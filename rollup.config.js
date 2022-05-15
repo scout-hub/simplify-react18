@@ -2,24 +2,15 @@
  * @Author: Zhouqi
  * @Date: 2022-05-15 15:30:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-15 15:31:10
+ * @LastEditTime: 2022-05-15 20:39:25
  */
-/*
- * @Author: Zhouqi
- * @Date: 2022-03-27 14:27:34
- * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-03 15:24:29
- */
-const {
-    terser
-} = require('rollup-plugin-terser');
 const typescript = require('@rollup/plugin-typescript');
 
 export default {
-    input,
+    input: './packages/react/src/react.ts',
     output: {
         format: "es",
-        file: ouputFile
+        file: './packages/react/dist/simplify-react.esm.js'
     },
     plugins: [
         typescript({

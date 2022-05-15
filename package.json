@@ -4,7 +4,9 @@
   "description": "a simplified version of react implementation for study",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "build": "rollup -c",
+    "dev": "node scripts/dev.js"
   },
   "keywords": [],
   "author": "",
