@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-15 20:36:52
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-15 21:25:19
+ * @LastEditTime: 2022-05-16 22:25:10
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -16,16 +16,15 @@
 </head>
 
 <body>
-    <script src="../dist/simplify-react.global.js"></script>
+    <div id="root"></div>
+    <script src="../build/simplify-react.global.js"></script>
+    <script src="../build/simplify-react-dom.global.js"></script>
     <script type="text/babel">
         const App = ()=>{
-            return (
-                <div>
-                    12313
-                </div>)
+            return <div>12313</div>
         }
-      const element = App();
-      console.log(element);
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        console.log(root);
     </script>
 </body>
 
