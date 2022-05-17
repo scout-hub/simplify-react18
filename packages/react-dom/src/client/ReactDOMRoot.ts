@@ -2,9 +2,10 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 19:59:04
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-17 20:17:45
+ * @LastEditTime: 2022-05-17 20:40:38
  */
 import { createContainer } from "packages/react-reconciler/src/ReactFiberReconciler";
+import { updateContainer } from "packages/react-reconciler/src/ReactFiberReconciler.old";
 import { ConcurrentRoot } from "packages/react-reconciler/src/ReactRootTags";
 
 export function createRoot(container) {

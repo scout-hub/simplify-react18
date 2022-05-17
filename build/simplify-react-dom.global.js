@@ -66,6 +66,9 @@ var ReactDOM = (() => {
   function createContainer(containerInfo, tag) {
     return createFiberRoot(containerInfo, tag);
   }
+  function updateContainer(element, container) {
+    console.log(element, container);
+  }
 
   // packages/react-reconciler/src/ReactFiberReconciler.ts
   var createContainer2 = createContainer;
