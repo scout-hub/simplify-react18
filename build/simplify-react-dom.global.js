@@ -82,6 +82,10 @@ var ReactDOM = (() => {
     constructor(internalRoot) {
       this._internalRoot = internalRoot;
     }
+    render(children) {
+      const root = this._internalRoot;
+      updateContainer(children, root);
+    }
   };
 
   // packages/react-dom/src/client/ReactDOM.ts
