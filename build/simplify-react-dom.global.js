@@ -62,12 +62,23 @@ var ReactDOM = (() => {
     }
   };
 
+  // packages/react-reconciler/src/ReactFiberWorkLoop.old.ts
+  function scheduleUpdateOnFiber(fiber) {
+    const root = fiber.stateNode;
+    ensureRootIsScheduled(root);
+  }
+  function ensureRootIsScheduled(root) {
+    console.log(root);
+    return root;
+  }
+
   // packages/react-reconciler/src/ReactFiberReconciler.old.ts
   function createContainer(containerInfo, tag) {
     return createFiberRoot(containerInfo, tag);
   }
   function updateContainer(element, container) {
-    console.log(element, container);
+    const current = container.current;
+    const root = scheduleUpdateOnFiber(current);
   }
 
   // packages/react-reconciler/src/ReactFiberReconciler.ts
