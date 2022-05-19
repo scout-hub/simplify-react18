@@ -48,19 +48,122 @@ var ReactDOM = (() => {
 
   // packages/react-reconciler/src/ReactFiberRoot.old.ts
   function createFiberRoot(containerInfo, tag) {
-    const root = new FiberRootNode(containerInfo);
+    const root = new FiberRootNode(containerInfo, tag);
     const uninitializedFiber = createHostRootFiber();
     root.current = uninitializedFiber;
     uninitializedFiber.stateNode = root;
     return root;
   }
   var FiberRootNode = class {
-    constructor(containerInfo) {
+    constructor(containerInfo, tag) {
       this.containerInfo = containerInfo;
       this.current = null;
+      this.tag = tag;
       this.finishedWork = null;
     }
   };
+
+  // packages/scheduler/src/SchedulerPriorities.ts
+  var ImmediatePriority = 1;
+  var UserBlockingPriority = 2;
+  var NormalPriority = 3;
+  var LowPriority = 4;
+  var IdlePriority = 5;
+
+  // packages/scheduler/src/SchedulerMinHeap.ts
+  function push(queue, task) {
+    const index = queue.length;
+    queue.push(task);
+    siftUp(queue, task, index);
+  }
+  function siftUp(queue, task, i) {
+    let index = i;
+    while (index > 0) {
+      const parentIndex = index - 1 >> 1;
+      const parentTask = queue[parentIndex];
+      if (compare(parentTask, task) > 0) {
+        queue[parentIndex] = task;
+        queue[index] = parentIndex;
+        index = parentIndex;
+      } else {
+        return;
+      }
+    }
+  }
+  function compare(a, b) {
+    const diff = a.sortIndex - b.sortIndex;
+    return diff !== 0 ? diff : a.id - b.id;
+  }
+
+  // packages/scheduler/src/forks/Scheduler.ts
+  var getCurrentTime;
+  var hasPerformanceNow = typeof performance === "object" && typeof performance.now === "function";
+  if (hasPerformanceNow) {
+    getCurrentTime = () => performance.now();
+  } else {
+  }
+  var IMMEDIATE_PRIORITY_TIMEOUT = -1;
+  var USER_BLOCKING_PRIORITY_TIMEOUT = 250;
+  var NORMAL_PRIORITY_TIMEOUT = 5e3;
+  var LOW_PRIORITY_TIMEOUT = 1e4;
+  var IDLE_PRIORITY_TIMEOUT = 1073741823;
+  var taskQueue = [];
+  var taskIdCounter = 1;
+  var isPerformingWork = false;
+  var isHostCallbackScheduled = false;
+  var scheduledHostCallback = null;
+  function unstable_scheduleCallback(priorityLevel, callback) {
+    const currentTime = getCurrentTime();
+    const startTime = currentTime;
+    let timeout;
+    switch (priorityLevel) {
+      case ImmediatePriority:
+        timeout = IMMEDIATE_PRIORITY_TIMEOUT;
+        break;
+      case UserBlockingPriority:
+        timeout = USER_BLOCKING_PRIORITY_TIMEOUT;
+        break;
+      case IdlePriority:
+        timeout = IDLE_PRIORITY_TIMEOUT;
+        break;
+      case LowPriority:
+        timeout = LOW_PRIORITY_TIMEOUT;
+        break;
+      case NormalPriority:
+        timeout = NORMAL_PRIORITY_TIMEOUT;
+        break;
+      default:
+        timeout = NORMAL_PRIORITY_TIMEOUT;
+    }
+    const expirationTime = startTime + timeout;
+    const newTask = {
+      id: taskIdCounter++,
+      callback,
+      priorityLevel,
+      startTime,
+      expirationTime,
+      sortIndex: -1
+    };
+    if (startTime > currentTime) {
+    } else {
+      newTask.sortIndex = expirationTime;
+      push(taskQueue, newTask);
+      if (!isHostCallbackScheduled && !isPerformingWork) {
+        isHostCallbackScheduled = true;
+        requestHostCallback(flushWork);
+      }
+    }
+  }
+  function requestHostCallback(callback) {
+    scheduledHostCallback = callback;
+    schedulePerformWorkUntilDeadline();
+  }
+  var schedulePerformWorkUntilDeadline;
+  function flushWork() {
+  }
+
+  // packages/react-reconciler/src/Scheduler.ts
+  var scheduleCallback = unstable_scheduleCallback;
 
   // packages/react-reconciler/src/ReactFiberWorkLoop.old.ts
   function scheduleUpdateOnFiber(fiber) {
@@ -68,8 +171,12 @@ var ReactDOM = (() => {
     ensureRootIsScheduled(root);
   }
   function ensureRootIsScheduled(root) {
-    console.log(root);
-    return root;
+    let newCallbackNode;
+    let schedulerPriorityLevel = NormalPriority;
+    newCallbackNode = scheduleCallback(schedulerPriorityLevel, performConcurrentWorkOnRoot.bind(null, root));
+    root.callbackNode = newCallbackNode;
+  }
+  function performConcurrentWorkOnRoot(root) {
   }
 
   // packages/react-reconciler/src/ReactFiberReconciler.old.ts
