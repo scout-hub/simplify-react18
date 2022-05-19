@@ -2,9 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-19 17:26:55
+ * @LastEditTime: 2022-05-19 20:55:22
  */
-import { push } from "../SchedulerMinHeap";
+import { peek, pop, push } from "../SchedulerMinHeap";
 import {
   ImmediatePriority,
   UserBlockingPriority,
@@ -122,7 +122,9 @@ if (typeof MessageChannel !== "undefined") {
 }
 
 function flushWork() {
-  console.log(1);
+  isHostCallbackScheduled = false;
+  isPerformingWork = true;
+  return workLoop();
 }
 
 function performWorkUntilDeadline() {
@@ -133,6 +135,21 @@ function performWorkUntilDeadline() {
     } finally {
       scheduledHostCallback = null;
     }
+  }
+}
+
+function workLoop() {
+  // 取出当前优先级最高的任务
+  let currentTask = peek(taskQueue);
+  while (currentTask !== null) {
+    const callback = currentTask.callback;
+    if (typeof callback === "function") {
+      callback();
+      if (currentTask === peek(taskQueue)) {
+        pop(taskQueue);
+      }
+    }
+    currentTask = peek(taskQueue);
   }
 }
 

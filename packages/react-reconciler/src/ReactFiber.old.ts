@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-19 10:37:52
+ * @LastEditTime: 2022-05-19 21:15:40
  */
 import { HostRoot } from "./ReactWorkTags";
 
@@ -56,4 +56,19 @@ class FiberNode {
     // current fiber tree和work in progress fiber tree的连接
     this.alternate = null;
   }
+}
+
+export function createWorkInProgress(current) {
+  let workInProgress = current.alternate;
+  if (workInProgress === null) {
+    workInProgress = createFiber(current.tag);
+    workInProgress.type = current.type;
+    workInProgress.stateNode = current.stateNode;
+    workInProgress.alternate = current;
+    current.alternate = workInProgress;
+  }
+  workInProgress.child = current.child;
+  workInProgress.sibling = current.sibling;
+  workInProgress.index = current.index;
+  return workInProgress;
 }

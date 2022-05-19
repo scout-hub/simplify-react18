@@ -45,6 +45,20 @@ var ReactDOM = (() => {
       this.alternate = null;
     }
   };
+  function createWorkInProgress(current) {
+    let workInProgress2 = current.alternate;
+    if (workInProgress2 === null) {
+      workInProgress2 = createFiber(current.tag);
+      workInProgress2.type = current.type;
+      workInProgress2.stateNode = current.stateNode;
+      workInProgress2.alternate = current;
+      current.alternate = workInProgress2;
+    }
+    workInProgress2.child = current.child;
+    workInProgress2.sibling = current.sibling;
+    workInProgress2.index = current.index;
+    return workInProgress2;
+  }
 
   // packages/react-reconciler/src/ReactFiberRoot.old.ts
   function createFiberRoot(containerInfo, tag) {
@@ -70,11 +84,41 @@ var ReactDOM = (() => {
   var LowPriority = 4;
   var IdlePriority = 5;
 
+  // packages/react-reconciler/src/ReactFiberCommitWork.old.ts
+  function commitMutationEffects(root, finishedWork) {
+    commitMutationEffectsOnFiber(finishedWork, root);
+  }
+  function commitMutationEffectsOnFiber(finishedWork, root) {
+    const current = finishedWork.alternate;
+    switch (finishedWork.tag) {
+      case HostRoot:
+        commitReconciliationEffects(finishedWork);
+    }
+  }
+  function commitReconciliationEffects(finishedWork) {
+    console.log(finishedWork);
+  }
+
   // packages/scheduler/src/SchedulerMinHeap.ts
   function push(queue, task) {
     const index = queue.length;
     queue.push(task);
     siftUp(queue, task, index);
+  }
+  function peek(queue) {
+    return queue.length ? queue[0] : null;
+  }
+  function pop(queue) {
+    if (queue.length === 0) {
+      return null;
+    }
+    const first = queue[0];
+    const last = queue.pop();
+    if (first !== last) {
+      queue[0] = last;
+      siftDown(queue, last, 0);
+    }
+    return first;
   }
   function siftUp(queue, task, i) {
     let index = i;
@@ -89,6 +133,8 @@ var ReactDOM = (() => {
         return;
       }
     }
+  }
+  function siftDown(queue, task, i) {
   }
   function compare(a, b) {
     const diff = a.sortIndex - b.sortIndex;
@@ -169,7 +215,9 @@ var ReactDOM = (() => {
   } else {
   }
   function flushWork() {
-    console.log(1);
+    isHostCallbackScheduled = false;
+    isPerformingWork = true;
+    return workLoop();
   }
   function performWorkUntilDeadline() {
     if (scheduledHostCallback !== null) {
@@ -180,11 +228,26 @@ var ReactDOM = (() => {
       }
     }
   }
+  function workLoop() {
+    let currentTask = peek(taskQueue);
+    while (currentTask !== null) {
+      const callback = currentTask.callback;
+      if (typeof callback === "function") {
+        callback();
+        if (currentTask === peek(taskQueue)) {
+          pop(taskQueue);
+        }
+      }
+      currentTask = peek(taskQueue);
+    }
+  }
 
   // packages/react-reconciler/src/Scheduler.ts
   var scheduleCallback = unstable_scheduleCallback;
 
   // packages/react-reconciler/src/ReactFiberWorkLoop.old.ts
+  var workInProgressRoot = null;
+  var workInProgress = null;
   function scheduleUpdateOnFiber(fiber) {
     const root = fiber.stateNode;
     ensureRootIsScheduled(root);
@@ -196,6 +259,40 @@ var ReactDOM = (() => {
     root.callbackNode = newCallbackNode;
   }
   function performConcurrentWorkOnRoot(root) {
+    renderRootSync(root);
+    const finishedWork = root.current.alternate;
+    root.finishedWork = finishedWork;
+    finishConcurrentRender(root);
+  }
+  function renderRootSync(root) {
+    if (workInProgressRoot !== root) {
+      prepareFreshStack(root);
+    }
+    workLoopSync();
+  }
+  function prepareFreshStack(root) {
+    root.finishedWork = null;
+    const rootWorkInProgress = createWorkInProgress(root.current);
+    workInProgress = rootWorkInProgress;
+    return workInProgressRoot;
+  }
+  function finishConcurrentRender(root) {
+    commitRoot(root);
+  }
+  function commitRoot(root) {
+    commitRootImpl(root);
+  }
+  function commitRootImpl(root) {
+    let finishedWork = root.finishedWork;
+    root.finishedWork = null;
+    root.callbackNode = null;
+    commitMutationEffects(root, finishedWork);
+  }
+  function workLoopSync() {
+    performUnitOfWork(workInProgress);
+  }
+  function performUnitOfWork(unitOfWork) {
+    console.log(unitOfWork);
   }
 
   // packages/react-reconciler/src/ReactFiberReconciler.old.ts

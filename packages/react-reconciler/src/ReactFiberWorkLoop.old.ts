@@ -2,10 +2,15 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-19 13:46:36
+ * @LastEditTime: 2022-05-19 21:47:38
  */
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
+import { createWorkInProgress } from "./ReactFiber.old";
+import { commitMutationEffects } from "./ReactFiberCommitWork.old";
 import { scheduleCallback } from "./Scheduler";
+
+let workInProgressRoot = null;
+let workInProgress = null;
 
 export function scheduleUpdateOnFiber(fiber) {
   const root = fiber.stateNode;
@@ -37,4 +42,46 @@ function ensureRootIsScheduled(root) {
   root.callbackNode = newCallbackNode;
 }
 
-function performConcurrentWorkOnRoot(root) {}
+function performConcurrentWorkOnRoot(root) {
+  renderRootSync(root);
+  const finishedWork = root.current.alternate;
+  root.finishedWork = finishedWork;
+  finishConcurrentRender(root);
+}
+
+function renderRootSync(root) {
+  if (workInProgressRoot !== root) {
+    prepareFreshStack(root);
+  }
+  workLoopSync();
+}
+
+function prepareFreshStack(root) {
+  root.finishedWork = null;
+  const rootWorkInProgress = createWorkInProgress(root.current);
+  workInProgress = rootWorkInProgress;
+  return workInProgressRoot;
+}
+
+function finishConcurrentRender(root) {
+  commitRoot(root);
+}
+
+function commitRoot(root) {
+  commitRootImpl(root);
+}
+
+function commitRootImpl(root) {
+  let finishedWork = root.finishedWork;
+  root.finishedWork = null;
+  root.callbackNode = null;
+  commitMutationEffects(root, finishedWork);
+}
+
+function workLoopSync() {
+  performUnitOfWork(workInProgress);
+}
+
+function performUnitOfWork(unitOfWork) {
+  console.log(unitOfWork);
+}
