@@ -159,7 +159,26 @@ var ReactDOM = (() => {
     schedulePerformWorkUntilDeadline();
   }
   var schedulePerformWorkUntilDeadline;
+  if (typeof MessageChannel !== "undefined") {
+    const channel = new MessageChannel();
+    const port = channel.port2;
+    channel.port1.onmessage = performWorkUntilDeadline;
+    schedulePerformWorkUntilDeadline = () => {
+      port.postMessage(null);
+    };
+  } else {
+  }
   function flushWork() {
+    console.log(1);
+  }
+  function performWorkUntilDeadline() {
+    if (scheduledHostCallback !== null) {
+      try {
+        scheduledHostCallback();
+      } finally {
+        scheduledHostCallback = null;
+      }
+    }
   }
 
   // packages/react-reconciler/src/Scheduler.ts

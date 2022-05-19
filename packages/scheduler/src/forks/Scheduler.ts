@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-19 16:20:42
+ * @LastEditTime: 2022-05-19 17:26:55
  */
 import { push } from "../SchedulerMinHeap";
 import {
@@ -38,7 +38,7 @@ let taskIdCounter = 1;
 let isPerformingWork = false;
 // 是否有任务在调度
 let isHostCallbackScheduled = false;
-let scheduledHostCallback = null;
+let scheduledHostCallback: null | Function = null;
 
 function unstable_scheduleCallback(priorityLevel, callback) {
   // 获取任务当前时间
@@ -101,7 +101,39 @@ function requestHostCallback(callback) {
 
 // 空闲时间进行任务调度逻辑
 let schedulePerformWorkUntilDeadline;
+// 利用messageChannel模拟实现requestIdleCallback
+// 模拟实现requestIdleCallback的两个条件
+// 1 模拟实现的requestIdleCallback能够主动让出线程，让浏览器去一些事情，例如渲染
+// 2 一次事件循环中只执行一次，因为执行完一次调度任务后还会去申请下一个时间片
+// 满足上述条件的只有宏任务，因为宏任务是在下一次事件循环开始的时候执行，并不会阻塞本次更新，并且宏任务在一次事件循环中也只逆行一次。
 
-function flushWork() {}
+// node环境下使用setImmediate
+// 浏览器和web worker环境下，这里不用setTimeout的原因是递归调用的时候，延迟最小是4ms
+if (typeof MessageChannel !== "undefined") {
+  const channel = new MessageChannel();
+  const port = channel.port2;
+  // message回调是宏任务，在下一个事件循环中执行这个回调
+  channel.port1.onmessage = performWorkUntilDeadline;
+  schedulePerformWorkUntilDeadline = () => {
+    port.postMessage(null);
+  };
+} else {
+  // 使用setTimeout
+}
+
+function flushWork() {
+  console.log(1);
+}
+
+function performWorkUntilDeadline() {
+  if (scheduledHostCallback !== null) {
+    try {
+      // flushWork
+      scheduledHostCallback();
+    } finally {
+      scheduledHostCallback = null;
+    }
+  }
+}
 
 export { unstable_scheduleCallback };
