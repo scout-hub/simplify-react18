@@ -100,34 +100,34 @@ var ReactDOM = (() => {
   }
 
   // packages/scheduler/src/SchedulerMinHeap.ts
-  function push(queue, task) {
-    const index = queue.length;
-    queue.push(task);
-    siftUp(queue, task, index);
+  function push(heap, task) {
+    const index = heap.length;
+    heap.push(task);
+    siftUp(heap, task, index);
   }
-  function peek(queue) {
-    return queue.length ? queue[0] : null;
+  function peek(heap) {
+    return heap.length ? heap[0] : null;
   }
-  function pop(queue) {
-    if (queue.length === 0) {
+  function pop(heap) {
+    if (heap.length === 0) {
       return null;
     }
-    const first = queue[0];
-    const last = queue.pop();
+    const first = heap[0];
+    const last = heap.pop();
     if (first !== last) {
-      queue[0] = last;
-      siftDown(queue, last, 0);
+      heap[0] = last;
+      siftDown(heap, last, 0);
     }
     return first;
   }
-  function siftUp(queue, task, i) {
+  function siftUp(heap, task, i) {
     let index = i;
     while (index > 0) {
       const parentIndex = index - 1 >> 1;
-      const parentTask = queue[parentIndex];
+      const parentTask = heap[parentIndex];
       if (compare(parentTask, task) > 0) {
-        queue[parentIndex] = task;
-        queue[index] = parentIndex;
+        heap[parentIndex] = task;
+        heap[index] = parentIndex;
         index = parentIndex;
       } else {
         return;
@@ -158,6 +158,7 @@ var ReactDOM = (() => {
   var isPerformingWork = false;
   var isHostCallbackScheduled = false;
   var scheduledHostCallback = null;
+  var isMessageLoopRunning = false;
   function unstable_scheduleCallback(priorityLevel, callback) {
     const currentTime = getCurrentTime();
     const startTime = currentTime;
@@ -202,7 +203,10 @@ var ReactDOM = (() => {
   }
   function requestHostCallback(callback) {
     scheduledHostCallback = callback;
-    schedulePerformWorkUntilDeadline();
+    if (!isMessageLoopRunning) {
+      isMessageLoopRunning = true;
+      schedulePerformWorkUntilDeadline();
+    }
   }
   var schedulePerformWorkUntilDeadline;
   if (typeof MessageChannel !== "undefined") {
@@ -221,11 +225,18 @@ var ReactDOM = (() => {
   }
   function performWorkUntilDeadline() {
     if (scheduledHostCallback !== null) {
+      let hasMoreWork = true;
       try {
-        scheduledHostCallback();
+        hasMoreWork = scheduledHostCallback();
       } finally {
-        scheduledHostCallback = null;
+        if (hasMoreWork) {
+        } else {
+          isMessageLoopRunning = false;
+          scheduledHostCallback = null;
+        }
       }
+    } else {
+      isMessageLoopRunning = false;
     }
   }
   function workLoop() {
@@ -233,6 +244,7 @@ var ReactDOM = (() => {
     while (currentTask !== null) {
       const callback = currentTask.callback;
       if (typeof callback === "function") {
+        currentTask.callback = null;
         callback();
         if (currentTask === peek(taskQueue)) {
           pop(taskQueue);
@@ -269,9 +281,11 @@ var ReactDOM = (() => {
       prepareFreshStack(root);
     }
     workLoopSync();
+    workInProgressRoot = null;
   }
   function prepareFreshStack(root) {
     root.finishedWork = null;
+    workInProgressRoot = root;
     const rootWorkInProgress = createWorkInProgress(root.current);
     workInProgress = rootWorkInProgress;
     return workInProgressRoot;
@@ -289,10 +303,14 @@ var ReactDOM = (() => {
     commitMutationEffects(root, finishedWork);
   }
   function workLoopSync() {
-    performUnitOfWork(workInProgress);
+    while (workInProgress !== null) {
+      performUnitOfWork(workInProgress);
+      workInProgress = null;
+    }
   }
   function performUnitOfWork(unitOfWork) {
-    console.log(unitOfWork);
+    const current = unitOfWork.alternate;
+    console.log(current);
   }
 
   // packages/react-reconciler/src/ReactFiberReconciler.old.ts

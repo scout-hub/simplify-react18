@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-19 20:55:22
+ * @LastEditTime: 2022-05-22 20:48:58
  */
 import { peek, pop, push } from "../SchedulerMinHeap";
 import {
@@ -34,12 +34,20 @@ const IDLE_PRIORITY_TIMEOUT = 1073741823; // 一些没有必要的任务，可�
 const taskQueue = [];
 // 任务id
 let taskIdCounter = 1;
-// 标记是否正在进行任务处理，防止任务重复执行
+// 标记是否正在进行任务处理，防止任务再次进入
 let isPerformingWork = false;
 // 是否有任务在调度
 let isHostCallbackScheduled = false;
 let scheduledHostCallback: null | Function = null;
 
+// postMessage发送的消息是否正在执行
+let isMessageLoopRunning = false;
+
+/**
+ * @description: 调度任务
+ * @param priorityLevel 优先级
+ * @param callback 需要调度的回调
+ */
 function unstable_scheduleCallback(priorityLevel, callback) {
   // 获取任务当前时间
   const currentTime = getCurrentTime();
@@ -94,9 +102,16 @@ function unstable_scheduleCallback(priorityLevel, callback) {
   }
 }
 
+/**
+ * @description: 注册宏任务
+ * @param callback
+ */
 function requestHostCallback(callback) {
   scheduledHostCallback = callback;
-  schedulePerformWorkUntilDeadline();
+  if (!isMessageLoopRunning) {
+    isMessageLoopRunning = true;
+    schedulePerformWorkUntilDeadline();
+  }
 }
 
 // 空闲时间进行任务调度逻辑
@@ -129,12 +144,21 @@ function flushWork() {
 
 function performWorkUntilDeadline() {
   if (scheduledHostCallback !== null) {
+    let hasMoreWork = true;
+
     try {
-      // flushWork
-      scheduledHostCallback();
+      // 执行flushWork
+      hasMoreWork = scheduledHostCallback();
     } finally {
-      scheduledHostCallback = null;
+      // TODO 如果队列中还有任务，则继续为其创建一个宏任务以继续执行
+      if (hasMoreWork) {
+      } else {
+        isMessageLoopRunning = false;
+        scheduledHostCallback = null;
+      }
     }
+  } else {
+    isMessageLoopRunning = false;
   }
 }
 
@@ -142,13 +166,17 @@ function workLoop() {
   // 取出当前优先级最高的任务
   let currentTask = peek(taskQueue);
   while (currentTask !== null) {
+    // 获取真正的更新函数
     const callback = currentTask.callback;
     if (typeof callback === "function") {
+      currentTask.callback = null;
       callback();
       if (currentTask === peek(taskQueue)) {
+        // 弹出当前执行的任务
         pop(taskQueue);
       }
     }
+    // 取出下一个任务执行
     currentTask = peek(taskQueue);
   }
 }

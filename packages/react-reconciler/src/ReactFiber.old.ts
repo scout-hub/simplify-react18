@@ -2,19 +2,22 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-19 21:15:40
+ * @LastEditTime: 2022-05-22 21:16:17
  */
 import { HostRoot } from "./ReactWorkTags";
 
+/**
+ * @description: 创建一个标记为HostRoot的fiber树根节点
+ * @return fiber节点
+ */
 export function createHostRootFiber() {
   return createFiber(HostRoot);
 }
 
 /**
- * @author: Zhouqi
  * @description: 创建fiber节点
  * @param tag 元素类型
- * @return
+ * @return fiber节点
  */
 function createFiber(tag) {
   return new FiberNode(tag);
@@ -58,6 +61,11 @@ class FiberNode {
   }
 }
 
+/**
+ * @description: 创建内存中的fiber，即为当前节点创建一个新的fiber节点去工作（双缓存机制）
+ * @param current 当前fiber节点
+ * @return 内存中的fiber树
+ */
 export function createWorkInProgress(current) {
   let workInProgress = current.alternate;
   if (workInProgress === null) {
