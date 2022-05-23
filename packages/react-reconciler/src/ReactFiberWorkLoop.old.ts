@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-22 21:29:50
+ * @LastEditTime: 2022-05-23 21:23:19
  */
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber.old";
@@ -32,7 +32,7 @@ function ensureRootIsScheduled(root) {
   let newCallbackNode;
 
   // 设置任务优先级，防止浏览器因没有空闲时间导致任务卡死
-  // TODO 先写死 NormalPriority
+  // 先写死 NormalPriority
   let schedulerPriorityLevel = NormalPriority;
   // TODO 计算任务超时等级
 
