@@ -84,6 +84,20 @@ var ReactDOM = (() => {
   var LowPriority = 4;
   var IdlePriority = 5;
 
+  // packages/react-reconciler/src/ReactFiberBeginWork.ts
+  function beginWork(current, workInProgress2) {
+    if (current !== null) {
+    }
+    switch (workInProgress2.tag) {
+      case HostRoot: {
+        return updateHostRoot(current, workInProgress2);
+      }
+    }
+  }
+  function updateHostRoot(current, workInProgress2) {
+    console.log(workInProgress2);
+  }
+
   // packages/react-reconciler/src/ReactFiberCommitWork.old.ts
   function commitMutationEffects(root, finishedWork) {
     commitMutationEffectsOnFiber(finishedWork, root);
@@ -96,7 +110,6 @@ var ReactDOM = (() => {
     }
   }
   function commitReconciliationEffects(finishedWork) {
-    console.log(finishedWork);
   }
 
   // packages/scheduler/src/SchedulerMinHeap.ts
@@ -310,7 +323,8 @@ var ReactDOM = (() => {
   }
   function performUnitOfWork(unitOfWork) {
     const current = unitOfWork.alternate;
-    console.log(current);
+    let next = null;
+    next = beginWork(current, unitOfWork);
   }
 
   // packages/react-reconciler/src/ReactFiberReconciler.old.ts

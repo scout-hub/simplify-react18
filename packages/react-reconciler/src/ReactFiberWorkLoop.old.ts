@@ -2,10 +2,11 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-24 22:34:17
+ * @LastEditTime: 2022-05-25 21:20:21
  */
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber.old";
+import { beginWork } from "./ReactFiberBeginWork";
 import { commitMutationEffects } from "./ReactFiberCommitWork.old";
 import { scheduleCallback } from "./Scheduler";
 
@@ -117,6 +118,8 @@ function workLoopSync() {
  * @param unitOfWork
  */
 function performUnitOfWork(unitOfWork) {
+  // 首屏渲染只有当前应用的根结点存在current，其它节点current为null
   const current = unitOfWork.alternate;
-  console.log(current);
+  let next: any = null;
+  next = beginWork(current, unitOfWork);
 }
