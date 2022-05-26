@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-26 16:12:40
+ * @LastEditTime: 2022-05-26 17:10:13
  */
 import { HostRoot } from "./ReactWorkTags";
 
@@ -39,7 +39,10 @@ class FiberNode {
   index: number = 0;
   // current fiber tree和work in progress fiber tree的连接
   alternate = null;
+
+  // 更新队列
   updateQueue = null;
+  // Fiber节点在本次更新的state
   memoizedState = null;
 
   constructor(public tag) {}

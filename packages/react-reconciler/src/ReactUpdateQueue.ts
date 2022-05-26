@@ -1,9 +1,13 @@
+import assign from "packages/shared/src/assign";
+
 /*
  * @Author: Zhouqi
  * @Date: 2022-05-26 14:43:08
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-26 16:24:30
+ * @LastEditTime: 2022-05-26 17:10:33
  */
+export const UpdateState = 0;
+
 /**
  *
  * @returns update的情况
@@ -42,7 +46,7 @@ export function createUpdate() {
     payload: null, // 更新挂载的数据，不同类型组件挂载的数据不同
     callback: null, // 更新的回调函数
     next: null, // 与其他Update连接形成链表
-    tag: null, // 更新的类型
+    tag: UpdateState, // 更新的类型
   };
   return update;
 }
@@ -85,7 +89,63 @@ export function processUpdateQueue(workInProgress) {
     // 将shared.pending上的update接到baseUpdate链表上
     if (lastBaseUpdate === null) {
       firstBaseUpdate = firstPendingUpdate;
+    } else {
+      firstBaseUpdate = lastBaseUpdate.next;
     }
     lastBaseUpdate = lastPendingUpdate;
+    const current = workInProgress.alternate;
+
+    // 如果current也存在，需要将current也进行同样的处理，同fiber双缓存相似
+
+    // Fiber节点最多同时存在两个updateQueue：
+    // current fiber保存的updateQueue即current updateQueue
+    // workInProgress fiber保存的updateQueue即workInProgress updateQueue
+    // 在commit阶段完成页面渲染后，workInProgress Fiber树变为current Fiber树，workInProgress Fiber树内Fiber节点的updateQueue就变成current updateQueue。
+    if (current !== null) {
+      const currentQueue = current.updateQueue;
+      const currentLastBaseUpdate = currentQueue.lastBaseUpdate;
+
+      // 如果current的updateQueue和workInProgress的updateQueue不同，则对current也进行同样的处理，用于结构共享
+      if (currentLastBaseUpdate !== lastBaseUpdate) {
+        if (currentLastBaseUpdate === null) {
+          currentQueue.firstBaseUpdate = firstPendingUpdate;
+        } else {
+          currentLastBaseUpdate.next = firstPendingUpdate;
+        }
+        currentQueue.lastBaseUpdate = lastPendingUpdate;
+      }
+    }
+  }
+
+  if (firstBaseUpdate !== null) {
+    let newState = queue.baseState;
+
+    let newLastBaseUpdate = null;
+    let newFirstBaseUpdate = null;
+    let newBaseState = null;
+
+    const update = firstBaseUpdate;
+    newState = getStateFromUpdate(workInProgress, queue, update, newState);
+    // TODO 多个update的情况 循环处理
+    if (newLastBaseUpdate === null) {
+      newBaseState = newState;
+    }
+    queue.baseState = newBaseState;
+    queue.firstBaseUpdate = newFirstBaseUpdate;
+    queue.lastBaseUpdate = newLastBaseUpdate;
+    workInProgress.memoizedState = newState;
+  }
+}
+
+function getStateFromUpdate(workInProgress, queue, update, prevState) {
+  switch (update.tag) {
+    case UpdateState:
+      const payload = update.payload;
+      let partialState = payload;
+      if (partialState == null) {
+        // 不需要更新
+        return prevState;
+      }
+      return assign({}, prevState, payload);
   }
 }

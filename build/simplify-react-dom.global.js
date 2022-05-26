@@ -65,7 +65,12 @@ var ReactDOM = (() => {
     return workInProgress2;
   }
 
+  // packages/shared/src/assign.ts
+  var assign = Object.assign;
+  var assign_default = assign;
+
   // packages/react-reconciler/src/ReactUpdateQueue.ts
+  var UpdateState = 0;
   function initializeUpdateQueue(fiber) {
     const queue = {
       baseState: fiber.memoizedState,
@@ -83,7 +88,7 @@ var ReactDOM = (() => {
       payload: null,
       callback: null,
       next: null,
-      tag: null
+      tag: UpdateState
     };
     return update;
   }
@@ -110,8 +115,49 @@ var ReactDOM = (() => {
       lastPendingUpdate.next = null;
       if (lastBaseUpdate === null) {
         firstBaseUpdate = firstPendingUpdate;
+      } else {
+        firstBaseUpdate = lastBaseUpdate.next;
       }
       lastBaseUpdate = lastPendingUpdate;
+      const current = workInProgress2.alternate;
+      if (current !== null) {
+        const currentQueue = current.updateQueue;
+        const currentLastBaseUpdate = currentQueue.lastBaseUpdate;
+        if (currentLastBaseUpdate !== lastBaseUpdate) {
+          if (currentLastBaseUpdate === null) {
+            currentQueue.firstBaseUpdate = firstPendingUpdate;
+          } else {
+            currentLastBaseUpdate.next = firstPendingUpdate;
+          }
+          currentQueue.lastBaseUpdate = lastPendingUpdate;
+        }
+      }
+    }
+    if (firstBaseUpdate !== null) {
+      let newState = queue.baseState;
+      let newLastBaseUpdate = null;
+      let newFirstBaseUpdate = null;
+      let newBaseState = null;
+      const update = firstBaseUpdate;
+      newState = getStateFromUpdate(workInProgress2, queue, update, newState);
+      if (newLastBaseUpdate === null) {
+        newBaseState = newState;
+      }
+      queue.baseState = newBaseState;
+      queue.firstBaseUpdate = newFirstBaseUpdate;
+      queue.lastBaseUpdate = newLastBaseUpdate;
+      workInProgress2.memoizedState = newState;
+    }
+  }
+  function getStateFromUpdate(workInProgress2, queue, update, prevState) {
+    switch (update.tag) {
+      case UpdateState:
+        const payload = update.payload;
+        let partialState = payload;
+        if (partialState == null) {
+          return prevState;
+        }
+        return assign_default({}, prevState, payload);
     }
   }
 
@@ -157,6 +203,8 @@ var ReactDOM = (() => {
   }
   function updateHostRoot(current, workInProgress2) {
     processUpdateQueue(workInProgress2);
+    const nextState = workInProgress2.memoizedState;
+    console.log(nextState);
     return workInProgress2.child;
   }
 
