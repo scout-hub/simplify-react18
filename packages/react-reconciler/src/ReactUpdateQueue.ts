@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 14:43:08
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-26 15:05:20
+ * @LastEditTime: 2022-05-26 16:24:30
  */
 /**
  *
@@ -15,6 +15,26 @@
  */
 
 /**
+ * @description: 初始化当前fiber的updateQueue
+ * @param fiber
+ */
+export function initializeUpdateQueue(fiber): void {
+  const queue = {
+    // 本次更新前该Fiber节点的state，Update基于该state计算更新后的state
+    baseState: fiber.memoizedState,
+    // 本次更新前该Fiber节点已保存的Update。以链表形式存在，链表头为firstBaseUpdate，链表尾为lastBaseUpdate。
+    firstBaseUpdate: null,
+    lastBaseUpdate: null,
+    shared: {
+      // 触发更新时，产生的Update会保存在shared.pending中形成单向环状链表。当由Update计算state时这个环会被剪开并连接在lastBaseUpdate后面。
+      pending: null,
+    },
+    effects: null,
+  };
+  fiber.updateQueue = queue;
+}
+
+/**
  * @description: 创建Update，保存更新状态相关内容的对象
  */
 export function createUpdate() {
@@ -25,4 +45,47 @@ export function createUpdate() {
     tag: null, // 更新的类型
   };
   return update;
+}
+
+/**
+ * @description: 向当前fiber节点的updateQueue中添加Update
+ * @param fiber
+ * @param update
+ */
+export function enqueueUpdate(fiber, update) {
+  const updateQueue = fiber.updateQueue;
+  if (updateQueue === null) return;
+  const sharedQueue = updateQueue.shared;
+  const pending = sharedQueue.pending;
+  // 构建循环链表
+  if (pending === null) {
+    update.next = update;
+  }
+  // shared.pending 会保证始终指向最后一个插入的update
+  sharedQueue.pending = update;
+}
+
+export function processUpdateQueue(workInProgress) {
+  const queue = workInProgress.updateQueue;
+
+  let firstBaseUpdate = queue.firstBaseUpdate;
+  let lastBaseUpdate = queue.lastBaseUpdate;
+
+  // pending始终指向的是最后一个添加进来的Update
+  let pendingQueue = queue.shared.pending;
+
+  // 检测shared.pending是否存在进行中的update将他们转移到baseQueue
+  if (pendingQueue !== null) {
+    queue.shared.pending = null;
+    const lastPendingUpdate = pendingQueue;
+    // 获取第一个Update
+    const firstPendingUpdate = lastPendingUpdate.next;
+    // pendingQueye队列是循环的。断开第一个和最后一个之间的指针，使其是非循环的
+    lastPendingUpdate.next = null;
+    // 将shared.pending上的update接到baseUpdate链表上
+    if (lastBaseUpdate === null) {
+      firstBaseUpdate = firstPendingUpdate;
+    }
+    lastBaseUpdate = lastPendingUpdate;
+  }
 }

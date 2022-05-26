@@ -2,8 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-26 15:02:50
+ * @LastEditTime: 2022-05-26 16:13:12
  */
+import { processUpdateQueue } from "./ReactUpdateQueue";
 import { HostRoot } from "./ReactWorkTags";
 
 export function beginWork(current, workInProgress) {
@@ -22,6 +23,7 @@ export function beginWork(current, workInProgress) {
 }
 
 function updateHostRoot(current, workInProgress) {
+  processUpdateQueue(workInProgress);
   // 返回子fiber节点
   return workInProgress.child;
 }

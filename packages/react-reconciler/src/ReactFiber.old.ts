@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-26 15:24:31
+ * @LastEditTime: 2022-05-26 16:12:40
  */
 import { HostRoot } from "./ReactWorkTags";
 
@@ -62,5 +62,9 @@ export function createWorkInProgress(current) {
   workInProgress.child = current.child;
   workInProgress.sibling = current.sibling;
   workInProgress.index = current.index;
+  workInProgress.memoizedProps = current.memoizedProps;
+  workInProgress.memoizedState = current.memoizedState;
+  workInProgress.updateQueue = current.updateQueue;
+  
   return workInProgress;
 }

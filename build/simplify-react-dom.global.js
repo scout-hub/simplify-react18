@@ -59,15 +59,73 @@ var ReactDOM = (() => {
     workInProgress2.child = current.child;
     workInProgress2.sibling = current.sibling;
     workInProgress2.index = current.index;
+    workInProgress2.memoizedProps = current.memoizedProps;
+    workInProgress2.memoizedState = current.memoizedState;
+    workInProgress2.updateQueue = current.updateQueue;
     return workInProgress2;
   }
 
+  // packages/react-reconciler/src/ReactUpdateQueue.ts
+  function initializeUpdateQueue(fiber) {
+    const queue = {
+      baseState: fiber.memoizedState,
+      firstBaseUpdate: null,
+      lastBaseUpdate: null,
+      shared: {
+        pending: null
+      },
+      effects: null
+    };
+    fiber.updateQueue = queue;
+  }
+  function createUpdate() {
+    const update = {
+      payload: null,
+      callback: null,
+      next: null,
+      tag: null
+    };
+    return update;
+  }
+  function enqueueUpdate(fiber, update) {
+    const updateQueue = fiber.updateQueue;
+    if (updateQueue === null)
+      return;
+    const sharedQueue = updateQueue.shared;
+    const pending = sharedQueue.pending;
+    if (pending === null) {
+      update.next = update;
+    }
+    sharedQueue.pending = update;
+  }
+  function processUpdateQueue(workInProgress2) {
+    const queue = workInProgress2.updateQueue;
+    let firstBaseUpdate = queue.firstBaseUpdate;
+    let lastBaseUpdate = queue.lastBaseUpdate;
+    let pendingQueue = queue.shared.pending;
+    if (pendingQueue !== null) {
+      queue.shared.pending = null;
+      const lastPendingUpdate = pendingQueue;
+      const firstPendingUpdate = lastPendingUpdate.next;
+      lastPendingUpdate.next = null;
+      if (lastBaseUpdate === null) {
+        firstBaseUpdate = firstPendingUpdate;
+      }
+      lastBaseUpdate = lastPendingUpdate;
+    }
+  }
+
   // packages/react-reconciler/src/ReactFiberRoot.old.ts
-  function createFiberRoot(containerInfo, tag) {
+  function createFiberRoot(containerInfo, tag, initialChildren = null) {
     const root = new FiberRootNode(containerInfo, tag);
     const uninitializedFiber = createHostRootFiber();
     root.current = uninitializedFiber;
     uninitializedFiber.stateNode = root;
+    const initialState = {
+      element: initialChildren
+    };
+    uninitializedFiber.memoizedState = initialState;
+    initializeUpdateQueue(uninitializedFiber);
     return root;
   }
   var FiberRootNode = class {
@@ -98,6 +156,7 @@ var ReactDOM = (() => {
     }
   }
   function updateHostRoot(current, workInProgress2) {
+    processUpdateQueue(workInProgress2);
     return workInProgress2.child;
   }
 
@@ -330,17 +389,6 @@ var ReactDOM = (() => {
     next = beginWork(current, unitOfWork);
   }
 
-  // packages/react-reconciler/src/ReactUpdateQueue.ts
-  function createUpdate() {
-    const update = {
-      payload: null,
-      callback: null,
-      next: null,
-      tag: null
-    };
-    return update;
-  }
-
   // packages/react-reconciler/src/ReactFiberReconciler.old.ts
   function createContainer(containerInfo, tag) {
     return createFiberRoot(containerInfo, tag);
@@ -349,6 +397,7 @@ var ReactDOM = (() => {
     const current = container.current;
     const update = createUpdate();
     update.payload = { element };
+    enqueueUpdate(current, update);
     const root = scheduleUpdateOnFiber(current);
   }
 
