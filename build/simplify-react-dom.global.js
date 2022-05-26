@@ -36,13 +36,15 @@ var ReactDOM = (() => {
   var FiberNode = class {
     constructor(tag) {
       this.tag = tag;
-      this.type = null;
       this.stateNode = null;
       this.return = null;
       this.sibling = null;
       this.child = null;
+      this.type = null;
       this.index = 0;
       this.alternate = null;
+      this.updateQueue = null;
+      this.memoizedState = null;
     }
   };
   function createWorkInProgress(current) {
@@ -87,6 +89,7 @@ var ReactDOM = (() => {
   // packages/react-reconciler/src/ReactFiberBeginWork.ts
   function beginWork(current, workInProgress2) {
     if (current !== null) {
+    } else {
     }
     switch (workInProgress2.tag) {
       case HostRoot: {
@@ -95,10 +98,10 @@ var ReactDOM = (() => {
     }
   }
   function updateHostRoot(current, workInProgress2) {
-    console.log(workInProgress2);
+    return workInProgress2.child;
   }
 
-  // packages/react-reconciler/src/ReactFiberCommitWork.old.ts
+  // packages/react-reconciler/src/ReactFiberCommitWork.ts
   function commitMutationEffects(root, finishedWork) {
     commitMutationEffectsOnFiber(finishedWork, root);
   }
@@ -327,12 +330,25 @@ var ReactDOM = (() => {
     next = beginWork(current, unitOfWork);
   }
 
+  // packages/react-reconciler/src/ReactUpdateQueue.ts
+  function createUpdate() {
+    const update = {
+      payload: null,
+      callback: null,
+      next: null,
+      tag: null
+    };
+    return update;
+  }
+
   // packages/react-reconciler/src/ReactFiberReconciler.old.ts
   function createContainer(containerInfo, tag) {
     return createFiberRoot(containerInfo, tag);
   }
   function updateContainer(element, container) {
     const current = container.current;
+    const update = createUpdate();
+    update.payload = { element };
     const root = scheduleUpdateOnFiber(current);
   }
 

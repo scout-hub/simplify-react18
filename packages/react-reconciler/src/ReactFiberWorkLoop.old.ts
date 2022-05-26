@@ -7,7 +7,7 @@
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber.old";
 import { beginWork } from "./ReactFiberBeginWork";
-import { commitMutationEffects } from "./ReactFiberCommitWork.old";
+import { commitMutationEffects } from "./ReactFiberCommitWork";
 import { scheduleCallback } from "./Scheduler";
 
 let workInProgressRoot = null;
