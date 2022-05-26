@@ -2,8 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-26 17:11:29
+ * @LastEditTime: 2022-05-26 17:21:03
  */
+import { reconcileChildFibers } from "./ReactChildFiber";
 import { processUpdateQueue } from "./ReactUpdateQueue";
 import { HostRoot } from "./ReactWorkTags";
 
@@ -23,10 +24,36 @@ export function beginWork(current, workInProgress) {
 }
 
 function updateHostRoot(current, workInProgress) {
+  const prevState = workInProgress.memoizedState;
+  const prevChildren = prevState.element;
   processUpdateQueue(workInProgress);
+
   const nextState = workInProgress.memoizedState;
-  console.log(nextState);
-  
+  // 获取要更新的jsx元素
+  const nextChildren = nextState.element;
+
+  // 新旧jsx对象没变，直接返回
+  if (nextChildren === prevChildren) {
+    return null;
+  }
+
+  // 创建子fiber节点
+  reconcileChildren(current, workInProgress, nextChildren);
+
   // 返回子fiber节点
   return workInProgress.child;
+}
+
+/**
+ * @description: 处理子fiber节点
+ */
+function reconcileChildren(current, workInProgress, nextChildren) {
+  if (current === null) {
+  } else {
+    workInProgress.child = reconcileChildFibers(
+      workInProgress,
+      current.child,
+      nextChildren
+    );
+  }
 }

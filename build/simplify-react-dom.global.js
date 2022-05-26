@@ -190,6 +190,11 @@ var ReactDOM = (() => {
   var LowPriority = 4;
   var IdlePriority = 5;
 
+  // packages/react-reconciler/src/ReactChildFiber.ts
+  function reconcileChildFibers(returnFiber, currentFirstChild, newChild) {
+    console.log(returnFiber, currentFirstChild, newChild);
+  }
+
   // packages/react-reconciler/src/ReactFiberBeginWork.ts
   function beginWork(current, workInProgress2) {
     if (current !== null) {
@@ -202,10 +207,22 @@ var ReactDOM = (() => {
     }
   }
   function updateHostRoot(current, workInProgress2) {
+    const prevState = workInProgress2.memoizedState;
+    const prevChildren = prevState.element;
     processUpdateQueue(workInProgress2);
     const nextState = workInProgress2.memoizedState;
-    console.log(nextState);
+    const nextChildren = nextState.element;
+    if (nextChildren === prevChildren) {
+      return null;
+    }
+    reconcileChildren(current, workInProgress2, nextChildren);
     return workInProgress2.child;
+  }
+  function reconcileChildren(current, workInProgress2, nextChildren) {
+    if (current === null) {
+    } else {
+      workInProgress2.child = reconcileChildFibers(workInProgress2, current.child, nextChildren);
+    }
   }
 
   // packages/react-reconciler/src/ReactFiberCommitWork.ts
