@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:20:49
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-19 10:37:46
+ * @LastEditTime: 2022-05-26 15:25:18
  */
 import { createHostRootFiber } from "./ReactFiber.old";
 
@@ -22,18 +22,9 @@ export function createFiberRoot(containerInfo, tag) {
 }
 
 class FiberRootNode {
-  public containerInfo;
-  public current;
-  public finishedWork;
-  public tag;
+  // 指向当前的RootFiber应用
+  current: any = null;
+  finishedWork = null;
 
-  constructor(containerInfo, tag) {
-    // 容器信息
-    this.containerInfo = containerInfo;
-    // 指向当前的RootFiber应用
-    this.current = null;
-    // Fiber标签，表示Fiber的类型
-    this.tag = tag;
-    this.finishedWork = null;
-  }
+  constructor(public containerInfo, public tag) {}
 }

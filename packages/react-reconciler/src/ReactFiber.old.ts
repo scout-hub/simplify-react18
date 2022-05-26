@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-26 15:22:35
+ * @LastEditTime: 2022-05-26 15:24:31
  */
 import { HostRoot } from "./ReactWorkTags";
 
@@ -26,7 +26,7 @@ function createFiber(tag) {
 // fiber类
 class FiberNode {
   // 指向应用节点FiberRootNode的指针
-  stateNode = null;
+  stateNode: any = null;
   // 指向父fiberNode的指针
   return = null;
   // 指向兄弟fiberNode的指针

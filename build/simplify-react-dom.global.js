@@ -73,8 +73,8 @@ var ReactDOM = (() => {
   var FiberRootNode = class {
     constructor(containerInfo, tag) {
       this.containerInfo = containerInfo;
-      this.current = null;
       this.tag = tag;
+      this.current = null;
       this.finishedWork = null;
     }
   };
