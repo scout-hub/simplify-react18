@@ -1,11 +1,11 @@
-import assign from "packages/shared/src/assign";
-
 /*
  * @Author: Zhouqi
  * @Date: 2022-05-26 14:43:08
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-26 17:10:33
+ * @LastEditTime: 2022-05-27 09:46:00
  */
+import { assign } from "packages/shared/src";
+
 export const UpdateState = 0;
 
 /**

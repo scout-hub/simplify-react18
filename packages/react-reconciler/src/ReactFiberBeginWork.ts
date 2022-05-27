@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-26 17:21:03
+ * @LastEditTime: 2022-05-27 09:39:28
  */
 import { reconcileChildFibers } from "./ReactChildFiber";
 import { processUpdateQueue } from "./ReactUpdateQueue";
@@ -49,6 +49,7 @@ function updateHostRoot(current, workInProgress) {
  */
 function reconcileChildren(current, workInProgress, nextChildren) {
   if (current === null) {
+    console.log(1);
   } else {
     workInProgress.child = reconcileChildFibers(
       workInProgress,

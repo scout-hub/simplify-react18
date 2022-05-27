@@ -25,8 +25,9 @@ var ReactDOM = (() => {
 
   // packages/react-reconciler/src/ReactWorkTags.ts
   var HostRoot = 3;
+  var IndeterminateComponent = 2;
 
-  // packages/react-reconciler/src/ReactFiber.old.ts
+  // packages/react-reconciler/src/ReactFiber.ts
   function createHostRootFiber() {
     return createFiber(HostRoot);
   }
@@ -36,11 +37,12 @@ var ReactDOM = (() => {
   var FiberNode = class {
     constructor(tag) {
       this.tag = tag;
+      this.type = null;
+      this.elementType = null;
       this.stateNode = null;
       this.return = null;
       this.sibling = null;
       this.child = null;
-      this.type = null;
       this.index = 0;
       this.alternate = null;
       this.updateQueue = null;
@@ -51,6 +53,7 @@ var ReactDOM = (() => {
     let workInProgress2 = current.alternate;
     if (workInProgress2 === null) {
       workInProgress2 = createFiber(current.tag);
+      workInProgress2.elementType = current.elementType;
       workInProgress2.type = current.type;
       workInProgress2.stateNode = current.stateNode;
       workInProgress2.alternate = current;
@@ -64,10 +67,22 @@ var ReactDOM = (() => {
     workInProgress2.updateQueue = current.updateQueue;
     return workInProgress2;
   }
+  function createFiberFromElement(element) {
+    const { type, key } = element;
+    const fiber = createFiberFromTypeAndProps(type, key);
+    return fiber;
+  }
+  function createFiberFromTypeAndProps(type, key) {
+    let fiberTag = IndeterminateComponent;
+    const fiber = createFiber(fiberTag);
+    fiber.elementType = type;
+    fiber.type = type;
+    return fiber;
+  }
 
-  // packages/shared/src/assign.ts
+  // packages/shared/src/index.ts
   var assign = Object.assign;
-  var assign_default = assign;
+  var isObject = (val) => val !== null && typeof val === "object";
 
   // packages/react-reconciler/src/ReactUpdateQueue.ts
   var UpdateState = 0;
@@ -157,7 +172,7 @@ var ReactDOM = (() => {
         if (partialState == null) {
           return prevState;
         }
-        return assign_default({}, prevState, payload);
+        return assign({}, prevState, payload);
     }
   }
 
@@ -190,9 +205,24 @@ var ReactDOM = (() => {
   var LowPriority = 4;
   var IdlePriority = 5;
 
+  // packages/shared/src/ReactSymbols.ts
+  var REACT_ELEMENT_TYPE = Symbol.for("react.element");
+
   // packages/react-reconciler/src/ReactChildFiber.ts
   function reconcileChildFibers(returnFiber, currentFirstChild, newChild) {
-    console.log(returnFiber, currentFirstChild, newChild);
+    if (isObject(newChild)) {
+      switch (newChild.$$typeof) {
+        case REACT_ELEMENT_TYPE:
+          return reconcileSingleElement(returnFiber, currentFirstChild, newChild);
+      }
+    }
+  }
+  function reconcileSingleElement(returnFiber, currentFirstChild, element) {
+    let child = currentFirstChild;
+    while (child !== null) {
+    }
+    const created = createFiberFromElement(element);
+    console.log(created);
   }
 
   // packages/react-reconciler/src/ReactFiberBeginWork.ts
@@ -220,6 +250,7 @@ var ReactDOM = (() => {
   }
   function reconcileChildren(current, workInProgress2, nextChildren) {
     if (current === null) {
+      console.log(1);
     } else {
       workInProgress2.child = reconcileChildFibers(workInProgress2, current.child, nextChildren);
     }

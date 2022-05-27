@@ -4,7 +4,7 @@
  * @LastEditors: Zhouqi
  * @LastEditTime: 2022-05-26 15:42:59
  */
-import { createHostRootFiber } from "./ReactFiber.old";
+import { createHostRootFiber } from "./ReactFiber";
 import { initializeUpdateQueue } from "./ReactUpdateQueue";
 
 export function createFiberRoot(containerInfo, tag, initialChildren = null) {
