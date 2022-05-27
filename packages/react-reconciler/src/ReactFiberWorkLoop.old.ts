@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-25 21:20:21
+ * @LastEditTime: 2022-05-27 14:02:49
  */
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber";
@@ -108,8 +108,6 @@ function commitRootImpl(root) {
 function workLoopSync() {
   while (workInProgress !== null) {
     performUnitOfWork(workInProgress);
-    // TODO 暂时重置workInProgress以退出循环，防止调试卡死
-    workInProgress = null;
   }
 }
 
@@ -122,4 +120,17 @@ function performUnitOfWork(unitOfWork) {
   const current = unitOfWork.alternate;
   let next: any = null;
   next = beginWork(current, unitOfWork);
+
+  // 不存在子fiber节点了，说明节点已经处理完，此时进入completeWork
+  if (next == null) {
+    completeUnitOfWork(unitOfWork);
+    // TODO 暂时重置workInProgress以退出循环，防止调试卡死
+    workInProgress = null;
+  } else {
+    workInProgress = next;
+  }
+}
+
+function completeUnitOfWork(unitOfWork) {
+  console.log(unitOfWork);
 }

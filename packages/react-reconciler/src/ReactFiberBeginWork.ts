@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-27 09:39:28
+ * @LastEditTime: 2022-05-27 14:00:09
  */
 import { reconcileChildFibers } from "./ReactChildFiber";
 import { processUpdateQueue } from "./ReactUpdateQueue";
@@ -21,6 +21,7 @@ export function beginWork(current, workInProgress) {
       return updateHostRoot(current, workInProgress);
     }
   }
+  return null;
 }
 
 function updateHostRoot(current, workInProgress) {

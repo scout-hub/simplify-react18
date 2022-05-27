@@ -23,6 +23,10 @@ var ReactDOM = (() => {
     createRoot: () => createRoot2
   });
 
+  // packages/react-reconciler/src/ReactFiberFlags.ts
+  var NoFlags = 0;
+  var Placement = 2;
+
   // packages/react-reconciler/src/ReactWorkTags.ts
   var HostRoot = 3;
   var IndeterminateComponent = 2;
@@ -47,6 +51,7 @@ var ReactDOM = (() => {
       this.alternate = null;
       this.updateQueue = null;
       this.memoizedState = null;
+      this.flags = NoFlags;
     }
   };
   function createWorkInProgress(current) {
@@ -209,21 +214,33 @@ var ReactDOM = (() => {
   var REACT_ELEMENT_TYPE = Symbol.for("react.element");
 
   // packages/react-reconciler/src/ReactChildFiber.ts
-  function reconcileChildFibers(returnFiber, currentFirstChild, newChild) {
-    if (isObject(newChild)) {
-      switch (newChild.$$typeof) {
-        case REACT_ELEMENT_TYPE:
-          return reconcileSingleElement(returnFiber, currentFirstChild, newChild);
+  function ChildReconciler(shouldTrackSideEffects) {
+    function reconcileChildFibers2(returnFiber, currentFirstChild, newChild) {
+      if (isObject(newChild)) {
+        switch (newChild.$$typeof) {
+          case REACT_ELEMENT_TYPE:
+            return placeSingleChild(reconcileSingleElement(returnFiber, currentFirstChild, newChild));
+        }
       }
+      return null;
     }
-  }
-  function reconcileSingleElement(returnFiber, currentFirstChild, element) {
-    let child = currentFirstChild;
-    while (child !== null) {
+    function reconcileSingleElement(returnFiber, currentFirstChild, element) {
+      let child = currentFirstChild;
+      while (child !== null) {
+      }
+      const created = createFiberFromElement(element);
+      created.return = returnFiber;
+      return created;
     }
-    const created = createFiberFromElement(element);
-    console.log(created);
+    function placeSingleChild(newFiber) {
+      if (shouldTrackSideEffects && newFiber.alternate === null) {
+        newFiber.flags |= Placement;
+      }
+      return newFiber;
+    }
+    return reconcileChildFibers2;
   }
+  var reconcileChildFibers = ChildReconciler(true);
 
   // packages/react-reconciler/src/ReactFiberBeginWork.ts
   function beginWork(current, workInProgress2) {
@@ -235,6 +252,7 @@ var ReactDOM = (() => {
         return updateHostRoot(current, workInProgress2);
       }
     }
+    return null;
   }
   function updateHostRoot(current, workInProgress2) {
     const prevState = workInProgress2.memoizedState;
@@ -476,13 +494,21 @@ var ReactDOM = (() => {
   function workLoopSync() {
     while (workInProgress !== null) {
       performUnitOfWork(workInProgress);
-      workInProgress = null;
     }
   }
   function performUnitOfWork(unitOfWork) {
     const current = unitOfWork.alternate;
     let next = null;
     next = beginWork(current, unitOfWork);
+    if (next == null) {
+      completeUnitOfWork(unitOfWork);
+      workInProgress = null;
+    } else {
+      workInProgress = next;
+    }
+  }
+  function completeUnitOfWork(unitOfWork) {
+    console.log(unitOfWork);
   }
 
   // packages/react-reconciler/src/ReactFiberReconciler.old.ts

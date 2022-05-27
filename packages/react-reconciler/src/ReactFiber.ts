@@ -2,8 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-27 10:22:07
+ * @LastEditTime: 2022-05-27 13:33:37
  */
+import { NoFlags } from "./ReactFiberFlags";
 import { HostRoot, IndeterminateComponent } from "./ReactWorkTags";
 
 /**
@@ -29,7 +30,6 @@ class FiberNode {
   type = null;
   // 元素的类型，是固定不变的，而type是可能会改变的
   elementType = null;
-
   // 指向应用节点FiberRootNode的指针
   stateNode: any = null;
   // 指向父fiberNode的指针
@@ -38,16 +38,16 @@ class FiberNode {
   sibling = null;
   // 指向子fiberNode的指针
   child = null;
-
   // 同级fiberNode的插入位置
   index: number = 0;
   // current fiber tree和work in progress fiber tree的连接
   alternate = null;
-
   // 更新队列
   updateQueue = null;
   // Fiber节点在本次更新的state
   memoizedState = null;
+  // Effects
+  flags = NoFlags;
 
   constructor(public tag) {}
 }
