@@ -2,11 +2,17 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-27 14:00:09
+ * @LastEditTime: 2022-05-27 15:37:30
  */
-import { reconcileChildFibers } from "./ReactChildFiber";
+import { mountChildFibers, reconcileChildFibers } from "./ReactChildFiber";
+import { renderWithHooks } from "./ReactFiberHooks";
 import { processUpdateQueue } from "./ReactUpdateQueue";
-import { HostRoot } from "./ReactWorkTags";
+import {
+  FunctionComponent,
+  HostComponent,
+  HostRoot,
+  IndeterminateComponent,
+} from "./ReactWorkTags";
 
 export function beginWork(current, workInProgress) {
   // 首屏渲染只有hostRoot存在current节点，其他节点还未被创建
@@ -20,6 +26,14 @@ export function beginWork(current, workInProgress) {
     case HostRoot: {
       return updateHostRoot(current, workInProgress);
     }
+    case IndeterminateComponent:
+      return mountIndeterminateComponent(
+        current,
+        workInProgress,
+        workInProgress.type
+      );
+    case HostComponent:
+      return updateHostComponent(current, workInProgress);
   }
   return null;
 }
@@ -49,13 +63,34 @@ function updateHostRoot(current, workInProgress) {
  * @description: 处理子fiber节点
  */
 function reconcileChildren(current, workInProgress, nextChildren) {
+  // current为null说明是首次创建阶段，除了hostRoot节点
   if (current === null) {
-    console.log(1);
+    workInProgress.child = mountChildFibers(workInProgress, null, nextChildren);
   } else {
+    // 说明是更新节点，hostRoot节点首次渲染也会进入这里
     workInProgress.child = reconcileChildFibers(
       workInProgress,
       current.child,
       nextChildren
     );
   }
+}
+
+/**
+ * @author: Zhouqi
+ * @description: Function组件首次渲染会进入这里
+ * @param _current
+ * @param workInProgress
+ * @param Component
+ */
+function mountIndeterminateComponent(_current, workInProgress, Component) {
+  // value值是jsx经过babel处理后得到的vnode对象
+  const value = renderWithHooks(_current, workInProgress, Component);
+  workInProgress.tag = FunctionComponent;
+  reconcileChildren(null, workInProgress, value);
+  return workInProgress.child;
+}
+
+function updateHostComponent(current, workInProgress) {
+  console.log(current, workInProgress);
 }

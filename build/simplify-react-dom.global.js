@@ -23,6 +23,11 @@ var ReactDOM = (() => {
     createRoot: () => createRoot2
   });
 
+  // packages/shared/src/index.ts
+  var assign = Object.assign;
+  var isObject = (val) => val !== null && typeof val === "object";
+  var isString = (val) => typeof val === "string";
+
   // packages/react-reconciler/src/ReactFiberFlags.ts
   var NoFlags = 0;
   var Placement = 2;
@@ -30,17 +35,20 @@ var ReactDOM = (() => {
   // packages/react-reconciler/src/ReactWorkTags.ts
   var HostRoot = 3;
   var IndeterminateComponent = 2;
+  var FunctionComponent = 0;
+  var HostComponent = 5;
 
   // packages/react-reconciler/src/ReactFiber.ts
   function createHostRootFiber() {
-    return createFiber(HostRoot);
+    return createFiber(HostRoot, null);
   }
-  function createFiber(tag) {
-    return new FiberNode(tag);
+  function createFiber(tag, pendingProps) {
+    return new FiberNode(tag, pendingProps);
   }
   var FiberNode = class {
-    constructor(tag) {
+    constructor(tag, pendingProps) {
       this.tag = tag;
+      this.pendingProps = pendingProps;
       this.type = null;
       this.elementType = null;
       this.stateNode = null;
@@ -54,10 +62,10 @@ var ReactDOM = (() => {
       this.flags = NoFlags;
     }
   };
-  function createWorkInProgress(current) {
+  function createWorkInProgress(current, pendingProps) {
     let workInProgress2 = current.alternate;
     if (workInProgress2 === null) {
-      workInProgress2 = createFiber(current.tag);
+      workInProgress2 = createFiber(current.tag, pendingProps);
       workInProgress2.elementType = current.elementType;
       workInProgress2.type = current.type;
       workInProgress2.stateNode = current.stateNode;
@@ -74,20 +82,20 @@ var ReactDOM = (() => {
   }
   function createFiberFromElement(element) {
     const { type, key } = element;
-    const fiber = createFiberFromTypeAndProps(type, key);
+    let pendingProps = element.props;
+    const fiber = createFiberFromTypeAndProps(type, key, pendingProps);
     return fiber;
   }
-  function createFiberFromTypeAndProps(type, key) {
+  function createFiberFromTypeAndProps(type, key, pendingProps) {
     let fiberTag = IndeterminateComponent;
-    const fiber = createFiber(fiberTag);
+    if (isString(type)) {
+      fiberTag = HostComponent;
+    }
+    const fiber = createFiber(fiberTag, pendingProps);
     fiber.elementType = type;
     fiber.type = type;
     return fiber;
   }
-
-  // packages/shared/src/index.ts
-  var assign = Object.assign;
-  var isObject = (val) => val !== null && typeof val === "object";
 
   // packages/react-reconciler/src/ReactUpdateQueue.ts
   var UpdateState = 0;
@@ -241,6 +249,13 @@ var ReactDOM = (() => {
     return reconcileChildFibers2;
   }
   var reconcileChildFibers = ChildReconciler(true);
+  var mountChildFibers = ChildReconciler(false);
+
+  // packages/react-reconciler/src/ReactFiberHooks.ts
+  function renderWithHooks(_current, workInProgress2, Component) {
+    const children = Component();
+    return children;
+  }
 
   // packages/react-reconciler/src/ReactFiberBeginWork.ts
   function beginWork(current, workInProgress2) {
@@ -251,6 +266,10 @@ var ReactDOM = (() => {
       case HostRoot: {
         return updateHostRoot(current, workInProgress2);
       }
+      case IndeterminateComponent:
+        return mountIndeterminateComponent(current, workInProgress2, workInProgress2.type);
+      case HostComponent:
+        return updateHostComponent(current, workInProgress2);
     }
     return null;
   }
@@ -268,10 +287,19 @@ var ReactDOM = (() => {
   }
   function reconcileChildren(current, workInProgress2, nextChildren) {
     if (current === null) {
-      console.log(1);
+      workInProgress2.child = mountChildFibers(workInProgress2, null, nextChildren);
     } else {
       workInProgress2.child = reconcileChildFibers(workInProgress2, current.child, nextChildren);
     }
+  }
+  function mountIndeterminateComponent(_current, workInProgress2, Component) {
+    const value = renderWithHooks(_current, workInProgress2, Component);
+    workInProgress2.tag = FunctionComponent;
+    reconcileChildren(null, workInProgress2, value);
+    return workInProgress2.child;
+  }
+  function updateHostComponent(current, workInProgress2) {
+    console.log(current, workInProgress2);
   }
 
   // packages/react-reconciler/src/ReactFiberCommitWork.ts
@@ -475,7 +503,7 @@ var ReactDOM = (() => {
   function prepareFreshStack(root) {
     root.finishedWork = null;
     workInProgressRoot = root;
-    const rootWorkInProgress = createWorkInProgress(root.current);
+    const rootWorkInProgress = createWorkInProgress(root.current, null);
     workInProgress = rootWorkInProgress;
     return workInProgressRoot;
   }
@@ -508,7 +536,6 @@ var ReactDOM = (() => {
     }
   }
   function completeUnitOfWork(unitOfWork) {
-    console.log(unitOfWork);
   }
 
   // packages/react-reconciler/src/ReactFiberReconciler.old.ts

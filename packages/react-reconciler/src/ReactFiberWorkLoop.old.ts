@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-27 14:02:49
+ * @LastEditTime: 2022-05-27 15:27:59
  */
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber";
@@ -82,7 +82,7 @@ function prepareFreshStack(root) {
   root.finishedWork = null;
   workInProgressRoot = root;
   // 为当前节点创建一个内存中的fiber节点（双缓存机制）
-  const rootWorkInProgress = createWorkInProgress(root.current);
+  const rootWorkInProgress = createWorkInProgress(root.current, null);
   workInProgress = rootWorkInProgress;
   return workInProgressRoot;
 }
@@ -120,7 +120,6 @@ function performUnitOfWork(unitOfWork) {
   const current = unitOfWork.alternate;
   let next: any = null;
   next = beginWork(current, unitOfWork);
-
   // 不存在子fiber节点了，说明节点已经处理完，此时进入completeWork
   if (next == null) {
     completeUnitOfWork(unitOfWork);
@@ -132,5 +131,5 @@ function performUnitOfWork(unitOfWork) {
 }
 
 function completeUnitOfWork(unitOfWork) {
-  console.log(unitOfWork);
+  // console.log(unitOfWork);
 }

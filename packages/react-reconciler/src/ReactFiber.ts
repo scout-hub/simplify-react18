@@ -2,17 +2,22 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-27 13:33:37
+ * @LastEditTime: 2022-05-27 15:27:08
  */
+import { isString } from "packages/shared/src";
 import { NoFlags } from "./ReactFiberFlags";
-import { HostRoot, IndeterminateComponent } from "./ReactWorkTags";
+import {
+  HostComponent,
+  HostRoot,
+  IndeterminateComponent,
+} from "./ReactWorkTags";
 
 /**
  * @description: 创建一个标记为HostRoot的fiber树根节点
  * @return fiber节点
  */
 export function createHostRootFiber() {
-  return createFiber(HostRoot);
+  return createFiber(HostRoot, null);
 }
 
 /**
@@ -20,8 +25,8 @@ export function createHostRootFiber() {
  * @param tag 元素类型
  * @return fiber节点
  */
-function createFiber(tag) {
-  return new FiberNode(tag);
+function createFiber(tag, pendingProps) {
+  return new FiberNode(tag, pendingProps);
 }
 
 // fiber类
@@ -49,7 +54,7 @@ class FiberNode {
   // Effects
   flags = NoFlags;
 
-  constructor(public tag) {}
+  constructor(public tag, public pendingProps) {}
 }
 
 /**
@@ -57,10 +62,10 @@ class FiberNode {
  * @param current 当前fiber节点
  * @return 内存中的fiber树
  */
-export function createWorkInProgress(current) {
+export function createWorkInProgress(current, pendingProps) {
   let workInProgress = current.alternate;
   if (workInProgress === null) {
-    workInProgress = createFiber(current.tag);
+    workInProgress = createFiber(current.tag, pendingProps);
     workInProgress.elementType = current.elementType;
     workInProgress.type = current.type;
     workInProgress.stateNode = current.stateNode;
@@ -82,13 +87,18 @@ export function createWorkInProgress(current) {
  */
 export function createFiberFromElement(element) {
   const { type, key } = element;
-  const fiber = createFiberFromTypeAndProps(type, key);
+  let pendingProps = element.props;
+  const fiber = createFiberFromTypeAndProps(type, key, pendingProps);
   return fiber;
 }
 
-function createFiberFromTypeAndProps(type, key) {
+function createFiberFromTypeAndProps(type, key, pendingProps) {
   let fiberTag = IndeterminateComponent;
-  const fiber = createFiber(fiberTag);
+  if (isString(type)) {
+    // 说明是普通元素节点
+    fiberTag = HostComponent;
+  }
+  const fiber = createFiber(fiberTag, pendingProps);
   fiber.elementType = type;
   fiber.type = type;
   return fiber;

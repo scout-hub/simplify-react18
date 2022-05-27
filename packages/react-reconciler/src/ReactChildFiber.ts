@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-27 14:00:35
+ * @LastEditTime: 2022-05-27 15:21:37
  */
 
 import { isObject } from "packages/shared/src";
@@ -59,3 +59,4 @@ function ChildReconciler(shouldTrackSideEffects) {
 }
 
 export const reconcileChildFibers = ChildReconciler(true);
+export const mountChildFibers = ChildReconciler(false);
