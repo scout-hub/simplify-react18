@@ -541,6 +541,7 @@ var ReactDOM = (() => {
     const current = unitOfWork.alternate;
     let next = null;
     next = beginWork(current, unitOfWork);
+    unitOfWork.memoizedProps = unitOfWork.pendingProps;
     if (next == null) {
       completeUnitOfWork(unitOfWork);
       workInProgress = null;
@@ -549,7 +550,8 @@ var ReactDOM = (() => {
     }
   }
   function completeUnitOfWork(unitOfWork) {
-    console.log(unitOfWork);
+    let completedWork = unitOfWork;
+    console.log(completedWork);
   }
 
   // packages/react-reconciler/src/ReactFiberReconciler.old.ts
