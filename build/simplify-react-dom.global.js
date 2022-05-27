@@ -218,6 +218,11 @@ var ReactDOM = (() => {
   var LowPriority = 4;
   var IdlePriority = 5;
 
+  // packages/react-dom/src/client/ReactDOMHostConfig.ts
+  function shouldSetTextContent(type, props) {
+    return type === "textarea" || type === "noscript" || typeof props.children === "string" || typeof props.children === "number" || typeof props.dangerouslySetInnerHTML === "object" && props.dangerouslySetInnerHTML !== null && props.dangerouslySetInnerHTML.__html != null;
+  }
+
   // packages/shared/src/ReactSymbols.ts
   var REACT_ELEMENT_TYPE = Symbol.for("react.element");
 
@@ -299,7 +304,15 @@ var ReactDOM = (() => {
     return workInProgress2.child;
   }
   function updateHostComponent(current, workInProgress2) {
-    console.log(current, workInProgress2);
+    const { type, pendingProps: nextProps } = workInProgress2;
+    let nextChildren = nextProps.children;
+    const isDirectTextChild = shouldSetTextContent(type, nextProps);
+    if (isDirectTextChild) {
+      nextChildren = null;
+    } else {
+    }
+    reconcileChildren(current, workInProgress2, nextChildren);
+    return workInProgress2.child;
   }
 
   // packages/react-reconciler/src/ReactFiberCommitWork.ts
@@ -536,6 +549,7 @@ var ReactDOM = (() => {
     }
   }
   function completeUnitOfWork(unitOfWork) {
+    console.log(unitOfWork);
   }
 
   // packages/react-reconciler/src/ReactFiberReconciler.old.ts

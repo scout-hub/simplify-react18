@@ -2,8 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-27 15:37:30
+ * @LastEditTime: 2022-05-27 15:50:39
  */
+import { shouldSetTextContent } from "packages/react-dom/src/client/ReactDOMHostConfig";
 import { mountChildFibers, reconcileChildFibers } from "./ReactChildFiber";
 import { renderWithHooks } from "./ReactFiberHooks";
 import { processUpdateQueue } from "./ReactUpdateQueue";
@@ -92,5 +93,15 @@ function mountIndeterminateComponent(_current, workInProgress, Component) {
 }
 
 function updateHostComponent(current, workInProgress) {
-  console.log(current, workInProgress);
+  const { type, pendingProps: nextProps } = workInProgress;
+  let nextChildren = nextProps.children;
+  // 判断是否只有唯一文本子节点，这种情况不需要为子节点创建fiber节点
+  const isDirectTextChild = shouldSetTextContent(type, nextProps);
+  if (isDirectTextChild) {
+    nextChildren = null;
+  } else {
+    // TODO
+  }
+  reconcileChildren(current, workInProgress, nextChildren);
+  return workInProgress.child;
 }
