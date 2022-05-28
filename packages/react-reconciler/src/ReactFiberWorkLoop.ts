@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-28 20:37:51
+ * @LastEditTime: 2022-05-28 20:46:12
  */
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber";
@@ -89,22 +89,30 @@ function prepareFreshStack(root) {
 }
 
 /**
- * @description: 工作完成，根据返回的退出码执行对应的操作
+ * @description: render工作完成，进入commit阶段
  * @param root
  */
 function finishConcurrentRender(root) {
-  console.log(root);
   commitRoot(root);
 }
 
+/**
+ * @description: 提交阶段
+ * @param root
+ */
 function commitRoot(root) {
   commitRootImpl(root);
 }
 
 function commitRootImpl(root) {
-  let finishedWork = root.finishedWork;
+  const finishedWork = root.finishedWork;
   root.finishedWork = null;
+  // commitRoot总是同步完成的。所以我们现在可以清除这些，以允许一个新的回调被调度。
   root.callbackNode = null;
+
+  workInProgressRoot = null;
+  workInProgress = null;
+  
   commitMutationEffects(root, finishedWork);
 }
 

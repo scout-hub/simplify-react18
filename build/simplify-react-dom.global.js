@@ -605,16 +605,17 @@ var ReactDOM = (() => {
     return workInProgressRoot;
   }
   function finishConcurrentRender(root) {
-    console.log(root);
     commitRoot(root);
   }
   function commitRoot(root) {
     commitRootImpl(root);
   }
   function commitRootImpl(root) {
-    let finishedWork = root.finishedWork;
+    const finishedWork = root.finishedWork;
     root.finishedWork = null;
     root.callbackNode = null;
+    workInProgressRoot = null;
+    workInProgress = null;
     commitMutationEffects(root, finishedWork);
   }
   function workLoopSync() {
