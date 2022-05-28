@@ -189,7 +189,7 @@ var ReactDOM = (() => {
     }
   }
 
-  // packages/react-reconciler/src/ReactFiberRoot.old.ts
+  // packages/react-reconciler/src/ReactFiberRoot.ts
   function createFiberRoot(containerInfo, tag, initialChildren = null) {
     const root = new FiberRootNode(containerInfo, tag);
     const uninitializedFiber = createHostRootFiber();
@@ -218,9 +218,68 @@ var ReactDOM = (() => {
   var LowPriority = 4;
   var IdlePriority = 5;
 
+  // packages/react-dom/src/shared/HTMLNodeType.ts
+  var TEXT_NODE = 3;
+
+  // packages/react-dom/src/client/setTextContent.ts
+  var setTextContent = function(node, text) {
+    if (text) {
+      const firstChild = node.firstChild;
+      if (firstChild && firstChild === node.lastChild && firstChild.nodeType === TEXT_NODE) {
+        firstChild.nodeValue = text;
+        return;
+      }
+    }
+    node.textContent = text;
+  };
+  var setTextContent_default = setTextContent;
+
+  // packages/react-dom/src/client/ReactDOMComponent.ts
+  var CHILDREN = "children";
+  function createElement(type, props) {
+    const domElement = document.createElement(type);
+    return domElement;
+  }
+  function setInitialProperties(domElement, tag, rawProps) {
+    let props = rawProps;
+    setInitialDOMProperties(tag, domElement, props);
+  }
+  function setInitialDOMProperties(tag, domElement, nextProps) {
+    console.log({
+      tag,
+      domElement,
+      nextProps
+    });
+    for (const propKey in nextProps) {
+      if (!nextProps.hasOwnProperty(propKey)) {
+        continue;
+      }
+      const nextProp = nextProps[propKey];
+      if (propKey === CHILDREN) {
+        const value = isString(nextProp) ? nextProp : "" + nextProp;
+        setTextContent_default(domElement, value);
+      }
+    }
+  }
+
+  // packages/react-dom/src/client/ReactDOMComponentTree.ts
+  var randomKey = Math.random().toString(36).slice(2);
+  var internalPropsKey = "__reactProps$" + randomKey;
+  function updateFiberProps(node, props) {
+    node[internalPropsKey] = props;
+  }
+
   // packages/react-dom/src/client/ReactDOMHostConfig.ts
   function shouldSetTextContent(type, props) {
     return type === "textarea" || type === "noscript" || typeof props.children === "string" || typeof props.children === "number" || typeof props.dangerouslySetInnerHTML === "object" && props.dangerouslySetInnerHTML !== null && props.dangerouslySetInnerHTML.__html != null;
+  }
+  function createInstance(type, props) {
+    const domElement = createElement(type, props);
+    updateFiberProps(domElement, props);
+    return domElement;
+  }
+  function finalizeInitialChildren(domElement, type, props) {
+    setInitialProperties(domElement, type, props);
   }
 
   // packages/shared/src/ReactSymbols.ts
@@ -327,6 +386,28 @@ var ReactDOM = (() => {
     }
   }
   function commitReconciliationEffects(finishedWork) {
+  }
+
+  // packages/react-reconciler/src/ReactFiberCompleteWork.ts
+  function completeWork(current, workInProgress2) {
+    const newProps = workInProgress2.pendingProps;
+    switch (workInProgress2.tag) {
+      case HostComponent: {
+        const type = workInProgress2.type;
+        if (current !== null && workInProgress2 !== null) {
+        } else {
+          const instance = createInstance(type, newProps);
+          appendAllChildren(instance, workInProgress2);
+          workInProgress2.stateNode = instance;
+          finalizeInitialChildren(instance, type, newProps);
+        }
+      }
+    }
+  }
+  function appendAllChildren(parent, workInProgress2) {
+    const node = workInProgress2.child;
+    while (node !== null) {
+    }
   }
 
   // packages/scheduler/src/SchedulerMinHeap.ts
@@ -487,7 +568,7 @@ var ReactDOM = (() => {
   // packages/react-reconciler/src/Scheduler.ts
   var scheduleCallback = unstable_scheduleCallback;
 
-  // packages/react-reconciler/src/ReactFiberWorkLoop.old.ts
+  // packages/react-reconciler/src/ReactFiberWorkLoop.ts
   var workInProgressRoot = null;
   var workInProgress = null;
   function scheduleUpdateOnFiber(fiber) {
@@ -551,7 +632,13 @@ var ReactDOM = (() => {
   }
   function completeUnitOfWork(unitOfWork) {
     let completedWork = unitOfWork;
-    console.log(completedWork);
+    do {
+      const current = completedWork.alternate;
+      const returnFiber = completedWork.return;
+      let next;
+      next = completeWork(current, completedWork);
+      completedWork = returnFiber;
+    } while (completedWork !== null);
   }
 
   // packages/react-reconciler/src/ReactFiberReconciler.old.ts

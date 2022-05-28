@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-27 15:27:08
+ * @LastEditTime: 2022-05-28 19:14:15
  */
 import { isString } from "packages/shared/src";
 import { NoFlags } from "./ReactFiberFlags";
@@ -35,7 +35,7 @@ class FiberNode {
   type = null;
   // 元素的类型，是固定不变的，而type是可能会改变的
   elementType = null;
-  // 指向应用节点FiberRootNode的指针
+  // 指向fiber节点对应的真实dom节点
   stateNode: any = null;
   // 指向父fiberNode的指针
   return = null;

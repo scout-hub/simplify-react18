@@ -2,12 +2,13 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-27 15:53:21
+ * @LastEditTime: 2022-05-28 19:24:02
  */
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber";
 import { beginWork } from "./ReactFiberBeginWork";
 import { commitMutationEffects } from "./ReactFiberCommitWork";
+import { completeWork } from "./ReactFiberCompleteWork";
 import { scheduleCallback } from "./Scheduler";
 
 let workInProgressRoot = null;
@@ -135,5 +136,11 @@ function performUnitOfWork(unitOfWork) {
 
 function completeUnitOfWork(unitOfWork) {
   let completedWork = unitOfWork;
-  console.log(completedWork);
+  do {
+    const current = completedWork.alternate;
+    const returnFiber = completedWork.return;
+    let next;
+    next = completeWork(current, completedWork);
+    completedWork = returnFiber;
+  } while (completedWork !== null);
 }

@@ -4,8 +4,8 @@
  * @LastEditors: Zhouqi
  * @LastEditTime: 2022-05-26 15:44:43
  */
-import { createFiberRoot } from "./ReactFiberRoot.old";
-import { scheduleUpdateOnFiber } from "./ReactFiberWorkLoop.old";
+import { createFiberRoot } from "./ReactFiberRoot";
+import { scheduleUpdateOnFiber } from "./ReactFiberWorkLoop";
 import { createUpdate, enqueueUpdate } from "./ReactUpdateQueue";
 
 /**
