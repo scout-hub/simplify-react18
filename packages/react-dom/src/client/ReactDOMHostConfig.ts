@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 15:44:53
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-28 19:57:25
+ * @LastEditTime: 2022-05-28 21:38:56
  */
 
 import { createElement, setInitialProperties } from "./ReactDOMComponent";
@@ -37,4 +37,23 @@ export function createInstance(type, props) {
 
 export function finalizeInitialChildren(domElement, type, props) {
   setInitialProperties(domElement, type, props);
+}
+
+/**
+ * @description: insertBefore插入节点
+ * @param container
+ * @param child
+ * @param beforeChild
+ */
+export function insertInContainerBefore(container, child, beforeChild) {
+  container.insertBefore(child, beforeChild);
+}
+
+/**
+ * @description: appendChild插入节点
+ * @param container
+ * @param child
+ */
+export function appendChildToContainer(container, child): void {
+  container.appendChild(child);
 }

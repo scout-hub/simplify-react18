@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-28 20:46:12
+ * @LastEditTime: 2022-05-28 21:05:59
  */
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber";
@@ -112,8 +112,12 @@ function commitRootImpl(root) {
 
   workInProgressRoot = null;
   workInProgress = null;
-  
+
+  // TODO beforeMutationEffect阶段
+
   commitMutationEffects(root, finishedWork);
+
+  // TODO layout阶段
 }
 
 /**

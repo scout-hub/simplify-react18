@@ -277,6 +277,12 @@ var ReactDOM = (() => {
   function finalizeInitialChildren(domElement, type, props) {
     setInitialProperties(domElement, type, props);
   }
+  function insertInContainerBefore(container, child, beforeChild) {
+    container.insertBefore(child, beforeChild);
+  }
+  function appendChildToContainer(container, child) {
+    container.appendChild(child);
+  }
 
   // packages/shared/src/ReactSymbols.ts
   var REACT_ELEMENT_TYPE = Symbol.for("react.element");
@@ -377,12 +383,96 @@ var ReactDOM = (() => {
   function commitMutationEffectsOnFiber(finishedWork, root) {
     const current = finishedWork.alternate;
     switch (finishedWork.tag) {
-      case HostRoot:
+      case FunctionComponent: {
+        recursivelyTraverseMutationEffects(root, finishedWork);
         commitReconciliationEffects(finishedWork);
+        return;
+      }
+      case HostRoot:
+        recursivelyTraverseMutationEffects(root, finishedWork);
+        return;
+    }
+  }
+  function recursivelyTraverseMutationEffects(root, parentFiber) {
+    let child = parentFiber.child;
+    while (child !== null) {
+      commitMutationEffectsOnFiber(child, root);
+      child = child.sibling;
     }
   }
   function commitReconciliationEffects(finishedWork) {
+    const flags = finishedWork.flags;
+    if (flags & Placement) {
+      commitPlacement(finishedWork);
+      finishedWork.flags &= ~Placement;
+    }
   }
+  function commitPlacement(finishedWork) {
+    const parentFiber = getHostParentFiber(finishedWork);
+    switch (parentFiber.tag) {
+      case HostRoot: {
+        const parent = parentFiber.stateNode.containerInfo;
+        const before = getHostSibling(finishedWork);
+        insertOrAppendPlacementNodeIntoContainer(finishedWork, before, parent);
+        break;
+      }
+    }
+  }
+  function insertOrAppendPlacementNodeIntoContainer(node, before, parent) {
+    const tag = node.tag;
+    const isHost = tag === HostComponent;
+    if (isHost) {
+      const stateNode = node.stateNode;
+      before ? insertInContainerBefore(parent, stateNode, before) : appendChildToContainer(parent, stateNode);
+    } else {
+      let child = node.child;
+      if (child !== null) {
+        insertOrAppendPlacementNodeIntoContainer(child, before, parent);
+        let sibling = child.sibling;
+        while (sibling !== null) {
+          insertOrAppendPlacementNodeIntoContainer(sibling, before, parent);
+          sibling = sibling.sibling;
+        }
+      }
+    }
+  }
+  function getHostParentFiber(fiber) {
+    let parent = fiber.return;
+    while (parent !== null) {
+      if (isHostParent(parent)) {
+        return parent;
+      }
+      parent = parent.return;
+    }
+  }
+  var isHostParent = (fiber) => fiber.tag === HostComponent || fiber.tag === HostRoot;
+  var getHostSibling = (fiber) => {
+    let node = fiber;
+    siblings:
+      while (true) {
+        while (node.sibling === null) {
+          if (node.return === null || isHostParent(node.return))
+            return null;
+          node = node.return;
+        }
+        node.sibling.return = node.return;
+        node = node.sibling;
+        while (node.tag !== HostComponent) {
+          if (node.flags & Placement) {
+            continue siblings;
+          }
+          if (node.child === null) {
+            continue siblings;
+          } else {
+            node.child.return = node;
+            node = node.child;
+          }
+        }
+        if (!(node.flags & Placement)) {
+          return node.stateNode;
+        }
+      }
+  };
 
   // packages/react-reconciler/src/ReactFiberCompleteWork.ts
   function completeWork(current, workInProgress2) {
