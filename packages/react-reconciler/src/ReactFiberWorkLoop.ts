@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-28 19:24:02
+ * @LastEditTime: 2022-05-28 20:37:51
  */
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber";
@@ -88,7 +88,12 @@ function prepareFreshStack(root) {
   return workInProgressRoot;
 }
 
+/**
+ * @description: 工作完成，根据返回的退出码执行对应的操作
+ * @param root
+ */
 function finishConcurrentRender(root) {
+  console.log(root);
   commitRoot(root);
 }
 
@@ -139,8 +144,19 @@ function completeUnitOfWork(unitOfWork) {
   do {
     const current = completedWork.alternate;
     const returnFiber = completedWork.return;
+
     let next;
     next = completeWork(current, completedWork);
+
+    // 处理当前节点的兄弟节点
+    const siblingFiber = completedWork.sibling;
+    if (siblingFiber !== null) {
+      workInProgress = next;
+      return;
+    }
+
+    // returnFiber的子节点已经全部处理完毕，开始处理returnFiber
     completedWork = returnFiber;
+    workInProgress = completedWork;
   } while (completedWork !== null);
 }

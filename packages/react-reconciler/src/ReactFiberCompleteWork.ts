@@ -2,17 +2,27 @@ import {
   createInstance,
   finalizeInitialChildren,
 } from "packages/react-dom/src/client/ReactDOMHostConfig";
-import { HostComponent } from "./ReactWorkTags";
+import { FunctionComponent, HostComponent, HostRoot } from "./ReactWorkTags";
 
 /*
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:23:10
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-28 19:54:54
+ * @LastEditTime: 2022-05-28 20:32:33
  */
 export function completeWork(current, workInProgress) {
   const newProps = workInProgress.pendingProps;
   switch (workInProgress.tag) {
+    // 函数式组件
+    case FunctionComponent: {
+      return null;
+    }
+    // 当前应用的根结点
+    case HostRoot: {
+      // const fiberRoot = workInProgress.stateNode;
+      // console.log(fiberRoot);
+      return null;
+    }
     // 创建普通元素节点
     case HostComponent: {
       const type = workInProgress.type;
@@ -29,6 +39,7 @@ export function completeWork(current, workInProgress) {
         // 初始化挂载属性
         finalizeInitialChildren(instance, type, newProps);
       }
+      return null;
     }
   }
 }

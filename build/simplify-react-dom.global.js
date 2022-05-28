@@ -245,11 +245,6 @@ var ReactDOM = (() => {
     setInitialDOMProperties(tag, domElement, props);
   }
   function setInitialDOMProperties(tag, domElement, nextProps) {
-    console.log({
-      tag,
-      domElement,
-      nextProps
-    });
     for (const propKey in nextProps) {
       if (!nextProps.hasOwnProperty(propKey)) {
         continue;
@@ -258,6 +253,7 @@ var ReactDOM = (() => {
       if (propKey === CHILDREN) {
         const value = isString(nextProp) ? nextProp : "" + nextProp;
         setTextContent_default(domElement, value);
+      } else if (nextProp != null) {
       }
     }
   }
@@ -392,6 +388,12 @@ var ReactDOM = (() => {
   function completeWork(current, workInProgress2) {
     const newProps = workInProgress2.pendingProps;
     switch (workInProgress2.tag) {
+      case FunctionComponent: {
+        return null;
+      }
+      case HostRoot: {
+        return null;
+      }
       case HostComponent: {
         const type = workInProgress2.type;
         if (current !== null && workInProgress2 !== null) {
@@ -401,6 +403,7 @@ var ReactDOM = (() => {
           workInProgress2.stateNode = instance;
           finalizeInitialChildren(instance, type, newProps);
         }
+        return null;
       }
     }
   }
@@ -602,6 +605,7 @@ var ReactDOM = (() => {
     return workInProgressRoot;
   }
   function finishConcurrentRender(root) {
+    console.log(root);
     commitRoot(root);
   }
   function commitRoot(root) {
@@ -637,7 +641,13 @@ var ReactDOM = (() => {
       const returnFiber = completedWork.return;
       let next;
       next = completeWork(current, completedWork);
+      const siblingFiber = completedWork.sibling;
+      if (siblingFiber !== null) {
+        workInProgress = next;
+        return;
+      }
       completedWork = returnFiber;
+      workInProgress = completedWork;
     } while (completedWork !== null);
   }
 

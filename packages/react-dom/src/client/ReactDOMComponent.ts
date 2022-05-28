@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:36:13
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-28 20:13:54
+ * @LastEditTime: 2022-05-28 20:30:31
  */
 
 import { isString } from "packages/shared/src";
@@ -32,12 +32,6 @@ export function setInitialProperties(domElement, tag, rawProps) {
 }
 
 function setInitialDOMProperties(tag, domElement, nextProps) {
-  console.log({
-    tag,
-    domElement,
-    nextProps,
-  });
-
   for (const propKey in nextProps) {
     if (!nextProps.hasOwnProperty(propKey)) {
       continue;
@@ -47,6 +41,8 @@ function setInitialDOMProperties(tag, domElement, nextProps) {
       // 文本子节点
       const value = isString(nextProp) ? nextProp : "" + nextProp;
       setTextContent(domElement, value);
+    } else if (nextProp != null) {
+      // TODO 设置属性
     }
   }
 }
