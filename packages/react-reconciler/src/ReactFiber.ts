@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-30 15:51:06
+ * @LastEditTime: 2022-05-30 15:53:31
  */
 import { isString } from "packages/shared/src";
 import { NoFlags } from "./ReactFiberFlags";
@@ -31,15 +31,15 @@ function createFiber(tag: WorkTag, pendingProps, key: null | string) {
   return new FiberNode(tag, pendingProps, key);
 }
 
-// fiber类
+// Fiber类
 class FiberNode {
   type = null;
   elementType = null;
-  stateNode: any = null;
+  stateNode = null;
   return = null;
   sibling = null;
   child = null;
-  index: number = 0;
+  index = 0;
   alternate = null;
   updateQueue = null;
   memoizedState = null;

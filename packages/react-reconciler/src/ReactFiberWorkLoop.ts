@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-28 21:05:59
+ * @LastEditTime: 2022-05-30 16:19:18
  */
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber";
@@ -11,7 +11,9 @@ import { commitMutationEffects } from "./ReactFiberCommitWork";
 import { completeWork } from "./ReactFiberCompleteWork";
 import { scheduleCallback } from "./Scheduler";
 
+// 当前正在工作的根应用fiber
 let workInProgressRoot = null;
+// 当前正在工作的fiber
 let workInProgress = null;
 
 /**
@@ -121,9 +123,11 @@ function commitRootImpl(root) {
 }
 
 /**
- * @description: 循环同步执行任务
+ * @description: 循环同步执行过期的任务
  */
 function workLoopSync() {
+  // 对于已经超时的任务，不需要检查是否需要yield，直接执行
+  // 如果存在workInProgress，就执行performUnitOfWork
   while (workInProgress !== null) {
     performUnitOfWork(workInProgress);
   }
@@ -144,8 +148,6 @@ function performUnitOfWork(unitOfWork) {
   // 不存在子fiber节点了，说明节点已经处理完，此时进入completeWork
   if (next == null) {
     completeUnitOfWork(unitOfWork);
-    // TODO 暂时重置workInProgress以退出循环，防止调试卡死
-    workInProgress = null;
   } else {
     workInProgress = next;
   }

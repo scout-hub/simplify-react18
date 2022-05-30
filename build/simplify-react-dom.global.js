@@ -597,7 +597,9 @@ var ReactDOM = (() => {
       sortIndex: -1
     };
     if (startTime > currentTime) {
+      console.log(1);
     } else {
+      console.log(2);
       newTask.sortIndex = expirationTime;
       push(taskQueue, newTask);
       if (!isHostCallbackScheduled && !isPerformingWork) {
@@ -721,7 +723,6 @@ var ReactDOM = (() => {
     unitOfWork.memoizedProps = unitOfWork.pendingProps;
     if (next == null) {
       completeUnitOfWork(unitOfWork);
-      workInProgress = null;
     } else {
       workInProgress = next;
     }

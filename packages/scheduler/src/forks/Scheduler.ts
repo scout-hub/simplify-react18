@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-22 20:48:58
+ * @LastEditTime: 2022-05-30 16:25:34
  */
 import { peek, pop, push } from "../SchedulerMinHeap";
 import {
@@ -89,7 +89,9 @@ function unstable_scheduleCallback(priorityLevel, callback) {
 
   // TODO 如果任务开始时间大于当前时间，说明任务没有过期
   if (startTime > currentTime) {
+    console.log(1);
   } else {
+    console.log(2);
     // 任务开始时间<=当前时间，说明任务过期了，需要添加到taskQueue队列中以进行任务调度
     // 过期任务根据过期时间进行排序
     newTask.sortIndex = expirationTime;
@@ -162,6 +164,9 @@ function performWorkUntilDeadline() {
   }
 }
 
+/**
+ * @description: 执行过期的任务
+ */
 function workLoop() {
   // 取出当前优先级最高的任务
   let currentTask = peek(taskQueue);

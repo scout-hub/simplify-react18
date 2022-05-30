@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-30 15:32:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-30 15:49:33
+ * @LastEditTime: 2022-05-30 15:56:25
  */
 import { Flags } from "./ReactFiberFlags";
 import { WorkTag } from "./ReactWorkTags";
@@ -21,17 +21,17 @@ export type Fiber = {
   return: Fiber | null;
   // 指向兄弟fiberNode的指针
   sibling: Fiber | null;
-  // 指向直接子fiberNode的指针
+  // 指向第一个子fiberNode的指针
   child: Fiber | null;
   // 当前fiberNode在所有同层级fiberNode中的位置索引
   index: number;
-  // current fiber和workInProgress fiber之间的连接
+  // current（old） fiber和workInProgress fiber之间的连接
   alternate: Fiber | null;
   // 存放该fiber节点所有的更新
   updateQueue: any;
   // state状态
   memoizedState: any;
-  // 
+  // 标记fiber effect，比如改fiber节点需要插入还是更新
   flags: Flags;
   // 内容状态中的props
   pendingProps: any;
