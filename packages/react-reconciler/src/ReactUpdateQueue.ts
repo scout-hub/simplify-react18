@@ -2,9 +2,16 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 14:43:08
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-27 09:46:00
+ * @LastEditTime: 2022-05-30 14:44:37
  */
 import { assign } from "packages/shared/src";
+
+export type Update = {
+  tag: 0 | 1 | 2 | 3;
+  payload: any;
+  callback: (() => {}) | null;
+  next: Update | null;
+};
 
 export const UpdateState = 0;
 
@@ -41,8 +48,8 @@ export function initializeUpdateQueue(fiber): void {
 /**
  * @description: 创建Update，保存更新状态相关内容的对象
  */
-export function createUpdate() {
-  const update = {
+export function createUpdate(): Update {
+  const update: Update = {
     payload: null, // 更新挂载的数据，不同类型组件挂载的数据不同
     callback: null, // 更新的回调函数
     next: null, // 与其他Update连接形成链表

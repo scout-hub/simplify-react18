@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 20:46:52
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-26 15:44:43
+ * @LastEditTime: 2022-05-30 14:58:56
  */
 import { createFiberRoot } from "./ReactFiberRoot";
 import { scheduleUpdateOnFiber } from "./ReactFiberWorkLoop";
@@ -26,10 +26,14 @@ export function createContainer(containerInfo, tag) {
 export function updateContainer(element, container) {
   const current = container.current;
   // 创建更新，目前只有hostRoot使用
-  const update: any = createUpdate();
+  const update = createUpdate();
   // 将update的payload做为需要挂载在根节点的组件
   update.payload = { element };
+  // 存储更新，添加到更新队列中
   enqueueUpdate(current, update);
   // 调度该fiber节点的更新
   const root = scheduleUpdateOnFiber(current);
+  if (root !== null) {
+    // TODO 处理非紧急更新 
+  }
 }

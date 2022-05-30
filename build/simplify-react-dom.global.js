@@ -752,6 +752,8 @@ var ReactDOM = (() => {
     update.payload = { element };
     enqueueUpdate(current, update);
     const root = scheduleUpdateOnFiber(current);
+    if (root !== null) {
+    }
   }
 
   // packages/react-reconciler/src/ReactFiberReconciler.ts
