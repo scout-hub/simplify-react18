@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-28 19:14:15
+ * @LastEditTime: 2022-05-30 15:51:06
  */
 import { isString } from "packages/shared/src";
 import { NoFlags } from "./ReactFiberFlags";
@@ -11,50 +11,41 @@ import {
   HostRoot,
   IndeterminateComponent,
 } from "./ReactWorkTags";
+import type { WorkTag } from "./ReactWorkTags";
 
 /**
  * @description: 创建一个标记为HostRoot的fiber树根节点
  * @return fiber节点
  */
 export function createHostRootFiber() {
-  return createFiber(HostRoot, null);
+  return createFiber(HostRoot, null, null);
 }
 
 /**
  * @description: 创建fiber节点
  * @param tag 元素类型
+ * @param pendingProps 元素属性
  * @return fiber节点
  */
-function createFiber(tag, pendingProps) {
-  return new FiberNode(tag, pendingProps);
+function createFiber(tag: WorkTag, pendingProps, key: null | string) {
+  return new FiberNode(tag, pendingProps, key);
 }
 
 // fiber类
 class FiberNode {
-  // 节点的类型，普通元素就是tag name，函数式组件就是function本身，class组件就是class
   type = null;
-  // 元素的类型，是固定不变的，而type是可能会改变的
   elementType = null;
-  // 指向fiber节点对应的真实dom节点
   stateNode: any = null;
-  // 指向父fiberNode的指针
   return = null;
-  // 指向兄弟fiberNode的指针
   sibling = null;
-  // 指向子fiberNode的指针
   child = null;
-  // 同级fiberNode的插入位置
   index: number = 0;
-  // current fiber tree和work in progress fiber tree的连接
   alternate = null;
-  // 更新队列
   updateQueue = null;
-  // Fiber节点在本次更新的state
   memoizedState = null;
-  // Effects
   flags = NoFlags;
 
-  constructor(public tag, public pendingProps) {}
+  constructor(public tag, public pendingProps, public key) {}
 }
 
 /**
@@ -65,7 +56,7 @@ class FiberNode {
 export function createWorkInProgress(current, pendingProps) {
   let workInProgress = current.alternate;
   if (workInProgress === null) {
-    workInProgress = createFiber(current.tag, pendingProps);
+    workInProgress = createFiber(current.tag, pendingProps, current.key);
     workInProgress.elementType = current.elementType;
     workInProgress.type = current.type;
     workInProgress.stateNode = current.stateNode;
@@ -93,12 +84,12 @@ export function createFiberFromElement(element) {
 }
 
 function createFiberFromTypeAndProps(type, key, pendingProps) {
-  let fiberTag = IndeterminateComponent;
+  let fiberTag: WorkTag = IndeterminateComponent;
   if (isString(type)) {
     // 说明是普通元素节点
     fiberTag = HostComponent;
   }
-  const fiber = createFiber(fiberTag, pendingProps);
+  const fiber = createFiber(fiberTag, pendingProps, key);
   fiber.elementType = type;
   fiber.type = type;
   return fiber;

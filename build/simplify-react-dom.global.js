@@ -40,15 +40,16 @@ var ReactDOM = (() => {
 
   // packages/react-reconciler/src/ReactFiber.ts
   function createHostRootFiber() {
-    return createFiber(HostRoot, null);
+    return createFiber(HostRoot, null, null);
   }
-  function createFiber(tag, pendingProps) {
-    return new FiberNode(tag, pendingProps);
+  function createFiber(tag, pendingProps, key) {
+    return new FiberNode(tag, pendingProps, key);
   }
   var FiberNode = class {
-    constructor(tag, pendingProps) {
+    constructor(tag, pendingProps, key) {
       this.tag = tag;
       this.pendingProps = pendingProps;
+      this.key = key;
       this.type = null;
       this.elementType = null;
       this.stateNode = null;
@@ -65,7 +66,7 @@ var ReactDOM = (() => {
   function createWorkInProgress(current, pendingProps) {
     let workInProgress2 = current.alternate;
     if (workInProgress2 === null) {
-      workInProgress2 = createFiber(current.tag, pendingProps);
+      workInProgress2 = createFiber(current.tag, pendingProps, current.key);
       workInProgress2.elementType = current.elementType;
       workInProgress2.type = current.type;
       workInProgress2.stateNode = current.stateNode;
@@ -91,7 +92,7 @@ var ReactDOM = (() => {
     if (isString(type)) {
       fiberTag = HostComponent;
     }
-    const fiber = createFiber(fiberTag, pendingProps);
+    const fiber = createFiber(fiberTag, pendingProps, key);
     fiber.elementType = type;
     fiber.type = type;
     return fiber;
