@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:39:57
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-30 15:27:42
+ * @LastEditTime: 2022-05-30 17:36:34
  */
 export type WorkTag =
   | 0
@@ -32,10 +32,13 @@ export type WorkTag =
   | 24
   | 25;
 
+// Function组件标记
+export const FunctionComponent = 0;
+// Before we know whether it is function or class 还不知道是function还是class类型
+export const IndeterminateComponent = 2;
 // 当前应用的根节点
 export const HostRoot = 3;
-// Function组件标记
-export const IndeterminateComponent = 2; // Before we know whether it is function or class
-export const FunctionComponent = 0;
 // 原生dom元素对应的fiber节点类型
 export const HostComponent = 5;
+// 文本类型
+export const HostText = 6;

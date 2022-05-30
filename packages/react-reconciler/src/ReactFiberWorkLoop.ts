@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-30 17:07:14
+ * @LastEditTime: 2022-05-30 17:21:14
  */
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber";
@@ -147,7 +147,6 @@ function performUnitOfWork(unitOfWork) {
   const current = unitOfWork.alternate;
   let next;
   next = beginWork(current, unitOfWork);
-
   unitOfWork.memoizedProps = unitOfWork.pendingProps;
 
   // 不存在子fiber节点了，说明节点已经处理完，此时进入completeWork

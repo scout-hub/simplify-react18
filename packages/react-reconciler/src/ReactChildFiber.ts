@@ -2,13 +2,14 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-27 15:21:37
+ * @LastEditTime: 2022-05-30 17:38:55
  */
 
-import { isObject } from "packages/shared/src";
+import { isArray, isNumber, isObject, isString } from "packages/shared/src";
 import { REACT_ELEMENT_TYPE } from "packages/shared/src/ReactSymbols";
-import { createFiberFromElement } from "./ReactFiber";
+import { createFiberFromElement, createFiberFromText } from "./ReactFiber";
 import { Placement } from "./ReactFiberFlags";
+import type { Fiber } from "./ReactInternalTypes";
 
 /**
  * @description: 创建diff的函数
@@ -20,14 +21,52 @@ function ChildReconciler(shouldTrackSideEffects) {
    */
   function reconcileChildFibers(returnFiber, currentFirstChild, newChild) {
     if (isObject(newChild)) {
+      // 处理单个子节点的情况
       switch (newChild.$$typeof) {
         case REACT_ELEMENT_TYPE:
           return placeSingleChild(
             reconcileSingleElement(returnFiber, currentFirstChild, newChild)
           );
       }
+
+      // 处理多个子节点的情况
+      if (isArray(newChild)) {
+        return reconcileChildrenArray(returnFiber, currentFirstChild, newChild);
+      }
     }
     return null;
+  }
+
+  /**
+   * @description: 处理子节点，diff的实现
+   */
+  function reconcileChildrenArray(
+    returnFiber: Fiber,
+    currentFirstChild: Fiber | null,
+    newChildren: Array<any>
+  ) {
+    let oldFiber = currentFirstChild;
+    let newIndex = 0;
+    if (oldFiber === null) {
+      for (; newIndex < newChildren.length; newIndex++) {
+        const newFiber = createChild(returnFiber, newChildren[newIndex]);
+      }
+    }
+
+    return;
+  }
+
+  /**
+   * @description: 创建子fiber节点
+   * @param {Fiber} returnFiber
+   * @param {any} newChild
+   */
+  function createChild(returnFiber: Fiber, newChild: any) {
+    // 处理文本子节点
+    if ((isString(newChild) && newChild !== "") || isNumber(newChild)) {
+      const created = createFiberFromText(newChild);
+      console.log(created);
+    }
   }
 
   /**

@@ -2,16 +2,18 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-30 15:53:31
+ * @LastEditTime: 2022-05-30 17:37:17
  */
 import { isString } from "packages/shared/src";
 import { NoFlags } from "./ReactFiberFlags";
 import {
   HostComponent,
   HostRoot,
+  HostText,
   IndeterminateComponent,
 } from "./ReactWorkTags";
 import type { WorkTag } from "./ReactWorkTags";
+import type { Fiber } from "./ReactInternalTypes";
 
 /**
  * @description: 创建一个标记为HostRoot的fiber树根节点
@@ -92,5 +94,13 @@ function createFiberFromTypeAndProps(type, key, pendingProps) {
   const fiber = createFiber(fiberTag, pendingProps, key);
   fiber.elementType = type;
   fiber.type = type;
+  return fiber;
+}
+
+/**
+ * @description: 创建文本节点对应的fiber
+ */
+export function createFiberFromText(content: string): Fiber {
+  const fiber = createFiber(HostText, content, null);
   return fiber;
 }

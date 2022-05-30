@@ -27,16 +27,19 @@ var ReactDOM = (() => {
   var assign = Object.assign;
   var isObject = (val) => val !== null && typeof val === "object";
   var isString = (val) => typeof val === "string";
+  var isNumber = (val) => typeof val === "number";
+  var isArray = Array.isArray;
 
   // packages/react-reconciler/src/ReactFiberFlags.ts
   var NoFlags = 0;
   var Placement = 2;
 
   // packages/react-reconciler/src/ReactWorkTags.ts
-  var HostRoot = 3;
-  var IndeterminateComponent = 2;
   var FunctionComponent = 0;
+  var IndeterminateComponent = 2;
+  var HostRoot = 3;
   var HostComponent = 5;
+  var HostText = 6;
 
   // packages/react-reconciler/src/ReactFiber.ts
   function createHostRootFiber() {
@@ -95,6 +98,10 @@ var ReactDOM = (() => {
     const fiber = createFiber(fiberTag, pendingProps, key);
     fiber.elementType = type;
     fiber.type = type;
+    return fiber;
+  }
+  function createFiberFromText(content) {
+    const fiber = createFiber(HostText, content, null);
     return fiber;
   }
 
@@ -296,8 +303,27 @@ var ReactDOM = (() => {
           case REACT_ELEMENT_TYPE:
             return placeSingleChild(reconcileSingleElement(returnFiber, currentFirstChild, newChild));
         }
+        if (isArray(newChild)) {
+          return reconcileChildrenArray(returnFiber, currentFirstChild, newChild);
+        }
       }
       return null;
+    }
+    function reconcileChildrenArray(returnFiber, currentFirstChild, newChildren) {
+      let oldFiber = currentFirstChild;
+      let newIndex = 0;
+      if (oldFiber === null) {
+        for (; newIndex < newChildren.length; newIndex++) {
+          const newFiber = createChild(returnFiber, newChildren[newIndex]);
+        }
+      }
+      return;
+    }
+    function createChild(returnFiber, newChild) {
+      if (isString(newChild) && newChild !== "" || isNumber(newChild)) {
+        const created = createFiberFromText(newChild);
+        console.log(created);
+      }
     }
     function reconcileSingleElement(returnFiber, currentFirstChild, element) {
       let child = currentFirstChild;
