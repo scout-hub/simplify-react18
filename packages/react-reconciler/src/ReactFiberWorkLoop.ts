@@ -2,19 +2,20 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-30 16:19:18
+ * @LastEditTime: 2022-05-30 17:07:14
  */
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber";
 import { beginWork } from "./ReactFiberBeginWork";
 import { commitMutationEffects } from "./ReactFiberCommitWork";
 import { completeWork } from "./ReactFiberCompleteWork";
+import { Fiber } from "./ReactInternalTypes";
 import { scheduleCallback } from "./Scheduler";
 
 // 当前正在工作的根应用fiber
 let workInProgressRoot = null;
 // 当前正在工作的fiber
-let workInProgress = null;
+let workInProgress: Fiber | null = null;
 
 /**
  * @description: 调度fiber节点上的更新
@@ -41,10 +42,10 @@ function ensureRootIsScheduled(root) {
   // TODO 计算任务超时等级
 
   // 低优先级的异步更新任务走performConcurrentWorkOnRoot
-  // performConcurrentWorkOnRoot在浏览器没有空闲时间的时候我执行shouldYield终止循环
+  // performConcurrentWorkOnRoot在浏览器没有空闲时间的时候执行shouldYield终止循环
   // 等浏览器有空闲时间的时候恢复执行
 
-  // 通过scheduler去调度任务
+  // 非同步任务通过scheduler去调度任务
   newCallbackNode = scheduleCallback(
     schedulerPriorityLevel,
     performConcurrentWorkOnRoot.bind(null, root)
@@ -57,11 +58,15 @@ function ensureRootIsScheduled(root) {
  * @param root
  */
 function performConcurrentWorkOnRoot(root) {
-  renderRootSync(root);
+  // todo 判断是否需要开启时间切片
+  const shouldTimeSlice = false;
+  shouldTimeSlice ? renderRootConcurrent(root) : renderRootSync(root);
   const finishedWork = root.current.alternate;
   root.finishedWork = finishedWork;
   finishConcurrentRender(root);
 }
+
+function renderRootConcurrent(roor) {}
 
 /**
  * @description: 同步执行根节点渲染
@@ -140,7 +145,7 @@ function workLoopSync() {
 function performUnitOfWork(unitOfWork) {
   // 首屏渲染只有当前应用的根结点存在current，其它节点current为null
   const current = unitOfWork.alternate;
-  let next: any = null;
+  let next;
   next = beginWork(current, unitOfWork);
 
   unitOfWork.memoizedProps = unitOfWork.pendingProps;

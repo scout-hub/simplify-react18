@@ -597,9 +597,7 @@ var ReactDOM = (() => {
       sortIndex: -1
     };
     if (startTime > currentTime) {
-      console.log(1);
     } else {
-      console.log(2);
       newTask.sortIndex = expirationTime;
       push(taskQueue, newTask);
       if (!isHostCallbackScheduled && !isPerformingWork) {
@@ -678,10 +676,13 @@ var ReactDOM = (() => {
     root.callbackNode = newCallbackNode;
   }
   function performConcurrentWorkOnRoot(root) {
-    renderRootSync(root);
+    const shouldTimeSlice = false;
+    shouldTimeSlice ? renderRootConcurrent(root) : renderRootSync(root);
     const finishedWork = root.current.alternate;
     root.finishedWork = finishedWork;
     finishConcurrentRender(root);
+  }
+  function renderRootConcurrent(roor) {
   }
   function renderRootSync(root) {
     if (workInProgressRoot !== root) {
@@ -718,7 +719,7 @@ var ReactDOM = (() => {
   }
   function performUnitOfWork(unitOfWork) {
     const current = unitOfWork.alternate;
-    let next = null;
+    let next;
     next = beginWork(current, unitOfWork);
     unitOfWork.memoizedProps = unitOfWork.pendingProps;
     if (next == null) {
@@ -744,7 +745,7 @@ var ReactDOM = (() => {
     } while (completedWork !== null);
   }
 
-  // packages/react-reconciler/src/ReactFiberReconciler.old.ts
+  // packages/react-reconciler/src/ReactFiberReconciler.ts
   function createContainer(containerInfo, tag) {
     return createFiberRoot(containerInfo, tag);
   }
@@ -758,15 +759,12 @@ var ReactDOM = (() => {
     }
   }
 
-  // packages/react-reconciler/src/ReactFiberReconciler.ts
-  var createContainer2 = createContainer;
-
   // packages/react-reconciler/src/ReactRootTags.ts
   var ConcurrentRoot = 1;
 
   // packages/react-dom/src/client/ReactDOMRoot.ts
   function createRoot(container) {
-    const root = createContainer2(container, ConcurrentRoot);
+    const root = createContainer(container, ConcurrentRoot);
     return new ReactDOMRoot(root);
   }
   var ReactDOMRoot = class {

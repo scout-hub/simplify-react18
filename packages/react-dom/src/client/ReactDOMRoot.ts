@@ -5,7 +5,7 @@
  * @LastEditTime: 2022-05-22 20:08:11
  */
 import { createContainer } from "packages/react-reconciler/src/ReactFiberReconciler";
-import { updateContainer } from "packages/react-reconciler/src/ReactFiberReconciler.old";
+import { updateContainer } from "packages/react-reconciler/src/ReactFiberReconciler";
 import { ConcurrentRoot } from "packages/react-reconciler/src/ReactRootTags";
 
 export function createRoot(container) {
