@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-15 20:14:41
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-31 11:21:41
+ * @LastEditTime: 2022-05-31 15:35:46
  */
 import { REACT_ELEMENT_TYPE } from "packages/shared/src/ReactSymbols";
 import ReactCurrentOwner from "./ReactCurrentOwner";
@@ -23,6 +23,15 @@ export function createElement(type, config, children) {
   let self = null;
   let source = null;
 
+  // 解析属性
+  if (config != null) {
+    for (const key in config) {
+      if (config.hasOwnProperty(key)) {
+        props[key] = config[key];
+      }
+    }
+  }
+  
   const childrenLength = arguments.length - 2;
   if (childrenLength === 1) {
     // 只有一个子节点的情况

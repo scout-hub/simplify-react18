@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-31 11:56:12
+ * @LastEditTime: 2022-05-31 15:28:52
  */
 
 import { isArray, isNumber, isObject, isString } from "packages/shared/src";
@@ -48,6 +48,8 @@ function ChildReconciler(shouldTrackSideEffects) {
     let newIndex = 0;
     let previousNewFiber: Fiber | null = null;
     let resultingFirstChild: Fiber | null = null;
+
+    // TODO  diff
 
     if (oldFiber === null) {
       for (; newIndex < newChildren.length; newIndex++) {
@@ -103,7 +105,7 @@ function ChildReconciler(shouldTrackSideEffects) {
   function reconcileSingleElement(returnFiber, currentFirstChild, element) {
     let child = currentFirstChild;
     // TODO 老的节点存在情况根据type和key进行节点的复用
-    while (child !== null) {}
+    // while (child !== null) {}
     // 没有节点复用（比如首屏渲染的hostRoot的current是没有child节点的）
     // 直接创建fiber节点
     const created = createFiberFromElement(element);

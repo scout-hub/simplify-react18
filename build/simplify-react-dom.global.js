@@ -226,6 +226,39 @@ var ReactDOM = (() => {
   var LowPriority = 4;
   var IdlePriority = 5;
 
+  // packages/react-dom/src/shared/DOMProperty.ts
+  var reservedProps = /* @__PURE__ */ new Set([
+    "children",
+    "dangerouslySetInnerHTML",
+    "defaultValue",
+    "defaultChecked",
+    "innerHTML",
+    "suppressContentEditableWarning",
+    "suppressHydrationWarning",
+    "style"
+  ]);
+  var renamedProps = /* @__PURE__ */ new Map([["className", "class"]]);
+  function getPropertyInfo(name) {
+    return renamedProps.get(name) || name;
+  }
+  function shouldIgnoreAttribute(name) {
+    if (reservedProps.has(name))
+      return true;
+    if (name.length > 2 && (name[0] === "o" || name[0] === "O") && (name[1] === "n" || name[1] === "N")) {
+      return true;
+    }
+    return false;
+  }
+
+  // packages/react-dom/src/client/DOMPropertyOperations.ts
+  function setValueForProperty(node, name, value) {
+    const attributeName = getPropertyInfo(name);
+    if (shouldIgnoreAttribute(attributeName)) {
+      return;
+    }
+    node.setAttribute(attributeName, value);
+  }
+
   // packages/react-dom/src/shared/HTMLNodeType.ts
   var TEXT_NODE = 3;
 
@@ -266,6 +299,7 @@ var ReactDOM = (() => {
           setTextContent_default(domElement, value);
         }
       } else if (nextProp != null) {
+        setValueForProperty(domElement, propKey, nextProp);
       }
     }
   }
@@ -358,8 +392,6 @@ var ReactDOM = (() => {
     }
     function reconcileSingleElement(returnFiber, currentFirstChild, element) {
       let child = currentFirstChild;
-      while (child !== null) {
-      }
       const created = createFiberFromElement(element);
       created.return = returnFiber;
       return created;

@@ -39,6 +39,13 @@ var React = (() => {
     let ref = null;
     let self = null;
     let source = null;
+    if (config != null) {
+      for (const key2 in config) {
+        if (config.hasOwnProperty(key2)) {
+          props[key2] = config[key2];
+        }
+      }
+    }
     const childrenLength = arguments.length - 2;
     if (childrenLength === 1) {
       props.children = children;

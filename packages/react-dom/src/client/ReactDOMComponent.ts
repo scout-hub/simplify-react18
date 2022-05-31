@@ -2,10 +2,11 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:36:13
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-31 14:15:32
+ * @LastEditTime: 2022-05-31 15:39:34
  */
 
 import { isNumber, isString } from "packages/shared/src";
+import { setValueForProperty } from "./DOMPropertyOperations";
 import setTextContent from "./setTextContent";
 
 const CHILDREN = "children";
@@ -46,7 +47,8 @@ function setInitialDOMProperties(tag, domElement, nextProps) {
         setTextContent(domElement, value);
       }
     } else if (nextProp != null) {
-      // TODO 设置属性
+      // 设置其他属性
+      setValueForProperty(domElement, propKey, nextProp);
     }
   }
 }
