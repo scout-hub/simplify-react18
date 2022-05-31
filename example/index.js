@@ -2,16 +2,17 @@
  * @Author: Zhouqi
  * @Date: 2022-05-17 20:09:43
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-31 16:30:09
+ * @LastEditTime: 2022-05-31 16:58:50
  */
 const { useState } = React;
 const App = () => {
   const [num, setNum] = useState(0);
   return (
-    <div style={{ color: "green" }}>
+    <div>
       <h1>{num}</h1>
       <button
-        onClick={() => {
+        onMouseDown={() => {
+          console.log(1);
           // setNum(num + 1);
         }}
       >

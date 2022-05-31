@@ -28,6 +28,7 @@ var ReactDOM = (() => {
   var isObject = (val) => val !== null && typeof val === "object";
   var isString = (val) => typeof val === "string";
   var isNumber = (val) => typeof val === "number";
+  var isFunction = (val) => typeof val === "function";
   var isArray = Array.isArray;
 
   // packages/react-reconciler/src/ReactFiberFlags.ts
@@ -354,6 +355,13 @@ var ReactDOM = (() => {
   function setInitialProperties(domElement, tag, rawProps) {
     let props = rawProps;
     setInitialDOMProperties(tag, domElement, props);
+    switch (tag) {
+      default:
+        if (isFunction(props.onClick)) {
+          domElement.onclick = props.onClick;
+        }
+        break;
+    }
   }
   function setInitialDOMProperties(tag, domElement, nextProps) {
     for (const propKey in nextProps) {

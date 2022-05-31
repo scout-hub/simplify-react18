@@ -2,13 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-31 16:43:21
- */
-/*
- * @Author: Zhouqi
- * @Date: 2022-05-17 20:09:43
- * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-31 16:20:59
+ * @LastEditTime: 2022-05-31 17:29:43
  */
 const App = () => {
   const num = 0;
