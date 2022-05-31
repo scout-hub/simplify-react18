@@ -2,14 +2,18 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:36:13
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-31 15:39:34
+ * @LastEditTime: 2022-05-31 16:33:19
  */
 
 import { isNumber, isString } from "packages/shared/src";
-import { setValueForProperty } from "./DOMPropertyOperations";
+import {
+  setValueForProperty,
+  setValueForStyles,
+} from "./DOMPropertyOperations";
 import setTextContent from "./setTextContent";
 
 const CHILDREN = "children";
+const STYLE = "style";
 
 /**
  * @description: 创建元素
@@ -38,7 +42,10 @@ function setInitialDOMProperties(tag, domElement, nextProps) {
       continue;
     }
     const nextProp = nextProps[propKey];
-    if (propKey === CHILDREN) {
+    if (propKey === STYLE) {
+      // 处理style
+      setValueForStyles(domElement, nextProp);
+    } else if (propKey === CHILDREN) {
       // 处理文本子节点，当nextProp是字符串或者数字时表示唯一文本子节点
       if (isString(nextProp)) {
         setTextContent(domElement, nextProp);

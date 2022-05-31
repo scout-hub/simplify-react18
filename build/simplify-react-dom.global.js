@@ -226,6 +226,65 @@ var ReactDOM = (() => {
   var LowPriority = 4;
   var IdlePriority = 5;
 
+  // packages/react-dom/src/shared/CSSProperty.ts
+  var isUnitlessNumber = {
+    animationIterationCount: true,
+    aspectRatio: true,
+    borderImageOutset: true,
+    borderImageSlice: true,
+    borderImageWidth: true,
+    boxFlex: true,
+    boxFlexGroup: true,
+    boxOrdinalGroup: true,
+    columnCount: true,
+    columns: true,
+    flex: true,
+    flexGrow: true,
+    flexPositive: true,
+    flexShrink: true,
+    flexNegative: true,
+    flexOrder: true,
+    gridArea: true,
+    gridRow: true,
+    gridRowEnd: true,
+    gridRowSpan: true,
+    gridRowStart: true,
+    gridColumn: true,
+    gridColumnEnd: true,
+    gridColumnSpan: true,
+    gridColumnStart: true,
+    fontWeight: true,
+    lineClamp: true,
+    lineHeight: true,
+    opacity: true,
+    order: true,
+    orphans: true,
+    tabSize: true,
+    widows: true,
+    zIndex: true,
+    zoom: true,
+    fillOpacity: true,
+    floodOpacity: true,
+    stopOpacity: true,
+    strokeDasharray: true,
+    strokeDashoffset: true,
+    strokeMiterlimit: true,
+    strokeOpacity: true,
+    strokeWidth: true
+  };
+
+  // packages/react-dom/src/shared/dangerousStyleValue.ts
+  function dangerousStyleValue(name, value) {
+    const isEmpty = value == null || typeof value === "boolean" || value === "";
+    if (isEmpty) {
+      return "";
+    }
+    if (typeof value === "number" && value !== 0 && !(isUnitlessNumber.hasOwnProperty(name) && isUnitlessNumber[name])) {
+      return value + "px";
+    }
+    return ("" + value).trim();
+  }
+
   // packages/react-dom/src/shared/DOMProperty.ts
   var reservedProps = /* @__PURE__ */ new Set([
     "children",
@@ -258,6 +317,16 @@ var ReactDOM = (() => {
     }
     node.setAttribute(attributeName, value);
   }
+  function setValueForStyles(node, styles) {
+    const style = node.style;
+    for (const styleName in styles) {
+      if (!styles.hasOwnProperty(styleName)) {
+        continue;
+      }
+      const styleValue = dangerousStyleValue(styleName, styles[styleName]);
+      style[styleName] = styleValue;
+    }
+  }
 
   // packages/react-dom/src/shared/HTMLNodeType.ts
   var TEXT_NODE = 3;
@@ -277,6 +346,7 @@ var ReactDOM = (() => {
 
   // packages/react-dom/src/client/ReactDOMComponent.ts
   var CHILDREN = "children";
+  var STYLE = "style";
   function createElement(type, props) {
     const domElement = document.createElement(type);
     return domElement;
@@ -291,7 +361,9 @@ var ReactDOM = (() => {
         continue;
       }
       const nextProp = nextProps[propKey];
-      if (propKey === CHILDREN) {
+      if (propKey === STYLE) {
+        setValueForStyles(domElement, nextProp);
+      } else if (propKey === CHILDREN) {
         if (isString(nextProp)) {
           setTextContent_default(domElement, nextProp);
         } else if (isNumber(nextProp)) {

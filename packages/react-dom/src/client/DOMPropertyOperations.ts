@@ -2,8 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 15:38:38
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-31 16:07:11
+ * @LastEditTime: 2022-05-31 16:42:51
  */
+import dangerousStyleValue from "../shared/dangerousStyleValue";
 import { getPropertyInfo, shouldIgnoreAttribute } from "../shared/DOMProperty";
 
 /**
@@ -22,4 +23,20 @@ export function setValueForProperty(node: Element, name: string, value) {
 
   // TODO属性值的处理
   node.setAttribute(attributeName, value);
+}
+
+/**
+ * @description: 设置style属性
+ * @param  node
+ * @param  styles
+ */
+export function setValueForStyles(node, styles) {
+  const style = node.style;
+  for (const styleName in styles) {
+    if (!styles.hasOwnProperty(styleName)) {
+      continue;
+    }
+    const styleValue = dangerousStyleValue(styleName, styles[styleName]);
+    style[styleName] = styleValue;
+  }
 }
