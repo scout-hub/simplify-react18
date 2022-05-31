@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 15:44:53
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-28 21:38:56
+ * @LastEditTime: 2022-05-31 13:52:22
  */
 
 import { createElement, setInitialProperties } from "./ReactDOMComponent";
@@ -56,4 +56,22 @@ export function insertInContainerBefore(container, child, beforeChild) {
  */
 export function appendChildToContainer(container, child): void {
   container.appendChild(child);
+}
+
+/**
+ * @description: 创建文本节点
+ * @param {string} text
+ */
+export function createTextInstance(text: string) {
+  const instance = document.createTextNode(text);
+  return instance;
+}
+
+/**
+ * @description: 添加子节点
+ * @param parentInstance
+ * @param child
+ */
+export function appendInitialChild(parentInstance, child): void {
+  parentInstance.appendChild(child);
 }

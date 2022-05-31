@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-30 17:38:55
+ * @LastEditTime: 2022-05-31 11:56:12
  */
 
 import { isArray, isNumber, isObject, isString } from "packages/shared/src";
@@ -28,7 +28,6 @@ function ChildReconciler(shouldTrackSideEffects) {
             reconcileSingleElement(returnFiber, currentFirstChild, newChild)
           );
       }
-
       // 处理多个子节点的情况
       if (isArray(newChild)) {
         return reconcileChildrenArray(returnFiber, currentFirstChild, newChild);
@@ -47,13 +46,25 @@ function ChildReconciler(shouldTrackSideEffects) {
   ) {
     let oldFiber = currentFirstChild;
     let newIndex = 0;
+    let previousNewFiber: Fiber | null = null;
+    let resultingFirstChild: Fiber | null = null;
+
     if (oldFiber === null) {
       for (; newIndex < newChildren.length; newIndex++) {
         const newFiber = createChild(returnFiber, newChildren[newIndex]);
+        // 前一个fiber是null说明当前这个newFiber就是要返回的第一个子fiber
+        if (previousNewFiber === null) {
+          resultingFirstChild = newFiber;
+        } else {
+          // 否则把当前的newFiber挂载到前一个fiber的sibling上
+          previousNewFiber.sibling = newFiber;
+        }
+        previousNewFiber = newFiber;
       }
+      return resultingFirstChild;
     }
 
-    return;
+    return null;
   }
 
   /**
@@ -65,8 +76,22 @@ function ChildReconciler(shouldTrackSideEffects) {
     // 处理文本子节点
     if ((isString(newChild) && newChild !== "") || isNumber(newChild)) {
       const created = createFiberFromText(newChild);
-      console.log(created);
+      created.return = returnFiber;
+      return created;
     }
+
+    if (isObject(newChild)) {
+      switch (newChild.$$typeof) {
+        case REACT_ELEMENT_TYPE: {
+          const created: Fiber = createFiberFromElement(newChild);
+          created.return = returnFiber;
+          return created;
+        }
+      }
+
+      // todo children
+    }
+    return null;
   }
 
   /**

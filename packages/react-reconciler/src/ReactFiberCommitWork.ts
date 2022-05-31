@@ -2,14 +2,19 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-28 21:39:53
+ * @LastEditTime: 2022-05-31 14:06:28
  */
 import {
   appendChildToContainer,
   insertInContainerBefore,
 } from "packages/react-dom/src/client/ReactDOMHostConfig";
 import { Placement } from "./ReactFiberFlags";
-import { FunctionComponent, HostComponent, HostRoot } from "./ReactWorkTags";
+import {
+  FunctionComponent,
+  HostComponent,
+  HostRoot,
+  HostText,
+} from "./ReactWorkTags";
 
 /**
  * @author: Zhouqi
@@ -76,7 +81,7 @@ function commitPlacement(finishedWork) {
  */
 function insertOrAppendPlacementNodeIntoContainer(node, before, parent) {
   const tag = node.tag;
-  const isHost = tag === HostComponent;
+  const isHost = tag === HostComponent || tag === HostText;
 
   if (isHost) {
     const stateNode = node.stateNode;

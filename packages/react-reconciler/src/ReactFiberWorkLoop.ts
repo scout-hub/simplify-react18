@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-30 17:21:14
+ * @LastEditTime: 2022-05-31 14:02:44
  */
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber";
@@ -166,13 +166,17 @@ function completeUnitOfWork(unitOfWork) {
     let next;
     next = completeWork(current, completedWork);
 
-    // 处理当前节点的兄弟节点
-    const siblingFiber = completedWork.sibling;
-    if (siblingFiber !== null) {
+    if (next !== null) {
       workInProgress = next;
       return;
     }
 
+    // 处理当前节点的兄弟节点
+    const siblingFiber = completedWork.sibling;
+    if (siblingFiber !== null) {
+      workInProgress = siblingFiber;
+      return;
+    }
     // returnFiber的子节点已经全部处理完毕，开始处理returnFiber
     completedWork = returnFiber;
     workInProgress = completedWork;

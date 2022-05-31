@@ -1,14 +1,27 @@
+/*
+ * @Author: Zhouqi
+ * @Date: 2022-05-28 19:23:10
+ * @LastEditors: Zhouqi
+ * @LastEditTime: 2022-05-31 13:56:03
+ */
 import {
+  appendInitialChild,
   createInstance,
+  createTextInstance,
   finalizeInitialChildren,
 } from "packages/react-dom/src/client/ReactDOMHostConfig";
-import { FunctionComponent, HostComponent, HostRoot } from "./ReactWorkTags";
+import {
+  FunctionComponent,
+  HostComponent,
+  HostRoot,
+  HostText,
+} from "./ReactWorkTags";
 
 /*
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:23:10
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-28 20:32:33
+ * @LastEditTime: 2022-05-31 13:22:37
  */
 export function completeWork(current, workInProgress) {
   const newProps = workInProgress.pendingProps;
@@ -41,7 +54,13 @@ export function completeWork(current, workInProgress) {
       }
       return null;
     }
+    // 处理文本节点
+    case HostText: {
+      workInProgress.stateNode = createTextInstance(newProps);
+      return null;
+    }
   }
+  return null;
 }
 
 /**
@@ -50,6 +69,20 @@ export function completeWork(current, workInProgress) {
  * @param workInProgress
  */
 function appendAllChildren(parent, workInProgress) {
-  const node = workInProgress.child;
-  while (node !== null) {}
+  let node = workInProgress.child;
+  while (node !== null) {
+    if (node.tag === HostComponent || node.tag === HostText) {
+      appendInitialChild(parent, node.stateNode);
+    }
+    while (node.sibling === null) {
+      // 处理父fiber
+      if (node.return === null || node.return === workInProgress) {
+        return;
+      }
+      node = node.return;
+    }
+    // 为兄弟fiber添加return指向父fiber
+    node.sibling.return = node.return;
+    node = node.sibling;
+  }
 }

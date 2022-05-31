@@ -43,6 +43,11 @@ var React = (() => {
     if (childrenLength === 1) {
       props.children = children;
     } else {
+      const childArray = new Array(childrenLength);
+      for (let i = 0; i < childrenLength; i++) {
+        childArray[i] = arguments[i + 2];
+      }
+      props.children = childArray;
     }
     return ReactElement(type, key, ref, self, source, ReactCurrentOwner_default.current, props);
   }

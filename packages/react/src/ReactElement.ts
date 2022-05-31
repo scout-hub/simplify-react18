@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-15 20:14:41
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-15 21:24:47
+ * @LastEditTime: 2022-05-31 11:21:41
  */
 import { REACT_ELEMENT_TYPE } from "packages/shared/src/ReactSymbols";
 import ReactCurrentOwner from "./ReactCurrentOwner";
@@ -24,11 +24,16 @@ export function createElement(type, config, children) {
   let source = null;
 
   const childrenLength = arguments.length - 2;
-  // 只有一个子节点的情况
   if (childrenLength === 1) {
+    // 只有一个子节点的情况
     props.children = children;
   } else {
     // 多个子节点的情况
+    const childArray = new Array(childrenLength);
+    for (let i = 0; i < childrenLength; i++) {
+      childArray[i] = arguments[i + 2];
+    }
+    props.children = childArray;
   }
 
   return ReactElement(

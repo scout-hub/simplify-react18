@@ -2,10 +2,10 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:36:13
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-28 20:30:31
+ * @LastEditTime: 2022-05-31 14:15:32
  */
 
-import { isString } from "packages/shared/src";
+import { isNumber, isString } from "packages/shared/src";
 import setTextContent from "./setTextContent";
 
 const CHILDREN = "children";
@@ -38,9 +38,13 @@ function setInitialDOMProperties(tag, domElement, nextProps) {
     }
     const nextProp = nextProps[propKey];
     if (propKey === CHILDREN) {
-      // 文本子节点
-      const value = isString(nextProp) ? nextProp : "" + nextProp;
-      setTextContent(domElement, value);
+      // 处理文本子节点，当nextProp是字符串或者数字时表示唯一文本子节点
+      if (isString(nextProp)) {
+        setTextContent(domElement, nextProp);
+      } else if (isNumber(nextProp)) {
+        const value = "" + nextProp;
+        setTextContent(domElement, value);
+      }
     } else if (nextProp != null) {
       // TODO 设置属性
     }

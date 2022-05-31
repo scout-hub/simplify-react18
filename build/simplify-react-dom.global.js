@@ -259,8 +259,12 @@ var ReactDOM = (() => {
       }
       const nextProp = nextProps[propKey];
       if (propKey === CHILDREN) {
-        const value = isString(nextProp) ? nextProp : "" + nextProp;
-        setTextContent_default(domElement, value);
+        if (isString(nextProp)) {
+          setTextContent_default(domElement, nextProp);
+        } else if (isNumber(nextProp)) {
+          const value = "" + nextProp;
+          setTextContent_default(domElement, value);
+        }
       } else if (nextProp != null) {
       }
     }
@@ -291,6 +295,13 @@ var ReactDOM = (() => {
   function appendChildToContainer(container, child) {
     container.appendChild(child);
   }
+  function createTextInstance(text) {
+    const instance = document.createTextNode(text);
+    return instance;
+  }
+  function appendInitialChild(parentInstance, child) {
+    parentInstance.appendChild(child);
+  }
 
   // packages/shared/src/ReactSymbols.ts
   var REACT_ELEMENT_TYPE = Symbol.for("react.element");
@@ -312,18 +323,38 @@ var ReactDOM = (() => {
     function reconcileChildrenArray(returnFiber, currentFirstChild, newChildren) {
       let oldFiber = currentFirstChild;
       let newIndex = 0;
+      let previousNewFiber = null;
+      let resultingFirstChild = null;
       if (oldFiber === null) {
         for (; newIndex < newChildren.length; newIndex++) {
           const newFiber = createChild(returnFiber, newChildren[newIndex]);
+          if (previousNewFiber === null) {
+            resultingFirstChild = newFiber;
+          } else {
+            previousNewFiber.sibling = newFiber;
+          }
+          previousNewFiber = newFiber;
         }
+        return resultingFirstChild;
       }
-      return;
+      return null;
     }
     function createChild(returnFiber, newChild) {
       if (isString(newChild) && newChild !== "" || isNumber(newChild)) {
         const created = createFiberFromText(newChild);
-        console.log(created);
+        created.return = returnFiber;
+        return created;
       }
+      if (isObject(newChild)) {
+        switch (newChild.$$typeof) {
+          case REACT_ELEMENT_TYPE: {
+            const created = createFiberFromElement(newChild);
+            created.return = returnFiber;
+            return created;
+          }
+        }
+      }
+      return null;
     }
     function reconcileSingleElement(returnFiber, currentFirstChild, element) {
       let child = currentFirstChild;
@@ -363,6 +394,8 @@ var ReactDOM = (() => {
         return mountIndeterminateComponent(current, workInProgress2, workInProgress2.type);
       case HostComponent:
         return updateHostComponent(current, workInProgress2);
+      case HostText:
+        return null;
     }
     return null;
   }
@@ -447,7 +480,7 @@ var ReactDOM = (() => {
   }
   function insertOrAppendPlacementNodeIntoContainer(node, before, parent) {
     const tag = node.tag;
-    const isHost = tag === HostComponent;
+    const isHost = tag === HostComponent || tag === HostText;
     if (isHost) {
       const stateNode = node.stateNode;
       before ? insertInContainerBefore(parent, stateNode, before) : appendChildToContainer(parent, stateNode);
@@ -522,11 +555,27 @@ var ReactDOM = (() => {
         }
         return null;
       }
+      case HostText: {
+        workInProgress2.stateNode = createTextInstance(newProps);
+        return null;
+      }
     }
+    return null;
   }
   function appendAllChildren(parent, workInProgress2) {
-    const node = workInProgress2.child;
+    let node = workInProgress2.child;
     while (node !== null) {
+      if (node.tag === HostComponent || node.tag === HostText) {
+        appendInitialChild(parent, node.stateNode);
+      }
+      while (node.sibling === null) {
+        if (node.return === null || node.return === workInProgress2) {
+          return;
+        }
+        node = node.return;
+      }
+      node.sibling.return = node.return;
+      node = node.sibling;
     }
   }
 
@@ -761,9 +810,13 @@ var ReactDOM = (() => {
       const returnFiber = completedWork.return;
       let next;
       next = completeWork(current, completedWork);
+      if (next !== null) {
+        workInProgress = next;
+        return;
+      }
       const siblingFiber = completedWork.sibling;
       if (siblingFiber !== null) {
-        workInProgress = next;
+        workInProgress = siblingFiber;
         return;
       }
       completedWork = returnFiber;

@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-30 17:27:11
+ * @LastEditTime: 2022-05-31 12:02:14
  */
 import { shouldSetTextContent } from "packages/react-dom/src/client/ReactDOMHostConfig";
 import { mountChildFibers, reconcileChildFibers } from "./ReactChildFiber";
@@ -12,6 +12,7 @@ import {
   FunctionComponent,
   HostComponent,
   HostRoot,
+  HostText,
   IndeterminateComponent,
 } from "./ReactWorkTags";
 
@@ -35,6 +36,9 @@ export function beginWork(current, workInProgress) {
       );
     case HostComponent:
       return updateHostComponent(current, workInProgress);
+    case HostText:
+      return null;
+    // return updateHostText(current, workInProgress);
   }
   return null;
 }
@@ -87,6 +91,7 @@ function reconcileChildren(current, workInProgress, nextChildren) {
 function mountIndeterminateComponent(_current, workInProgress, Component) {
   // value值是jsx经过babel处理后得到的vnode对象
   const value = renderWithHooks(_current, workInProgress, Component);
+  // return;
   workInProgress.tag = FunctionComponent;
   reconcileChildren(null, workInProgress, value);
   return workInProgress.child;
