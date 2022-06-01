@@ -2,14 +2,16 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 13:53:51
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 17:28:34
+ * @LastEditTime: 2022-06-01 17:44:39
  */
 import type { Fiber } from "packages/react-reconciler/src/ReactInternalTypes";
+import { HostComponent } from "packages/react-reconciler/src/ReactWorkTags";
 import { DOMEventName } from "./DOMEventNames";
 import { addEventBubbleListener } from "./EventListener";
 import { allNativeEvents } from "./EventRegistry";
 import { EventSystemFlags, IS_CAPTURE_PHASE } from "./EventSystemFlags";
 import getEventTarget from "./getEventTarget";
+import getListener from "./getListener";
 import { AnyNativeEvent } from "./PluginModuleType";
 import * as SimpleEventPlugin from "./plugins/SimpleEventPlugin";
 import { createEventListenerWrapperWithPriority } from "./ReactDOMEventListener";
@@ -158,5 +160,26 @@ export function accumulateSinglePhaseListeners(
   const reactEventName = inCapturePhase ? captureName : reactName;
   let listeners: Array<DispatchListener> = [];
   let instance = targetFiber;
-  console.log(instance);
+  let lastHostComponent = null;
+
+  // TODO 循环向上遍历节点，将有关的事件都添加到事件队列中
+  while (instance !== null) {
+    const { stateNode, tag } = instance;
+    if (tag === HostComponent && stateNode !== null) {
+      lastHostComponent = stateNode;
+      if (reactEventName) {
+        const listener = getListener(instance, reactEventName);
+        if (listener != null) {
+          listeners.push({
+            instance,
+            listener,
+            currentTarget: lastHostComponent as any,
+          });
+        }
+      }
+    }
+    instance = instance.return;
+  }
+  console.log(listeners);
+  return listeners;
 }

@@ -996,6 +996,10 @@ var ReactDOM = (() => {
   }
   var getEventTarget_default = getEventTarget;
 
+  // packages/react-dom/src/events/getListener.ts
+  function getListener(inst, registrationName) {
+  }
+
   // packages/react-reconciler/src/ReactFiberLane.ts
   var SyncLane = 1;
 
@@ -1131,7 +1135,26 @@ var ReactDOM = (() => {
     const reactEventName = inCapturePhase ? captureName : reactName;
     let listeners = [];
     let instance = targetFiber;
-    console.log(instance);
+    let lastHostComponent = null;
+    while (instance !== null) {
+      const { stateNode, tag } = instance;
+      if (tag === HostComponent && stateNode !== null) {
+        lastHostComponent = stateNode;
+        if (reactEventName) {
+          const listener = getListener(instance, reactEventName);
+          if (listener != null) {
+            listeners.push({
+              instance,
+              listener,
+              currentTarget: lastHostComponent
+            });
+          }
+        }
+      }
+      instance = instance.return;
+    }
+    console.log(listeners);
+    return listeners;
   }
 
   // packages/react-dom/src/client/ReactDOMRoot.ts
