@@ -972,6 +972,12 @@ var ReactDOM = (() => {
   // packages/react-dom/src/events/EventSystemFlags.ts
   var IS_CAPTURE_PHASE = 1 << 2;
 
+  // packages/react-reconciler/src/ReactFiberLane.ts
+  var SyncLane = 1;
+
+  // packages/react-dom/src/events/ReactEventPriorities.ts
+  var DiscreteEventPriority = SyncLane;
+
   // packages/react-dom/src/events/DOMEventProperties.ts
   var topLevelEventsToReactNames = /* @__PURE__ */ new Map();
   var simpleEventPluginEvents = ["click", "mouseDown"];
@@ -988,6 +994,28 @@ var ReactDOM = (() => {
     }
   }
 
+  // packages/react-dom/src/events/ReactDOMEventListener.ts
+  function createEventListenerWrapperWithPriority(targetContainer, domEventName, eventSystemFlags) {
+    const eventPriority = getEventPriority(domEventName);
+    let listenerWrapper;
+    switch (eventPriority) {
+      case DiscreteEventPriority:
+        listenerWrapper = dispatchDiscreteEvent;
+        break;
+    }
+    return listenerWrapper.bind(null, domEventName, eventSystemFlags, targetContainer);
+  }
+  function getEventPriority(domEventName) {
+    switch (domEventName) {
+      case "click":
+      case "mousedown":
+        return DiscreteEventPriority;
+    }
+  }
+  function dispatchDiscreteEvent(domEventName, eventSystemFlags, container, nativeEvent) {
+    console.log(1);
+  }
+
   // packages/react-dom/src/events/DOMPluginEventSystem.ts
   registerSimpleEvents();
   var listeningMarker = "_reactListening" + Math.random().toString(36).slice(2);
@@ -999,6 +1027,7 @@ var ReactDOM = (() => {
     addTrappedEventListener(target, domEventName, eventSystemFlags, isCapturePhaseListener);
   }
   function addTrappedEventListener(targetContainer, domEventName, eventSystemFlags, isCapturePhaseListener) {
+    let listener = createEventListenerWrapperWithPriority(targetContainer, domEventName, eventSystemFlags);
   }
   function listenToAllSupportedEvents(rootContainerElement) {
     if (!rootContainerElement[listeningMarker]) {

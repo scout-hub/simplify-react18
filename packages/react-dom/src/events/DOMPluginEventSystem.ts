@@ -2,12 +2,13 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 13:53:51
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 14:52:40
+ * @LastEditTime: 2022-06-01 15:02:06
  */
 import { DOMEventName } from "./DOMEventNames";
 import { allNativeEvents } from "./EventRegistry";
 import { EventSystemFlags, IS_CAPTURE_PHASE } from "./EventSystemFlags";
 import * as SimpleEventPlugin from "./plugins/SimpleEventPlugin";
+import { createEventListenerWrapperWithPriority } from "./ReactDOMEventListener";
 
 SimpleEventPlugin.registerEvents();
 
@@ -41,7 +42,13 @@ function addTrappedEventListener(
   domEventName: DOMEventName,
   eventSystemFlags: EventSystemFlags,
   isCapturePhaseListener: boolean
-) {}
+) {
+  let listener = createEventListenerWrapperWithPriority(
+    targetContainer,
+    domEventName,
+    eventSystemFlags
+  );
+}
 
 /**
  * @description: 创建所有支持的事件监听，react18所有的事件监听都是绑定在app容器上的
