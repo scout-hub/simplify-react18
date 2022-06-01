@@ -2,11 +2,13 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 15:02:16
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 15:09:58
+ * @LastEditTime: 2022-06-01 15:33:21
  */
 import { DOMEventName } from "./DOMEventNames";
 import { EventSystemFlags } from "./EventSystemFlags";
 import { DiscreteEventPriority } from "./ReactEventPriorities";
+
+type AnyNativeEvent = Event | KeyboardEvent | MouseEvent | TouchEvent;
 
 export function createEventListenerWrapperWithPriority(
   targetContainer: EventTarget,
@@ -29,6 +31,18 @@ export function createEventListenerWrapperWithPriority(
 }
 
 /**
+ * @description: 事件触发函数
+ */
+function dispatchDiscreteEvent(
+  domEventName,
+  eventSystemFlags,
+  container,
+  nativeEvent
+) {
+  dispatchEvent(domEventName, eventSystemFlags, container, nativeEvent);
+}
+
+/**
  * @description: 获取事件优先级
  * @param {DOMEventName} domEventName
  */
@@ -40,11 +54,26 @@ function getEventPriority(domEventName: DOMEventName) {
   }
 }
 
-function dispatchDiscreteEvent(
-  domEventName,
-  eventSystemFlags,
-  container,
-  nativeEvent
+/**
+ * @description: 触发事件
+ */
+function dispatchEvent(
+  domEventName: DOMEventName,
+  eventSystemFlags: EventSystemFlags,
+  targetContainer: EventTarget,
+  nativeEvent: AnyNativeEvent
 ) {
-  console.log(1);
+  dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay(
+    domEventName,
+    eventSystemFlags,
+    targetContainer,
+    nativeEvent
+  );
 }
+
+function dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay(
+  domEventName: DOMEventName,
+  eventSystemFlags: EventSystemFlags,
+  targetContainer: EventTarget,
+  nativeEvent: AnyNativeEvent
+) {}

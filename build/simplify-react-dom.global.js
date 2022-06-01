@@ -953,6 +953,12 @@ var ReactDOM = (() => {
   // packages/react-reconciler/src/ReactRootTags.ts
   var ConcurrentRoot = 1;
 
+  // packages/react-dom/src/events/EventListener.ts
+  function addEventBubbleListener(target, eventType, listener) {
+    target.addEventListener(eventType, listener, false);
+    return listener;
+  }
+
   // packages/react-dom/src/events/EventRegistry.ts
   var allNativeEvents = /* @__PURE__ */ new Set();
   var registrationNameDependencies = {};
@@ -1005,6 +1011,9 @@ var ReactDOM = (() => {
     }
     return listenerWrapper.bind(null, domEventName, eventSystemFlags, targetContainer);
   }
+  function dispatchDiscreteEvent(domEventName, eventSystemFlags, container, nativeEvent) {
+    dispatchEvent(domEventName, eventSystemFlags, container, nativeEvent);
+  }
   function getEventPriority(domEventName) {
     switch (domEventName) {
       case "click":
@@ -1012,8 +1021,10 @@ var ReactDOM = (() => {
         return DiscreteEventPriority;
     }
   }
-  function dispatchDiscreteEvent(domEventName, eventSystemFlags, container, nativeEvent) {
-    console.log(1);
+  function dispatchEvent(domEventName, eventSystemFlags, targetContainer, nativeEvent) {
+    dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay(domEventName, eventSystemFlags, targetContainer, nativeEvent);
+  }
+  function dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay(domEventName, eventSystemFlags, targetContainer, nativeEvent) {
   }
 
   // packages/react-dom/src/events/DOMPluginEventSystem.ts
@@ -1028,11 +1039,12 @@ var ReactDOM = (() => {
   }
   function addTrappedEventListener(targetContainer, domEventName, eventSystemFlags, isCapturePhaseListener) {
     let listener = createEventListenerWrapperWithPriority(targetContainer, domEventName, eventSystemFlags);
+    addEventBubbleListener(targetContainer, domEventName, listener);
   }
   function listenToAllSupportedEvents(rootContainerElement) {
     if (!rootContainerElement[listeningMarker]) {
       allNativeEvents.forEach((domEventName) => {
-        listenToNativeEvent(domEventName, true, rootContainerElement);
+        listenToNativeEvent(domEventName, false, rootContainerElement);
       });
     }
   }

@@ -2,9 +2,10 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 13:53:51
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 15:02:06
+ * @LastEditTime: 2022-06-01 15:17:47
  */
 import { DOMEventName } from "./DOMEventNames";
+import { addEventBubbleListener } from "./EventListener";
 import { allNativeEvents } from "./EventRegistry";
 import { EventSystemFlags, IS_CAPTURE_PHASE } from "./EventSystemFlags";
 import * as SimpleEventPlugin from "./plugins/SimpleEventPlugin";
@@ -48,6 +49,8 @@ function addTrappedEventListener(
     domEventName,
     eventSystemFlags
   );
+  // 注册冒泡事件
+  addEventBubbleListener(targetContainer, domEventName, listener);
 }
 
 /**
@@ -57,8 +60,8 @@ function addTrappedEventListener(
 export function listenToAllSupportedEvents(rootContainerElement: EventTarget) {
   if (!rootContainerElement[listeningMarker]) {
     allNativeEvents.forEach((domEventName) => {
+      listenToNativeEvent(domEventName, false, rootContainerElement);
       // TODO 对于部分事件不能委托给容器，应该委托给实际目标元素，因为这些事件不会一直在dom上冒泡
-      listenToNativeEvent(domEventName, true, rootContainerElement);
     });
   }
 }

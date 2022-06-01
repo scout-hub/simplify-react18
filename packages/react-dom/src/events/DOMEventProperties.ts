@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 13:52:17
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 15:07:06
+ * @LastEditTime: 2022-06-01 15:16:20
  */
 import { DOMEventName } from "./DOMEventNames";
 import { registerTwoPhaseEvent } from "./EventRegistry";
@@ -12,7 +12,7 @@ export const topLevelEventsToReactNames: Map<DOMEventName, string> = new Map();
 const simpleEventPluginEvents = ["click", "mouseDown"];
 
 /**
- * @description: 注册简单事件
+ * @description: 简单事件注册函数
  * @param domEventName dom上的事件名
  * @param reactName react上的事件名
  */

@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-31 17:29:43
+ * @LastEditTime: 2022-06-01 15:19:31
  */
 const App = () => {
   const num = 0;
@@ -13,8 +13,8 @@ const App = () => {
       <span>react</span>
       <br />
       <button
-        onClick={() => {
-          console.log("click");
+        onMouseDown={() => {
+          console.log("mouseDown");
         }}
       >
         计数
