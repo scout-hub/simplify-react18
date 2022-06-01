@@ -387,17 +387,28 @@ var ReactDOM = (() => {
   // packages/react-dom/src/client/ReactDOMComponentTree.ts
   var randomKey = Math.random().toString(36).slice(2);
   var internalPropsKey = "__reactProps$" + randomKey;
+  var internalInstanceKey = "__reactFiber$" + randomKey;
   function updateFiberProps(node, props) {
     node[internalPropsKey] = props;
+  }
+  function precacheFiberNode(hostInst, node) {
+    node[internalInstanceKey] = hostInst;
+  }
+  function getClosestInstanceFromNode(targetNode) {
+    let targetInst = targetNode[internalInstanceKey];
+    if (targetInst) {
+      return targetInst;
+    }
   }
 
   // packages/react-dom/src/client/ReactDOMHostConfig.ts
   function shouldSetTextContent(type, props) {
     return type === "textarea" || type === "noscript" || typeof props.children === "string" || typeof props.children === "number" || typeof props.dangerouslySetInnerHTML === "object" && props.dangerouslySetInnerHTML !== null && props.dangerouslySetInnerHTML.__html != null;
   }
-  function createInstance(type, props) {
+  function createInstance(type, props, internalInstanceHandle) {
     const domElement = createElement(type, props);
     updateFiberProps(domElement, props);
+    precacheFiberNode(internalInstanceHandle, domElement);
     return domElement;
   }
   function finalizeInitialChildren(domElement, type, props) {
@@ -660,7 +671,7 @@ var ReactDOM = (() => {
         const type = workInProgress2.type;
         if (current !== null && workInProgress2 !== null) {
         } else {
-          const instance = createInstance(type, newProps);
+          const instance = createInstance(type, newProps, workInProgress2);
           appendAllChildren(instance, workInProgress2);
           workInProgress2.stateNode = instance;
           finalizeInitialChildren(instance, type, newProps);
@@ -1069,7 +1080,14 @@ var ReactDOM = (() => {
     dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay(domEventName, eventSystemFlags, targetContainer, nativeEvent);
   }
   function dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay(domEventName, eventSystemFlags, targetContainer, nativeEvent) {
+    findInstanceBlockingEvent(domEventName, eventSystemFlags, targetContainer, nativeEvent);
     dispatchEventForPluginEventSystem(domEventName, eventSystemFlags, nativeEvent, return_targetInst, targetContainer);
+  }
+  function findInstanceBlockingEvent(domEventName, eventSystemFlags, targetContainer, nativeEvent) {
+    return_targetInst = null;
+    const nativeEventTarget = getEventTarget_default(nativeEvent);
+    let targetInst = getClosestInstanceFromNode(nativeEventTarget);
+    return_targetInst = targetInst;
   }
 
   // packages/react-dom/src/events/DOMPluginEventSystem.ts
@@ -1095,7 +1113,6 @@ var ReactDOM = (() => {
   }
   function dispatchEventForPluginEventSystem(domEventName, eventSystemFlags, nativeEvent, targetInst, targetContainer) {
     const ancestorInst = targetInst;
-    console.log(ancestorInst);
     batchedUpdates(() => dispatchEventsForPlugins(domEventName, eventSystemFlags, nativeEvent, ancestorInst, targetContainer));
   }
   function dispatchEventsForPlugins(domEventName, eventSystemFlags, nativeEvent, targetInst, targetContainer) {

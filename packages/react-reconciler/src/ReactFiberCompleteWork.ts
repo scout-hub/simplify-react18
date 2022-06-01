@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:23:10
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-31 13:56:03
+ * @LastEditTime: 2022-06-01 17:24:10
  */
 import {
   appendInitialChild,
@@ -43,7 +43,7 @@ export function completeWork(current, workInProgress) {
         // 更新
       } else {
         // 创建元素
-        const instance = createInstance(type, newProps);
+        const instance = createInstance(type, newProps, workInProgress);
         // 在归阶段的时候，子fiber对应的真实dom已经全部创建完毕，此时只需要
         // 将当前fiber节点的child fiber节点对应的真实dom添加到自身真实dom下
         appendAllChildren(instance, workInProgress);

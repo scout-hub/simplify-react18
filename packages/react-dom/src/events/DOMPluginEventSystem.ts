@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 13:53:51
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 17:11:31
+ * @LastEditTime: 2022-06-01 17:28:34
  */
 import type { Fiber } from "packages/react-reconciler/src/ReactInternalTypes";
 import { DOMEventName } from "./DOMEventNames";
@@ -90,7 +90,6 @@ export function dispatchEventForPluginEventSystem(
   targetContainer: EventTarget
 ) {
   const ancestorInst = targetInst;
-  console.log(ancestorInst);
   batchedUpdates(() =>
     dispatchEventsForPlugins(
       domEventName,

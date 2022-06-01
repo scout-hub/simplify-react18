@@ -2,11 +2,12 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 15:44:53
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-31 13:52:22
+ * @LastEditTime: 2022-06-01 17:25:14
  */
 
+import { Fiber } from "packages/react-reconciler/src/ReactInternalTypes";
 import { createElement, setInitialProperties } from "./ReactDOMComponent";
-import { updateFiberProps } from "./ReactDOMComponentTree";
+import { precacheFiberNode, updateFiberProps } from "./ReactDOMComponentTree";
 
 /**
  * 判断该节点的children是否可以直接作为文本子节点
@@ -28,10 +29,12 @@ export function shouldSetTextContent(type, props) {
  * @param type 元素类型
  * @param props 元素属性
  */
-export function createInstance(type, props) {
+export function createInstance(type, props, internalInstanceHandle: Fiber) {
   const domElement = createElement(type, props);
   // 在创建的dom元素上添加一个自定义的属性用于存储props
   updateFiberProps(domElement, props);
+  // 在对应dom上绑定fiber节点，在事件处理中需要用dom获取fiber节点
+  precacheFiberNode(internalInstanceHandle, domElement);
   return domElement;
 }
 

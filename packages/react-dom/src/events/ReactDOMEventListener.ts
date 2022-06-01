@@ -2,11 +2,13 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 15:02:16
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 15:43:27
+ * @LastEditTime: 2022-06-01 17:28:42
  */
+import { getClosestInstanceFromNode } from "../client/ReactDOMComponentTree";
 import { DOMEventName } from "./DOMEventNames";
 import { dispatchEventForPluginEventSystem } from "./DOMPluginEventSystem";
 import { EventSystemFlags } from "./EventSystemFlags";
+import getEventTarget from "./getEventTarget";
 import { AnyNativeEvent } from "./PluginModuleType";
 import { DiscreteEventPriority } from "./ReactEventPriorities";
 
@@ -79,6 +81,12 @@ function dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEve
   targetContainer: EventTarget,
   nativeEvent: AnyNativeEvent
 ) {
+  findInstanceBlockingEvent(
+    domEventName,
+    eventSystemFlags,
+    targetContainer,
+    nativeEvent
+  );
   dispatchEventForPluginEventSystem(
     domEventName,
     eventSystemFlags,
@@ -86,4 +94,16 @@ function dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEve
     return_targetInst,
     targetContainer
   );
+}
+
+function findInstanceBlockingEvent(
+  domEventName: DOMEventName,
+  eventSystemFlags: EventSystemFlags,
+  targetContainer: EventTarget,
+  nativeEvent: AnyNativeEvent
+) {
+  return_targetInst = null;
+  const nativeEventTarget = getEventTarget(nativeEvent);
+  let targetInst = getClosestInstanceFromNode(nativeEventTarget);
+  return_targetInst = targetInst;
 }
