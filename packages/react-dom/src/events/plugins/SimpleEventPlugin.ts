@@ -2,10 +2,56 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 13:51:07
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 13:52:57
+ * @LastEditTime: 2022-06-01 16:55:00
  */
-import { registerSimpleEvents } from "../DOMEventProperties";
+import type { Fiber } from "packages/react-reconciler/src/ReactInternalTypes";
+import type { DOMEventName } from "../DOMEventNames";
+import {
+  accumulateSinglePhaseListeners,
+  DispatchQueue,
+} from "../DOMPluginEventSystem";
+import { EventSystemFlags, IS_CAPTURE_PHASE } from "../EventSystemFlags";
+import type { AnyNativeEvent } from "../PluginModuleType";
+import {
+  registerSimpleEvents,
+  topLevelEventsToReactNames,
+} from "../DOMEventProperties";
+import { SyntheticEvent, SyntheticMouseEvent } from "../SyntheticEvent";
 
-function extractEvents() {}
+function extractEvents(
+  dispatchQueue: DispatchQueue,
+  domEventName: DOMEventName,
+  targetInst: null | Fiber,
+  nativeEvent: AnyNativeEvent,
+  nativeEventTarget: null | EventTarget,
+  eventSystemFlags: EventSystemFlags,
+  targetContainer: EventTarget
+) {
+  const reactName = topLevelEventsToReactNames.get(domEventName);
+  if (!reactName) {
+    return;
+  }
+
+  let SyntheticEventCtor = SyntheticEvent;
+
+  switch (domEventName) {
+    case "click":
+    case "mousedown":
+      SyntheticEventCtor = SyntheticMouseEvent;
+      break;
+  }
+
+  const inCapturePhase = (eventSystemFlags & IS_CAPTURE_PHASE) !== 0;
+  const accumulateTargetOnly = false;
+
+  const listeners = accumulateSinglePhaseListeners(
+    targetInst,
+    reactName,
+    nativeEvent.type,
+    inCapturePhase,
+    accumulateTargetOnly,
+    nativeEvent
+  );
+}
 
 export { registerSimpleEvents as registerEvents, extractEvents };

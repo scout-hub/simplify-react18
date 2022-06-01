@@ -2,14 +2,30 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 13:53:51
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 15:17:47
+ * @LastEditTime: 2022-06-01 17:11:31
  */
+import type { Fiber } from "packages/react-reconciler/src/ReactInternalTypes";
 import { DOMEventName } from "./DOMEventNames";
 import { addEventBubbleListener } from "./EventListener";
 import { allNativeEvents } from "./EventRegistry";
 import { EventSystemFlags, IS_CAPTURE_PHASE } from "./EventSystemFlags";
+import getEventTarget from "./getEventTarget";
+import { AnyNativeEvent } from "./PluginModuleType";
 import * as SimpleEventPlugin from "./plugins/SimpleEventPlugin";
 import { createEventListenerWrapperWithPriority } from "./ReactDOMEventListener";
+
+type DispatchListener = {
+  instance: null | Fiber;
+  listener: Function;
+  currentTarget: EventTarget;
+};
+
+type DispatchEntry = {
+  event: Object;
+  listeners: Array<DispatchListener>;
+};
+
+export type DispatchQueue = Array<DispatchEntry>;
 
 SimpleEventPlugin.registerEvents();
 
@@ -64,4 +80,84 @@ export function listenToAllSupportedEvents(rootContainerElement: EventTarget) {
       // TODO 对于部分事件不能委托给容器，应该委托给实际目标元素，因为这些事件不会一直在dom上冒泡
     });
   }
+}
+
+export function dispatchEventForPluginEventSystem(
+  domEventName: DOMEventName,
+  eventSystemFlags: EventSystemFlags,
+  nativeEvent: AnyNativeEvent,
+  targetInst: null | Fiber,
+  targetContainer: EventTarget
+) {
+  const ancestorInst = targetInst;
+  console.log(ancestorInst);
+  batchedUpdates(() =>
+    dispatchEventsForPlugins(
+      domEventName,
+      eventSystemFlags,
+      nativeEvent,
+      ancestorInst,
+      targetContainer
+    )
+  );
+}
+
+function dispatchEventsForPlugins(
+  domEventName: DOMEventName,
+  eventSystemFlags: EventSystemFlags,
+  nativeEvent: AnyNativeEvent,
+  targetInst: null | Fiber,
+  targetContainer: EventTarget
+) {
+  const nativeEventTarget = getEventTarget(nativeEvent);
+  // 要触发的事件队列
+  const dispatchQueue = [];
+  extractEvents(
+    dispatchQueue,
+    domEventName,
+    targetInst,
+    nativeEvent,
+    nativeEventTarget,
+    eventSystemFlags,
+    targetContainer
+  );
+}
+
+function batchedUpdates(fn: () => void) {
+  fn();
+}
+
+function extractEvents(
+  dispatchQueue: DispatchQueue,
+  domEventName: DOMEventName,
+  targetInst: null | Fiber,
+  nativeEvent: AnyNativeEvent,
+  nativeEventTarget: null | EventTarget,
+  eventSystemFlags: EventSystemFlags,
+  targetContainer: EventTarget
+) {
+  SimpleEventPlugin.extractEvents(
+    dispatchQueue,
+    domEventName,
+    targetInst,
+    nativeEvent,
+    nativeEventTarget,
+    eventSystemFlags,
+    targetContainer
+  );
+}
+
+export function accumulateSinglePhaseListeners(
+  targetFiber: Fiber | null,
+  reactName: string | null,
+  nativeEventType: string,
+  inCapturePhase: boolean,
+  accumulateTargetOnly: boolean,
+  nativeEvent: AnyNativeEvent
+) {
+  const captureName = reactName !== null ? reactName + "Capture" : null;
+  const reactEventName = inCapturePhase ? captureName : reactName;
+  let listeners: Array<DispatchListener> = [];
+  let instance = targetFiber;
+  console.log(instance);
 }

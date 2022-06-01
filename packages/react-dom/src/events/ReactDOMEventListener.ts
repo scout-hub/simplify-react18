@@ -2,13 +2,15 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 15:02:16
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 15:33:21
+ * @LastEditTime: 2022-06-01 15:43:27
  */
 import { DOMEventName } from "./DOMEventNames";
+import { dispatchEventForPluginEventSystem } from "./DOMPluginEventSystem";
 import { EventSystemFlags } from "./EventSystemFlags";
+import { AnyNativeEvent } from "./PluginModuleType";
 import { DiscreteEventPriority } from "./ReactEventPriorities";
 
-type AnyNativeEvent = Event | KeyboardEvent | MouseEvent | TouchEvent;
+export let return_targetInst = null;
 
 export function createEventListenerWrapperWithPriority(
   targetContainer: EventTarget,
@@ -76,4 +78,12 @@ function dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEve
   eventSystemFlags: EventSystemFlags,
   targetContainer: EventTarget,
   nativeEvent: AnyNativeEvent
-) {}
+) {
+  dispatchEventForPluginEventSystem(
+    domEventName,
+    eventSystemFlags,
+    nativeEvent,
+    return_targetInst,
+    targetContainer
+  );
+}

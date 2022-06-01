@@ -978,6 +978,13 @@ var ReactDOM = (() => {
   // packages/react-dom/src/events/EventSystemFlags.ts
   var IS_CAPTURE_PHASE = 1 << 2;
 
+  // packages/react-dom/src/events/getEventTarget.ts
+  function getEventTarget(nativeEvent) {
+    let target = nativeEvent.target || nativeEvent.srcElement || window;
+    return target.nodeType === TEXT_NODE ? target.parentNode : target;
+  }
+  var getEventTarget_default = getEventTarget;
+
   // packages/react-reconciler/src/ReactFiberLane.ts
   var SyncLane = 1;
 
@@ -1000,7 +1007,44 @@ var ReactDOM = (() => {
     }
   }
 
+  // packages/react-dom/src/events/SyntheticEvent.ts
+  function createSyntheticEvent() {
+    class SyntheticBaseEvent {
+      constructor(reactName, reactEventType, targetInst, nativeEvent, nativeEventTarget) {
+        this._reactName = null;
+        this._reactName = reactName;
+        this._targetInst = targetInst;
+        this.type = reactEventType;
+        this.nativeEvent = nativeEvent;
+        this.target = nativeEventTarget;
+        console.log(nativeEvent);
+      }
+    }
+    return SyntheticBaseEvent;
+  }
+  var SyntheticEvent = createSyntheticEvent();
+  var SyntheticMouseEvent = createSyntheticEvent();
+
+  // packages/react-dom/src/events/plugins/SimpleEventPlugin.ts
+  function extractEvents(dispatchQueue, domEventName, targetInst, nativeEvent, nativeEventTarget, eventSystemFlags, targetContainer) {
+    const reactName = topLevelEventsToReactNames.get(domEventName);
+    if (!reactName) {
+      return;
+    }
+    let SyntheticEventCtor = SyntheticEvent;
+    switch (domEventName) {
+      case "click":
+      case "mousedown":
+        SyntheticEventCtor = SyntheticMouseEvent;
+        break;
+    }
+    const inCapturePhase = (eventSystemFlags & IS_CAPTURE_PHASE) !== 0;
+    const accumulateTargetOnly = false;
+    const listeners = accumulateSinglePhaseListeners(targetInst, reactName, nativeEvent.type, inCapturePhase, accumulateTargetOnly, nativeEvent);
+  }
+
   // packages/react-dom/src/events/ReactDOMEventListener.ts
+  var return_targetInst = null;
   function createEventListenerWrapperWithPriority(targetContainer, domEventName, eventSystemFlags) {
     const eventPriority = getEventPriority(domEventName);
     let listenerWrapper;
@@ -1025,6 +1069,7 @@ var ReactDOM = (() => {
     dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay(domEventName, eventSystemFlags, targetContainer, nativeEvent);
   }
   function dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay(domEventName, eventSystemFlags, targetContainer, nativeEvent) {
+    dispatchEventForPluginEventSystem(domEventName, eventSystemFlags, nativeEvent, return_targetInst, targetContainer);
   }
 
   // packages/react-dom/src/events/DOMPluginEventSystem.ts
@@ -1047,6 +1092,29 @@ var ReactDOM = (() => {
         listenToNativeEvent(domEventName, false, rootContainerElement);
       });
     }
+  }
+  function dispatchEventForPluginEventSystem(domEventName, eventSystemFlags, nativeEvent, targetInst, targetContainer) {
+    const ancestorInst = targetInst;
+    console.log(ancestorInst);
+    batchedUpdates(() => dispatchEventsForPlugins(domEventName, eventSystemFlags, nativeEvent, ancestorInst, targetContainer));
+  }
+  function dispatchEventsForPlugins(domEventName, eventSystemFlags, nativeEvent, targetInst, targetContainer) {
+    const nativeEventTarget = getEventTarget_default(nativeEvent);
+    const dispatchQueue = [];
+    extractEvents2(dispatchQueue, domEventName, targetInst, nativeEvent, nativeEventTarget, eventSystemFlags, targetContainer);
+  }
+  function batchedUpdates(fn) {
+    fn();
+  }
+  function extractEvents2(dispatchQueue, domEventName, targetInst, nativeEvent, nativeEventTarget, eventSystemFlags, targetContainer) {
+    extractEvents(dispatchQueue, domEventName, targetInst, nativeEvent, nativeEventTarget, eventSystemFlags, targetContainer);
+  }
+  function accumulateSinglePhaseListeners(targetFiber, reactName, nativeEventType, inCapturePhase, accumulateTargetOnly, nativeEvent) {
+    const captureName = reactName !== null ? reactName + "Capture" : null;
+    const reactEventName = inCapturePhase ? captureName : reactName;
+    let listeners = [];
+    let instance = targetFiber;
+    console.log(instance);
   }
 
   // packages/react-dom/src/client/ReactDOMRoot.ts
