@@ -953,9 +953,65 @@ var ReactDOM = (() => {
   // packages/react-reconciler/src/ReactRootTags.ts
   var ConcurrentRoot = 1;
 
+  // packages/react-dom/src/events/EventRegistry.ts
+  var allNativeEvents = /* @__PURE__ */ new Set();
+  var registrationNameDependencies = {};
+  function registerDirectEvent(registrationName, dependencies) {
+    if (registrationNameDependencies[registrationName]) {
+      return;
+    }
+    registrationNameDependencies[registrationName] = dependencies;
+    for (let i = 0; i < dependencies.length; i++) {
+      allNativeEvents.add(dependencies[i]);
+    }
+  }
+  function registerTwoPhaseEvent(registrationName, dependencies) {
+    registerDirectEvent(registrationName, dependencies);
+  }
+
+  // packages/react-dom/src/events/EventSystemFlags.ts
+  var IS_CAPTURE_PHASE = 1 << 2;
+
+  // packages/react-dom/src/events/DOMEventProperties.ts
+  var topLevelEventsToReactNames = /* @__PURE__ */ new Map();
+  var simpleEventPluginEvents = ["click", "mouseDown"];
+  function registerSimpleEvent(domEventName, reactName) {
+    topLevelEventsToReactNames.set(domEventName, reactName);
+    registerTwoPhaseEvent(reactName, [domEventName]);
+  }
+  function registerSimpleEvents() {
+    for (let i = 0; i < simpleEventPluginEvents.length; i++) {
+      const eventName = simpleEventPluginEvents[i];
+      const domEventName = eventName.toLowerCase();
+      const capitalizedEvent = eventName[0].toUpperCase() + eventName.slice(1);
+      registerSimpleEvent(domEventName, "on" + capitalizedEvent);
+    }
+  }
+
+  // packages/react-dom/src/events/DOMPluginEventSystem.ts
+  registerSimpleEvents();
+  var listeningMarker = "_reactListening" + Math.random().toString(36).slice(2);
+  function listenToNativeEvent(domEventName, isCapturePhaseListener, target) {
+    let eventSystemFlags = 0;
+    if (isCapturePhaseListener) {
+      eventSystemFlags |= IS_CAPTURE_PHASE;
+    }
+    addTrappedEventListener(target, domEventName, eventSystemFlags, isCapturePhaseListener);
+  }
+  function addTrappedEventListener(targetContainer, domEventName, eventSystemFlags, isCapturePhaseListener) {
+  }
+  function listenToAllSupportedEvents(rootContainerElement) {
+    if (!rootContainerElement[listeningMarker]) {
+      allNativeEvents.forEach((domEventName) => {
+        listenToNativeEvent(domEventName, true, rootContainerElement);
+      });
+    }
+  }
+
   // packages/react-dom/src/client/ReactDOMRoot.ts
   function createRoot(container) {
     const root = createContainer(container, ConcurrentRoot);
+    listenToAllSupportedEvents(container);
     return new ReactDOMRoot(root);
   }
   var ReactDOMRoot = class {

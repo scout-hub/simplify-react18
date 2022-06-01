@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-17 20:09:43
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-31 16:58:50
+ * @LastEditTime: 2022-06-01 13:29:26
  */
 const { useState } = React;
 const App = () => {
@@ -10,14 +10,7 @@ const App = () => {
   return (
     <div>
       <h1>{num}</h1>
-      <button
-        onMouseDown={() => {
-          console.log(1);
-          // setNum(num + 1);
-        }}
-      >
-        计数
-      </button>
+      <button>计数</button>
     </div>
   );
 };
