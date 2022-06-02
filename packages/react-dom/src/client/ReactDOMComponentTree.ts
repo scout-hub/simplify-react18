@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:40:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 17:25:56
+ * @LastEditTime: 2022-06-02 10:56:27
  */
 import { Fiber } from "packages/react-reconciler/src/ReactInternalTypes";
 
@@ -26,4 +26,12 @@ export function getClosestInstanceFromNode(targetNode: Fiber) {
   if (targetInst) {
     return targetInst;
   }
+}
+
+/**
+ * @description: 根据node节点获取props
+ * @param node
+ */
+export function getFiberCurrentPropsFromNode(node) {
+  return node[internalPropsKey] || null;
 }

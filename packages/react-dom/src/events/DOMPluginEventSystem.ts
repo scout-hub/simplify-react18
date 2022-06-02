@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 13:53:51
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 17:44:39
+ * @LastEditTime: 2022-06-02 11:34:34
  */
 import type { Fiber } from "packages/react-reconciler/src/ReactInternalTypes";
 import { HostComponent } from "packages/react-reconciler/src/ReactWorkTags";
@@ -103,6 +103,48 @@ export function dispatchEventForPluginEventSystem(
   );
 }
 
+function executeDispatch(
+  event: Record<string, any>,
+  listener: Function,
+  currentTarget: EventTarget
+): void {
+  listener(event);
+}
+
+function processDispatchQueueItemsInOrder(
+  event: Record<string, any>,
+  dispatchListeners: Array<DispatchListener>,
+  inCapturePhase: boolean
+) {
+  if (inCapturePhase) {
+    // 事件捕获
+  } else {
+    // 事件冒泡
+    for (let i = 0; i < dispatchListeners.length; i++) {
+      const { currentTarget, listener } = dispatchListeners[i];
+      // 判断事件冒泡是否已经被阻止了
+      if (event.isPropagationStopped()) {
+        return;
+      }
+      executeDispatch(event, listener, currentTarget);
+    }
+  }
+}
+
+/**
+ * @description: 触发事件队列中的事件
+ */
+function processDispatchQueue(
+  dispatchQueue: DispatchQueue,
+  eventSystemFlags: EventSystemFlags
+) {
+  const inCapturePhase = (eventSystemFlags & IS_CAPTURE_PHASE) !== 0;
+  for (let i = 0; i < dispatchQueue.length; i++) {
+    const { event, listeners } = dispatchQueue[i];
+    processDispatchQueueItemsInOrder(event, listeners, inCapturePhase);
+  }
+}
+
 function dispatchEventsForPlugins(
   domEventName: DOMEventName,
   eventSystemFlags: EventSystemFlags,
@@ -113,6 +155,7 @@ function dispatchEventsForPlugins(
   const nativeEventTarget = getEventTarget(nativeEvent);
   // 要触发的事件队列
   const dispatchQueue = [];
+  // 获取需要触发的事件，将事件加入到队列中
   extractEvents(
     dispatchQueue,
     domEventName,
@@ -122,6 +165,7 @@ function dispatchEventsForPlugins(
     eventSystemFlags,
     targetContainer
   );
+  processDispatchQueue(dispatchQueue, eventSystemFlags);
 }
 
 function batchedUpdates(fn: () => void) {
@@ -180,6 +224,5 @@ export function accumulateSinglePhaseListeners(
     }
     instance = instance.return;
   }
-  console.log(listeners);
   return listeners;
 }

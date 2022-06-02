@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:36:13
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-31 17:20:52
+ * @LastEditTime: 2022-06-02 11:20:14
  */
 
 import { isFunction, isNumber, isString } from "packages/shared/src";
@@ -34,13 +34,6 @@ export function createElement(type, props) {
 export function setInitialProperties(domElement, tag, rawProps) {
   let props = rawProps;
   setInitialDOMProperties(tag, domElement, props);
-  switch (tag) {
-    default:
-      if (isFunction(props.onClick)) {
-        domElement.onclick = props.onClick;
-      }
-      break;
-  }
 }
 
 function setInitialDOMProperties(tag, domElement, nextProps) {

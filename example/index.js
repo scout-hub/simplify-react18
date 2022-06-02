@@ -1,18 +1,30 @@
 /*
  * @Author: Zhouqi
- * @Date: 2022-05-17 20:09:43
+ * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 15:23:26
+ * @LastEditTime: 2022-06-02 11:23:49
  */
-const { useState } = React;
 const App = () => {
-  const [num, setNum] = useState(0);
+  const num = 0;
   return (
-    <div>
-      <h1 onMouseDown={()=>{
-        console.log(1);
-      }}>{num}</h1>
-      <button>计数</button>
+    <div
+      className="red"
+      style={{ fontSize: 14 }}
+      onClick={() => {
+        console.log("mouseDown div");
+      }}
+    >
+      <span>hello</span>
+      <h1>{num}</h1>
+      <span>react</span>
+      <br />
+      <button
+        onClick={(e) => {
+          console.log("mouseDown button");
+        }}
+      >
+        计数
+      </button>
     </div>
   );
 };

@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 13:51:07
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 16:55:00
+ * @LastEditTime: 2022-06-02 11:07:49
  */
 import type { Fiber } from "packages/react-reconciler/src/ReactInternalTypes";
 import type { DOMEventName } from "../DOMEventNames";
@@ -33,6 +33,7 @@ function extractEvents(
   }
 
   let SyntheticEventCtor = SyntheticEvent;
+  let reactEventType: string = domEventName;
 
   switch (domEventName) {
     case "click":
@@ -52,6 +53,16 @@ function extractEvents(
     accumulateTargetOnly,
     nativeEvent
   );
+  if (listeners.length > 0) {
+    const event = new SyntheticEventCtor(
+      reactName,
+      reactEventType,
+      null,
+      nativeEvent as any,
+      nativeEventTarget
+    );
+    dispatchQueue.push({ event, listeners });
+  }
 }
 
 export { registerSimpleEvents as registerEvents, extractEvents };

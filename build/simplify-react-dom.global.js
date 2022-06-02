@@ -28,7 +28,6 @@ var ReactDOM = (() => {
   var isObject = (val) => val !== null && typeof val === "object";
   var isString = (val) => typeof val === "string";
   var isNumber = (val) => typeof val === "number";
-  var isFunction = (val) => typeof val === "function";
   var isArray = Array.isArray;
 
   // packages/react-reconciler/src/ReactFiberFlags.ts
@@ -355,13 +354,6 @@ var ReactDOM = (() => {
   function setInitialProperties(domElement, tag, rawProps) {
     let props = rawProps;
     setInitialDOMProperties(tag, domElement, props);
-    switch (tag) {
-      default:
-        if (isFunction(props.onClick)) {
-          domElement.onclick = props.onClick;
-        }
-        break;
-    }
   }
   function setInitialDOMProperties(tag, domElement, nextProps) {
     for (const propKey in nextProps) {
@@ -399,6 +391,9 @@ var ReactDOM = (() => {
     if (targetInst) {
       return targetInst;
     }
+  }
+  function getFiberCurrentPropsFromNode(node) {
+    return node[internalPropsKey] || null;
   }
 
   // packages/react-dom/src/client/ReactDOMHostConfig.ts
@@ -998,6 +993,16 @@ var ReactDOM = (() => {
 
   // packages/react-dom/src/events/getListener.ts
   function getListener(inst, registrationName) {
+    const stateNode = inst.stateNode;
+    if (stateNode === null) {
+      return null;
+    }
+    const props = getFiberCurrentPropsFromNode(stateNode);
+    if (props === null) {
+      return null;
+    }
+    const listener = props[registrationName];
+    return listener;
   }
 
   // packages/react-reconciler/src/ReactFiberLane.ts
@@ -1023,6 +1028,12 @@ var ReactDOM = (() => {
   }
 
   // packages/react-dom/src/events/SyntheticEvent.ts
+  function functionThatReturnsTrue() {
+    return true;
+  }
+  function functionThatReturnsFalse() {
+    return false;
+  }
   function createSyntheticEvent() {
     class SyntheticBaseEvent {
       constructor(reactName, reactEventType, targetInst, nativeEvent, nativeEventTarget) {
@@ -1032,7 +1043,17 @@ var ReactDOM = (() => {
         this.type = reactEventType;
         this.nativeEvent = nativeEvent;
         this.target = nativeEventTarget;
-        console.log(nativeEvent);
+        this.isPropagationStopped = functionThatReturnsFalse;
+      }
+      stopPropagation() {
+        const event = this.nativeEvent;
+        if (!event) {
+          return;
+        }
+        if (event.stopPropagation) {
+          event.stopPropagation();
+        }
+        this.isPropagationStopped = functionThatReturnsTrue;
       }
     }
     return SyntheticBaseEvent;
@@ -1047,6 +1068,7 @@ var ReactDOM = (() => {
       return;
     }
     let SyntheticEventCtor = SyntheticEvent;
+    let reactEventType = domEventName;
     switch (domEventName) {
       case "click":
       case "mousedown":
@@ -1056,6 +1078,10 @@ var ReactDOM = (() => {
     const inCapturePhase = (eventSystemFlags & IS_CAPTURE_PHASE) !== 0;
     const accumulateTargetOnly = false;
     const listeners = accumulateSinglePhaseListeners(targetInst, reactName, nativeEvent.type, inCapturePhase, accumulateTargetOnly, nativeEvent);
+    if (listeners.length > 0) {
+      const event = new SyntheticEventCtor(reactName, reactEventType, null, nativeEvent, nativeEventTarget);
+      dispatchQueue.push({ event, listeners });
+    }
   }
 
   // packages/react-dom/src/events/ReactDOMEventListener.ts
@@ -1119,10 +1145,33 @@ var ReactDOM = (() => {
     const ancestorInst = targetInst;
     batchedUpdates(() => dispatchEventsForPlugins(domEventName, eventSystemFlags, nativeEvent, ancestorInst, targetContainer));
   }
+  function executeDispatch(event, listener, currentTarget) {
+    listener(event);
+  }
+  function processDispatchQueueItemsInOrder(event, dispatchListeners, inCapturePhase) {
+    if (inCapturePhase) {
+    } else {
+      for (let i = 0; i < dispatchListeners.length; i++) {
+        const { currentTarget, listener } = dispatchListeners[i];
+        if (event.isPropagationStopped()) {
+          return;
+        }
+        executeDispatch(event, listener, currentTarget);
+      }
+    }
+  }
+  function processDispatchQueue(dispatchQueue, eventSystemFlags) {
+    const inCapturePhase = (eventSystemFlags & IS_CAPTURE_PHASE) !== 0;
+    for (let i = 0; i < dispatchQueue.length; i++) {
+      const { event, listeners } = dispatchQueue[i];
+      processDispatchQueueItemsInOrder(event, listeners, inCapturePhase);
+    }
+  }
   function dispatchEventsForPlugins(domEventName, eventSystemFlags, nativeEvent, targetInst, targetContainer) {
     const nativeEventTarget = getEventTarget_default(nativeEvent);
     const dispatchQueue = [];
     extractEvents2(dispatchQueue, domEventName, targetInst, nativeEvent, nativeEventTarget, eventSystemFlags, targetContainer);
+    processDispatchQueue(dispatchQueue, eventSystemFlags);
   }
   function batchedUpdates(fn) {
     fn();
@@ -1153,7 +1202,6 @@ var ReactDOM = (() => {
       }
       instance = instance.return;
     }
-    console.log(listeners);
     return listeners;
   }
 
