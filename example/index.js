@@ -2,25 +2,17 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-02 11:23:49
+ * @LastEditTime: 2022-06-03 20:06:49
  */
+const { useState } = React;
 const App = () => {
-  const num = 0;
+  let [num, setNum] = useState(0);
   return (
-    <div
-      className="red"
-      style={{ fontSize: 14 }}
-      onClick={() => {
-        console.log("mouseDown div");
-      }}
-    >
-      <span>hello</span>
+    <div>
       <h1>{num}</h1>
-      <span>react</span>
-      <br />
       <button
-        onClick={(e) => {
-          console.log("mouseDown button");
+        onClick={() => {
+          setNum(num + 1);
         }}
       >
         计数

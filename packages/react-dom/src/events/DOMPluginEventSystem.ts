@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 13:53:51
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-02 11:34:34
+ * @LastEditTime: 2022-06-03 20:01:49
  */
 import type { Fiber } from "packages/react-reconciler/src/ReactInternalTypes";
 import { HostComponent } from "packages/react-reconciler/src/ReactWorkTags";
@@ -117,7 +117,7 @@ function processDispatchQueueItemsInOrder(
   inCapturePhase: boolean
 ) {
   if (inCapturePhase) {
-    // 事件捕获
+    // TODO 事件捕获
   } else {
     // 事件冒泡
     for (let i = 0; i < dispatchListeners.length; i++) {
@@ -131,7 +131,7 @@ function processDispatchQueueItemsInOrder(
   }
 }
 
-/**
+/**  
  * @description: 触发事件队列中的事件
  */
 function processDispatchQueue(
