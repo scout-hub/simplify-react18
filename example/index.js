@@ -2,11 +2,13 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-03 20:06:49
+ * @LastEditTime: 2022-06-11 20:09:02
  */
 const { useState } = React;
 const App = () => {
+  console.log(1);
   let [num, setNum] = useState(0);
+
   return (
     <div>
       <h1>{num}</h1>

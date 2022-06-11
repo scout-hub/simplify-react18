@@ -2,14 +2,14 @@
  * @Author: Zhouqi
  * @Date: 2022-04-28 15:14:45
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-16 20:22:19
+ * @LastEditTime: 2022-06-11 20:17:25
  */
 const {
     build
 } = require('esbuild')
 
 build({
-    entryPoints: [`./packages/react/src/React.ts`],
+    entryPoints: [`./packages/react/index.ts`],
     outfile: './build/simplify-react.global.js',
     bundle: true,
     sourcemap: true,

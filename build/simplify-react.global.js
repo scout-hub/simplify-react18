@@ -17,10 +17,11 @@ var React = (() => {
   };
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // packages/react/src/React.ts
-  var React_exports = {};
-  __export(React_exports, {
-    createElement: () => createElement
+  // packages/react/index.ts
+  var react_exports = {};
+  __export(react_exports, {
+    createElement: () => createElement,
+    useState: () => useState
   });
 
   // packages/shared/src/ReactSymbols.ts
@@ -69,6 +70,11 @@ var React = (() => {
     };
     return element;
   };
-  return __toCommonJS(React_exports);
+
+  // packages/react/src/ReactHooks.ts
+  function useState(initialState) {
+    console.log(1);
+  }
+  return __toCommonJS(react_exports);
 })();
 //# sourceMappingURL=simplify-react.global.js.map
