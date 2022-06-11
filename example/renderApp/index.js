@@ -2,9 +2,10 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-11 20:19:14
+ * @LastEditTime: 2022-06-11 20:23:06
  */
 const { useState } = React;
+useState();
 const App = () => {
   const num = 0;
   return (

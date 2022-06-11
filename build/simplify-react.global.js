@@ -71,9 +71,20 @@ var React = (() => {
     return element;
   };
 
+  // packages/react/src/ReactCurrentDispatcher.ts
+  var ReactCurrentDispatcher = {
+    current: null
+  };
+  var ReactCurrentDispatcher_default = ReactCurrentDispatcher;
+
   // packages/react/src/ReactHooks.ts
+  function resolveDispatcher() {
+    const dispatcher = ReactCurrentDispatcher_default.current;
+    return dispatcher;
+  }
   function useState(initialState) {
-    console.log(1);
+    const dispatcher = resolveDispatcher();
+    console.log(dispatcher);
   }
   return __toCommonJS(react_exports);
 })();

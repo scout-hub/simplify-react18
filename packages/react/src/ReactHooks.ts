@@ -2,8 +2,16 @@
  * @Author: Zhouqi
  * @Date: 2022-06-11 20:11:17
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-11 20:11:24
+ * @LastEditTime: 2022-06-11 20:22:25
  */
+import ReactCurrentDispatcher from "./ReactCurrentDispatcher";
+
+function resolveDispatcher() {
+  const dispatcher = ReactCurrentDispatcher.current;
+  return dispatcher;
+}
+
 export function useState(initialState) {
-  console.log(1);
+  const dispatcher = resolveDispatcher();
+  console.log(dispatcher);
 }
