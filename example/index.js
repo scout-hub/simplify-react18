@@ -2,11 +2,10 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-11 20:09:02
+ * @LastEditTime: 2022-06-12 22:16:31
  */
 const { useState } = React;
 const App = () => {
-  console.log(1);
   let [num, setNum] = useState(0);
 
   return (
