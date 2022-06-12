@@ -84,7 +84,7 @@ var React = (() => {
   }
   function useState(initialState) {
     const dispatcher = resolveDispatcher();
-    console.log(dispatcher);
+    return dispatcher == null ? void 0 : dispatcher.useState(initialState);
   }
   return __toCommonJS(react_exports);
 })();

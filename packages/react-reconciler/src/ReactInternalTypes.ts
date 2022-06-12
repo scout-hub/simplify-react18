@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-30 15:32:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-30 15:56:25
+ * @LastEditTime: 2022-06-12 14:37:15
  */
 import { Flags } from "./ReactFiberFlags";
 import { WorkTag } from "./ReactWorkTags";
@@ -35,4 +35,11 @@ export type Fiber = {
   flags: Flags;
   // 内容状态中的props
   pendingProps: any;
+};
+
+export type Dispatch<A> = (a: A) => void;
+export type BasicStateAction<S> = ((a: S) => S) | S;
+
+export type Dispatcher = {
+  useState<S>(initialState: (() => S) | S): [S, Dispatch<BasicStateAction<S>>];
 };

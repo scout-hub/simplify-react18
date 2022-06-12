@@ -28,6 +28,7 @@ var ReactDOM = (() => {
   var isObject = (val) => val !== null && typeof val === "object";
   var isString = (val) => typeof val === "string";
   var isNumber = (val) => typeof val === "number";
+  var isFunction = (val) => typeof val === "function";
   var isArray = Array.isArray;
 
   // packages/react-reconciler/src/ReactFiberFlags.ts
@@ -493,10 +494,59 @@ var ReactDOM = (() => {
   var reconcileChildFibers = ChildReconciler(true);
   var mountChildFibers = ChildReconciler(false);
 
+  // packages/react/src/ReactCurrentDispatcher.ts
+  var ReactCurrentDispatcher = {
+    current: null
+  };
+  var ReactCurrentDispatcher_default = ReactCurrentDispatcher;
+
   // packages/react-reconciler/src/ReactFiberHooks.ts
-  function renderWithHooks(_current, workInProgress2, Component) {
+  var workInProgressHook = null;
+  var currentlyRenderingFiber = null;
+  var HooksDispatcherOnMount = {
+    useState: mountState
+  };
+  var HooksDispatcherOnUpdate = {
+    useState: mountState
+  };
+  function renderWithHooks(current, workInProgress2, Component) {
+    currentlyRenderingFiber = workInProgress2;
+    workInProgress2.memoizedState = null;
+    workInProgress2.updateQueue = null;
+    ReactCurrentDispatcher_default.current = current === null || current.memoizedState === null ? HooksDispatcherOnMount : HooksDispatcherOnUpdate;
     const children = Component();
     return children;
+  }
+  function mountState(initialState) {
+    const hook = mountWorkInProgressHook();
+    if (isFunction(initialState)) {
+      initialState = initialState();
+    }
+    hook.memoizedState = hook.baseState = initialState;
+    const queue = {
+      pending: null
+    };
+    hook.queue = queue;
+    const dispatch = dispatchSetState.bind(null, currentlyRenderingFiber, queue);
+    return [hook.memoizedState, dispatch];
+  }
+  function mountWorkInProgressHook() {
+    const hook = {
+      memoizedState: null,
+      baseState: null,
+      baseQueue: null,
+      queue: null,
+      next: null
+    };
+    if (workInProgressHook == null) {
+      currentlyRenderingFiber.memoizedState = hook;
+    } else {
+      workInProgressHook.next = hook;
+    }
+    workInProgressHook = hook;
+    return workInProgressHook;
+  }
+  function dispatchSetState() {
   }
 
   // packages/react-reconciler/src/ReactFiberBeginWork.ts

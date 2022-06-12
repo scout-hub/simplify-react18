@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-11 20:06:13
+ * @LastEditTime: 2022-06-12 14:07:19
  */
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber";
@@ -23,7 +23,7 @@ let workInProgress: Fiber | null = null;
  */
 export function scheduleUpdateOnFiber(fiber) {
   const root = fiber.stateNode;
-  // 调度应用
+  // 异步调度应用（concurrent模式）
   ensureRootIsScheduled(root);
 }
 
