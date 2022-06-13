@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-12 22:27:48
+ * @LastEditTime: 2022-06-13 20:42:10
  */
 import { isFunction } from "packages/shared/src";
 import ReactSharedInternals from "packages/shared/src/ReactSharedInternals";
@@ -12,18 +12,22 @@ import type {
   Dispatcher,
   Fiber,
 } from "./ReactInternalTypes";
-import type { Update } from "./ReactUpdateQueue";
+
+type Update<S> = {
+  action: S;
+  next: Update<S>;
+};
 
 export type Hook = {
   memoizedState: any; // hook对应的state属性
   baseState: any;
-  baseQueue: Update | null;
+  baseQueue: Update<any> | null;
   queue: any; // hook保存的Update更新链表
   next: Hook | null; // 指向下一个hook
 };
 
 export type UpdateQueue<S> = {
-  pending: Update | null;
+  pending: Update<S> | null;
   dispatch: Dispatch<BasicStateAction<S>> | null;
 };
 
@@ -54,6 +58,7 @@ export function renderWithHooks(current, workInProgress, Component) {
 
   const children = Component();
   // console.log(children);
+  currentlyRenderingFiber = null;
   return children;
 }
 
@@ -67,13 +72,13 @@ function mountState<S>(
   // 首次使用hook时，hook.memoizedState就是initialState
   hook.memoizedState = hook.baseState = initialState;
   const queue: UpdateQueue<S> = {
-    pending: null,
+    pending: null, // 指向末尾的Update
     dispatch: null,
   };
   // hook上的queue和Update上的queue一样，是一个环状链表
   hook.queue = queue;
   const dispatch: Dispatch<BasicStateAction<S>> = (queue.dispatch =
-    dispatchSetState.bind(null, currentlyRenderingFiber, queue));
+    dispatchSetState.bind(null, currentlyRenderingFiber!, queue));
 
   return [hook.memoizedState, dispatch];
 }
@@ -103,8 +108,41 @@ function mountWorkInProgressHook(): Hook {
 /**
  * @description: 更新hook上的state
  */
-function dispatchSetState<S>(fiber: Fiber | null, queue: any, action: S) {
-  console.log(fiber);
-  console.log(queue);
-  console.log(action);
+function dispatchSetState<S>(fiber: Fiber, queue: any, action: S) {
+  // 创建一个update
+  const update: Update<S> = {
+    action,
+    next: null as any, // 指向下一个update，用于构建环状链表
+  };
+  // 判断是否是render阶段产生的更新，即直接在执行function component函数时调用了dispatchSetState
+  if (fiber === currentlyRenderingFiber) {
+    // TODO
+  } else {
+    enqueueUpdate(fiber, queue, update);
+    console.log(queue);
+  }
+}
+
+/**
+ * @description: 构建update环状链表
+ */
+function enqueueUpdate<S>(
+  fiber: Fiber,
+  queue: UpdateQueue<S>,
+  update: Update<S>
+) {
+  const pending = queue.pending;
+  // 第一个update，自身和自身构成环状链表
+  if (pending === null) {
+    update.next = update;
+  } else {
+    // 已经存在环状链表了，需要加当前update插入到环状链表的末尾
+    // 比如 1->2->3->1 添加了一个4 就变成 1->2->3->4->1
+    // 1、将当前update的next指向第一个update，第一个update就是pending.next ===> 4->1->2->3
+    update.next = pending.next;
+    // 2、当前环状链表末尾的update指向新创建的update  ===》 4->1->2->3->4
+    pending.next = update;
+  }
+  // 新创建的update为当前环状链表的末尾
+  queue.pending = update;
 }

@@ -2,18 +2,16 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-12 22:13:52
+ * @LastEditTime: 2022-06-13 20:19:54
  */
 const { useState } = React;
 
 const App = () => {
-  const [num, setNum] = useState(0);
-
+  const [num, setNum] = useState(1);
+  
   return (
     <div className="red" style={{ fontSize: 14 }}>
-      <span>hello</span>
       <h1>{num}</h1>
-      <span>react</span>
       <p>
         <button
           onClick={(e) => {
