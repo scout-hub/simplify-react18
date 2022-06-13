@@ -2,10 +2,11 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-13 20:42:10
+ * @LastEditTime: 2022-06-13 21:10:20
  */
-import { isFunction } from "packages/shared/src";
+import { is, isFunction } from "packages/shared/src";
 import ReactSharedInternals from "packages/shared/src/ReactSharedInternals";
+import { scheduleUpdateOnFiber } from "./ReactFiberWorkLoop";
 import type {
   BasicStateAction,
   Dispatch,
@@ -26,9 +27,11 @@ export type Hook = {
   next: Hook | null; // 指向下一个hook
 };
 
-export type UpdateQueue<S> = {
+export type UpdateQueue<S, A> = {
   pending: Update<S> | null;
   dispatch: Dispatch<BasicStateAction<S>> | null;
+  lastRenderedReducer: (S, A) => S;
+  lastRenderedState: S | null;
 };
 
 const { ReactCurrentDispatcher } = ReactSharedInternals;
@@ -62,7 +65,11 @@ export function renderWithHooks(current, workInProgress, Component) {
   return children;
 }
 
-function mountState<S>(
+function basicStateReducer<S>(state: S, action: BasicStateAction<S>) {
+  return isFunction(action) ? (action as () => S)() : action;
+}
+
+function mountState<S, A>(
   initialState: S | (() => S)
 ): [S, Dispatch<BasicStateAction<S>>] {
   const hook = mountWorkInProgressHook();
@@ -71,9 +78,11 @@ function mountState<S>(
   }
   // 首次使用hook时，hook.memoizedState就是initialState
   hook.memoizedState = hook.baseState = initialState;
-  const queue: UpdateQueue<S> = {
+  const queue: UpdateQueue<S, A> = {
     pending: null, // 指向末尾的Update
     dispatch: null,
+    lastRenderedReducer: basicStateReducer,
+    lastRenderedState: initialState as any,
   };
   // hook上的queue和Update上的queue一样，是一个环状链表
   hook.queue = queue;
@@ -119,16 +128,28 @@ function dispatchSetState<S>(fiber: Fiber, queue: any, action: S) {
     // TODO
   } else {
     enqueueUpdate(fiber, queue, update);
-    console.log(queue);
+    const lastRenderedReducer = queue.lastRenderedReducer;
+    if (lastRenderedReducer !== null) {
+      // 获取上一次渲染阶段时的state
+      const currentState = queue.lastRenderedState;
+      // 获取期望的state，也就是通过调用useState返回的dispatch函数，将新的state计算方式传入并调用的结果
+      const eagerState = lastRenderedReducer(currentState, action);
+      // 如果期望的state和上一次渲染阶段的state一致，则不需要触发更新逻辑
+      if (is(eagerState, currentState)) {
+        return;
+      }
+    }
   }
+  // 调度fiber节点的更新
+  scheduleUpdateOnFiber(fiber);
 }
 
 /**
  * @description: 构建update环状链表
  */
-function enqueueUpdate<S>(
+function enqueueUpdate<S, A>(
   fiber: Fiber,
-  queue: UpdateQueue<S>,
+  queue: UpdateQueue<S, A>,
   update: Update<S>
 ) {
   const pending = queue.pending;
