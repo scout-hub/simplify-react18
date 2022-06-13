@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-13 21:39:54
+ * @LastEditTime: 2022-06-13 21:41:44
  */
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber";
@@ -29,6 +29,9 @@ export function scheduleUpdateOnFiber(fiber) {
    * markUpdateLaneFromFiberToRoot向上去查找当前应用的根节点
    */
   const root = markUpdateLaneFromFiberToRoot(fiber);
+  if (root === null) {
+    return null;
+  }
   // 异步调度应用（concurrent模式）
   ensureRootIsScheduled(root);
 }
