@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-12 14:07:19
+ * @LastEditTime: 2022-06-13 21:39:54
  */
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber";
@@ -10,6 +10,7 @@ import { beginWork } from "./ReactFiberBeginWork";
 import { commitMutationEffects } from "./ReactFiberCommitWork";
 import { completeWork } from "./ReactFiberCompleteWork";
 import { Fiber } from "./ReactInternalTypes";
+import { HostRoot } from "./ReactWorkTags";
 import { scheduleCallback } from "./Scheduler";
 
 // 当前正在工作的根应用fiber
@@ -22,9 +23,32 @@ let workInProgress: Fiber | null = null;
  * @param fiber
  */
 export function scheduleUpdateOnFiber(fiber) {
-  const root = fiber.stateNode;
+  /**
+   * react在render阶段从当前应用的根节点开始进行树的深度优先遍历处理，
+   * 在更新的时候，当前处理的fiber节点可能不是当前应用的根节点，因此需要通过
+   * markUpdateLaneFromFiberToRoot向上去查找当前应用的根节点
+   */
+  const root = markUpdateLaneFromFiberToRoot(fiber);
   // 异步调度应用（concurrent模式）
   ensureRootIsScheduled(root);
+}
+
+/**
+ * @description: 将当前fiber的更新冒泡到当前应用的根节点上，冒泡过程中会更新路径上fiber的优先级
+ */
+function markUpdateLaneFromFiberToRoot(sourceFiber) {
+  // TODO 优先级计算
+  let node = sourceFiber;
+  let parent = sourceFiber.return;
+  while (parent !== null) {
+    node = parent;
+    parent = parent.return;
+  }
+  if (node.tag === HostRoot) {
+    return node.stateNode;
+  } else {
+    return null;
+  }
 }
 
 /**
