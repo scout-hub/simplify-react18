@@ -2,20 +2,24 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 14:12:32
+ * @LastEditTime: 2022-06-14 14:42:02
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
-import {
-  Lane,
-  markRootUpdated,
-  markStarvedLanesAsExpired,
-} from "./ReactFiberLane";
+import type { Lane, Lanes } from "./ReactFiberLane";
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber";
 import { beginWork } from "./ReactFiberBeginWork";
 import { commitMutationEffects } from "./ReactFiberCommitWork";
 import { completeWork } from "./ReactFiberCompleteWork";
-import { NoTimestamp, NoLane, mergeLanes } from "./ReactFiberLane";
+import {
+  getNextLanes,
+  NoTimestamp,
+  NoLane,
+  mergeLanes,
+  markRootUpdated,
+  markStarvedLanesAsExpired,
+  NoLanes,
+} from "./ReactFiberLane";
 import { HostRoot } from "./ReactWorkTags";
 import { now, scheduleCallback } from "./Scheduler";
 import { getCurrentUpdatePriority } from "./ReactEventPriorities";
@@ -27,6 +31,8 @@ let workInProgressRoot = null;
 let workInProgress: Fiber | null = null;
 
 let currentEventTime: number = NoTimestamp;
+
+let workInProgressRootRenderLanes: Lanes = NoLanes;
 
 /**
  * @description: 计算事件的开始时间
@@ -122,6 +128,14 @@ function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
 
   // 判读某些lane上的任务是否已经过期，过期的话就标记为过期，然后接下去就可以执行它们
   markStarvedLanesAsExpired(root, eventTime);
+
+  // 获取优先级最高的任务的优先级
+  const nextLanes = getNextLanes(
+    root,
+    root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes
+  );
+
+  console.log(nextLanes);
 
   // 调度一个新的回调
   let newCallbackNode;

@@ -2,14 +2,15 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 11:10:29
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 14:13:09
+ * @LastEditTime: 2022-06-14 15:05:13
  */
-import type { Fiber, FiberRoot } from "./ReactInternalTypes";
+import type { FiberRoot } from "./ReactInternalTypes";
 
 export type Lanes = number;
 export type Lane = number;
 export type LaneMap<T> = Array<T>;
 
+// lane使用31位二进制来表示优先级车道共31条, 位数越小（1的位置越靠右）表示优先级越高
 export const TotalLanes = 31;
 
 export const NoTimestamp = -1;
@@ -17,9 +18,11 @@ export const NoTimestamp = -1;
 // 无优先级，初始化的优先级
 export const NoLanes: Lanes = 0b0000000000000000000000000000000;
 export const NoLane: Lane = 0b0000000000000000000000000000000;
+
 // 同步更新的优先级为最高优先级
 export const SyncLane = 0b0000000000000000000000000000001;
 
+// 默认优先级，例如使用setTimeout，请求数据返回等造成的更新
 export const DefaultLane: Lane = 0b0000000000000000000000000010000;
 
 /**
@@ -59,22 +62,70 @@ export function markRootUpdated(
 /**
  * @description: 1、为当前任务根据优先级添加过期时间
  * 2、检查未执行的任务中是否有任务过期，有任务过期则expiredLanes中添加该任务的lane，在后续任务执行中以同步模式执行，避免饥饿问题
+ *
+ * 饥饿问题：
+ * 当某个任务因为其他过多高优先级任务的插入导致迟迟不能执行时，就会出现饥饿问题
  */
 export function markStarvedLanesAsExpired(
   root: FiberRoot,
   currentTime: number
 ) {
-  console.log(root);
-  console.log(currentTime);
+  const pendingLanes = root.pendingLanes;
+  const expirationTimes = root.expirationTimes;
+
+  let lanes = pendingLanes;
+  while (lanes > 0) {
+    // 获取当前31位lanes中最左边1的位置
+    const index = pickArbitraryLaneIndex(lanes);
+    // 根据位置计算lane值
+    const lane = 1 << index;
+    // 获取该位置上任务的过期时间
+    const expirationTime = expirationTimes[index];
+    // 如果没有过期时间，则创建一个过期时间
+    if (expirationTime === NoTimestamp) {
+      expirationTimes[index] = computeExpirationTime(lane, currentTime);
+    } else if (expirationTime <= currentTime) {
+      // 如果任务已经过期，将当前的lane添加到expiredLanes中
+      root.expiredLanes |= lane;
+    }
+    // 从lanes中删除lane, 每次循环删除一个，直到lanes等于0
+    lanes &= ~lane;
+  }
 }
 
 /**
- * @description:
- * 返回该lane所在bit位在bitset中index
- * 比如
- * 0b001 就会返回0
- * 0b010 就会返回1
- * 0b100 就会返回2
+ * @description: 获取当前任务的优先级
+ */
+export function getNextLanes(root: FiberRoot, wipLanes: Lanes): Lanes {
+  // 每一个任务都会将它们各自的优先级添加到fiberRoot的pendingLanes的属性上，这里获取
+  // 了所有将要执行的任务的lane
+  const pendingLanes = root.pendingLanes;
+
+  // pendingLanes为空，说明所有的任务都执行完了
+  if (pendingLanes === NoLanes) {
+    return NoLanes;
+  }
+  return 1;
+}
+
+/**
+ * @description: 根据优先级计算任务过期时间
+ */
+function computeExpirationTime(lane: Lane, currentTime: number) {
+  switch (lane) {
+    case SyncLane:
+      return currentTime + 250;
+    case DefaultLane:
+      return currentTime + 5000;
+    default: {
+      return NoTimestamp;
+    }
+  }
+}
+
+/**
+ * @description: 返回该lane所在bit位在bitset中index
+ * 比如：0b001 就会返回0；0b010 就会返回1
  */
 function laneToIndex(lane: Lane) {
   return pickArbitraryLaneIndex(lane);

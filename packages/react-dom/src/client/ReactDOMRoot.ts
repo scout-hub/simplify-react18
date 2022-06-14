@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 19:59:04
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 14:06:05
+ * @LastEditTime: 2022-06-14 14:51:50
  */
 import { createContainer } from "packages/react-reconciler/src/ReactFiberReconciler";
 import { updateContainer } from "packages/react-reconciler/src/ReactFiberReconciler";
@@ -12,6 +12,7 @@ import { listenToAllSupportedEvents } from "../events/DOMPluginEventSystem";
 export function createRoot(container) {
   // 创建根容器
   const root = createContainer(container, ConcurrentRoot);
+  // 开启事件委托，监听root上所有的事件
   listenToAllSupportedEvents(container)
   return new ReactDOMRoot(root);
 }

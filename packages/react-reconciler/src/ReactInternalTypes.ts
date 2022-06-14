@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-30 15:32:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 14:05:19
+ * @LastEditTime: 2022-06-14 14:44:29
  */
 import type { Flags } from "./ReactFiberFlags";
 import type { LaneMap, Lanes } from "./ReactFiberLane";
@@ -39,9 +39,11 @@ export type Fiber = {
 
 export type FiberRoot = {
   current: Fiber;
-  pendingLanes: Lanes;
   callbackNode: any;
-  eventTimes: LaneMap<number>;
+  pendingLanes: Lanes; // 所有将要执行的任务的lane
+  expiredLanes: Lanes; // 已经过期的任务的lane
+  eventTimes: LaneMap<number>; // 每个lane的事件开始时间
+  expirationTimes: LaneMap<number>; // 所有任务的过期时间
 };
 
 export type Dispatch<A> = (a: A) => void;

@@ -2,10 +2,15 @@
  * @Author: Zhouqi
  * @Date: 2022-06-14 12:32:30
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 12:42:49
+ * @LastEditTime: 2022-06-14 14:59:07
  */
 import { DefaultLane, Lane } from "./ReactFiberLane";
 import { NoLane } from "./ReactFiberLane";
+
+import { SyncLane } from "packages/react-reconciler/src/ReactFiberLane";
+
+export const DiscreteEventPriority = SyncLane;
+
 
 export type EventPriority = Lane;
 
@@ -26,3 +31,4 @@ export function getCurrentUpdatePriority(): EventPriority {
 export function setCurrentUpdatePriority(newPriority: EventPriority) {
   currentUpdatePriority = newPriority;
 }
+
