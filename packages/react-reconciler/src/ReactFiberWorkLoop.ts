@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 16:47:10
+ * @LastEditTime: 2022-06-14 17:13:12
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -26,8 +26,23 @@ import {
   NoLanes,
 } from "./ReactFiberLane";
 import { HostRoot } from "./ReactWorkTags";
-import { now, scheduleCallback, cancelCallback } from "./Scheduler";
-import { getCurrentUpdatePriority } from "./ReactEventPriorities";
+import {
+  now,
+  scheduleCallback,
+  cancelCallback,
+  ImmediatePriority as ImmediateSchedulerPriority,
+  UserBlockingPriority as UserBlockingSchedulerPriority,
+  NormalPriority as NormalSchedulerPriority,
+  IdlePriority as IdleSchedulerPriority,
+} from "./Scheduler";
+import {
+  ContinuousEventPriority,
+  DefaultEventPriority,
+  DiscreteEventPriority,
+  getCurrentUpdatePriority,
+  IdleEventPriority,
+  lanesToEventPriority,
+} from "./ReactEventPriorities";
 import { getCurrentEventPriority } from "packages/react-dom/src/client/ReactDOMHostConfig";
 
 // 当前正在工作的根应用fiber
@@ -180,9 +195,26 @@ function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
     // 同步任务的更新
   } else {
     // 设置任务优先级，防止浏览器因没有空闲时间导致任务卡死
-    // 先写死NormalPriority
-    let schedulerPriorityLevel = NormalPriority;
-    // TODO 计算任务超时等级
+    let schedulerPriorityLevel;
+    // 计算任务超时等级
+    // lanesToEventPriority函数将lane的优先级转换为React事件的优先级，然后再根据React事件的优先级转换为Scheduler的优先级
+    switch (lanesToEventPriority(nextLanes)) {
+      case DiscreteEventPriority:
+        schedulerPriorityLevel = ImmediateSchedulerPriority;
+        break;
+      case ContinuousEventPriority:
+        schedulerPriorityLevel = UserBlockingSchedulerPriority;
+        break;
+      case DefaultEventPriority:
+        schedulerPriorityLevel = NormalSchedulerPriority;
+        break;
+      case IdleEventPriority:
+        schedulerPriorityLevel = IdleSchedulerPriority;
+        break;
+      default:
+        schedulerPriorityLevel = NormalSchedulerPriority;
+        break;
+    }
 
     // 低优先级的异步更新任务走performConcurrentWorkOnRoot
     // performConcurrentWorkOnRoot在浏览器没有空闲时间的时候执行shouldYield终止循环

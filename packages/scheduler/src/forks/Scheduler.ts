@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 16:17:22
+ * @LastEditTime: 2022-06-14 17:05:25
  */
 import { peek, pop, push } from "../SchedulerMinHeap";
 import {
@@ -195,4 +195,9 @@ export {
   unstable_scheduleCallback,
   getCurrentTime as unstable_now,
   unstable_cancelCallback,
+  ImmediatePriority as unstable_ImmediatePriority,
+  UserBlockingPriority as unstable_UserBlockingPriority,
+  IdlePriority as unstable_IdlePriority,
+  LowPriority as unstable_LowPriority,
+  NormalPriority as unstable_NormalPriority,
 };

@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 11:10:29
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 16:14:43
+ * @LastEditTime: 2022-06-14 17:12:44
  */
 import type { FiberRoot } from "./ReactInternalTypes";
 
@@ -22,8 +22,12 @@ export const NoLane: Lane = 0b0000000000000000000000000000000;
 // 同步更新的优先级为最高优先级
 export const SyncLane = 0b0000000000000000000000000000001;
 
+export const InputContinuousLane: Lane = 0b0000000000000000000000000000100;
+
 // 默认优先级，例如使用setTimeout，请求数据返回等造成的更新
 export const DefaultLane: Lane = 0b0000000000000000000000000010000;
+
+export const IdleLane: Lane = 0b0100000000000000000000000000000;
 
 // 所有未闲置的1的位置，通过 & NonIdleLanes就能知道是否有未闲置的任务 1 & 1 ==> 1 1 & 0 ==> 0
 const NonIdleLanes: Lanes = 0b0001111111111111111111111111111;
@@ -150,6 +154,9 @@ export function getHighestPriorityLane(lanes: Lanes): Lane {
   return lanes & -lanes;
 }
 
+export function includesNonIdleWork(lanes: Lanes) {
+  return (lanes & NonIdleLanes) !== NoLanes;
+}
 /**
  * @description: 从lanes中获取最高优先级的lane
  */
