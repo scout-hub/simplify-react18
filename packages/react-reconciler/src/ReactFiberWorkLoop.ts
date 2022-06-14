@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 14:42:02
+ * @LastEditTime: 2022-06-14 16:16:16
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import type { Lane, Lanes } from "./ReactFiberLane";
@@ -21,7 +21,7 @@ import {
   NoLanes,
 } from "./ReactFiberLane";
 import { HostRoot } from "./ReactWorkTags";
-import { now, scheduleCallback } from "./Scheduler";
+import { now, scheduleCallback, cancelCallback } from "./Scheduler";
 import { getCurrentUpdatePriority } from "./ReactEventPriorities";
 import { getCurrentEventPriority } from "packages/react-dom/src/client/ReactDOMHostConfig";
 
@@ -135,7 +135,20 @@ function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
     root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes
   );
 
-  console.log(nextLanes);
+  // 如果nextLanes为空则表示没有任务需要执行，则直接中断更新
+  if (nextLanes === NoLanes) {
+    // existingCallbackNode不为空表示有任务使用了concurrent模式被scheduler调用，但是还未执行
+    // nextLanes为空了则表示没有任务了，就算这个任务执行了但是也做不了任何更新，所以需要取消掉
+    if (existingCallbackNode !== null) {
+      // 使用cancelCallback会将任务的callback置为null
+      // 在scheduler循环taskQueue时，会检查当前task的callback是否为null
+      // 为null则从taskQueue中删除，不会执行
+      cancelCallback(existingCallbackNode);
+    }
+    root.callbackNode = null;
+    root.callbackPriority = NoLane;
+    return;
+  }
 
   // 调度一个新的回调
   let newCallbackNode;

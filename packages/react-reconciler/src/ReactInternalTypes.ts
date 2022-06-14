@@ -2,10 +2,10 @@
  * @Author: Zhouqi
  * @Date: 2022-05-30 15:32:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 14:44:29
+ * @LastEditTime: 2022-06-14 16:09:48
  */
 import type { Flags } from "./ReactFiberFlags";
-import type { LaneMap, Lanes } from "./ReactFiberLane";
+import type { Lane, LaneMap, Lanes } from "./ReactFiberLane";
 import type { WorkTag } from "./ReactWorkTags";
 
 export type Fiber = {
@@ -40,6 +40,7 @@ export type Fiber = {
 export type FiberRoot = {
   current: Fiber;
   callbackNode: any;
+  callbackPriority: Lane;
   pendingLanes: Lanes; // 所有将要执行的任务的lane
   expiredLanes: Lanes; // 已经过期的任务的lane
   eventTimes: LaneMap<number>; // 每个lane的事件开始时间

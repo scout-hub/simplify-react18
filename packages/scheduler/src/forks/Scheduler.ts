@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 14:07:12
+ * @LastEditTime: 2022-06-14 16:17:22
  */
 import { peek, pop, push } from "../SchedulerMinHeap";
 import {
@@ -184,4 +184,15 @@ function workLoop() {
   }
 }
 
-export { unstable_scheduleCallback, getCurrentTime as unstable_now };
+/**
+ * @description: 删除一个callback任务
+ */
+function unstable_cancelCallback(task) {
+  task.callback = null;
+}
+
+export {
+  unstable_scheduleCallback,
+  getCurrentTime as unstable_now,
+  unstable_cancelCallback,
+};

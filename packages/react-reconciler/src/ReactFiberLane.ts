@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 11:10:29
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 15:05:13
+ * @LastEditTime: 2022-06-14 16:14:43
  */
 import type { FiberRoot } from "./ReactInternalTypes";
 
@@ -24,6 +24,9 @@ export const SyncLane = 0b0000000000000000000000000000001;
 
 // 默认优先级，例如使用setTimeout，请求数据返回等造成的更新
 export const DefaultLane: Lane = 0b0000000000000000000000000010000;
+
+// 所有未闲置的1的位置，通过 & NonIdleLanes就能知道是否有未闲置的任务 1 & 1 ==> 1 1 & 0 ==> 0
+const NonIdleLanes: Lanes = 0b0001111111111111111111111111111;
 
 /**
  * @description: 创建31位的lane数组
@@ -95,6 +98,8 @@ export function markStarvedLanesAsExpired(
 
 /**
  * @description: 获取当前任务的优先级
+ *  wipLanes是正在执行任务的lane，nextLanes是本次需要执行的任务的lane
+ *
  */
 export function getNextLanes(root: FiberRoot, wipLanes: Lanes): Lanes {
   // 每一个任务都会将它们各自的优先级添加到fiberRoot的pendingLanes的属性上，这里获取
@@ -105,7 +110,59 @@ export function getNextLanes(root: FiberRoot, wipLanes: Lanes): Lanes {
   if (pendingLanes === NoLanes) {
     return NoLanes;
   }
-  return 1;
+
+  let nextLanes = NoLanes;
+
+  // 是否有非空闲的任务，如果有非空闲的任务，需要先执行非空闲的任务，不要去执行空闲的任务
+  const nonIdlePendingLanes = pendingLanes & NonIdleLanes;
+  // 有未闲置的任务
+  if (nonIdlePendingLanes !== NoLanes) {
+    // 获取除挂起任务外最高优先级任务的优先级，这里暂时不考虑挂起任务
+    nextLanes = getHighestPriorityLanes(nonIdlePendingLanes);
+    // TODO 从挂起任务中获取最高优先级任务的优先级
+  } else {
+    // TODO
+  }
+
+  if (nextLanes === NoLanes) {
+    return NoLanes;
+  }
+
+  // 说明在渲染阶段插入了一个新的任务 ???
+  if (wipLanes !== NoLanes && wipLanes !== nextLanes) {
+    const nextLane = getHighestPriorityLane(nextLanes);
+    const wipLane = getHighestPriorityLane(wipLanes);
+
+    // 如果新添加任务优先级低，则依旧返回当前渲染中的任务的优先级
+    if (nextLane >= wipLane) {
+      return wipLanes;
+    }
+  }
+
+  return nextLanes;
+}
+
+/**
+ * @description: 获得一个二进制数中以最低位1所形成的数
+ * 比如 0b101 & -0b101 ===> 0b001 === 1;  0b110 & -0b110 ===> 0b010 === 2
+ */
+export function getHighestPriorityLane(lanes: Lanes): Lane {
+  return lanes & -lanes;
+}
+
+/**
+ * @description: 从lanes中获取最高优先级的lane
+ */
+function getHighestPriorityLanes(lanes: Lanes | Lane): Lanes {
+  switch (getHighestPriorityLane(lanes)) {
+    case SyncLane:
+      return SyncLane;
+    case DefaultLane:
+      return DefaultLane;
+    default: {
+      return lanes;
+    }
+  }
 }
 
 /**
