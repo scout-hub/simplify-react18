@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 17:05:25
+ * @LastEditTime: 2022-06-14 21:20:08
  */
 import { peek, pop, push } from "../SchedulerMinHeap";
 import {
@@ -13,7 +13,10 @@ import {
   NormalPriority,
 } from "../SchedulerPriorities";
 
+let startTime = -1;
+let currentTask;
 let getCurrentTime;
+let currentPriorityLevel = NormalPriority;
 // 是否可使用performace.now去获取高精度时间
 const hasPerformanceNow =
   typeof performance === "object" && typeof performance.now === "function";
@@ -136,19 +139,31 @@ if (typeof MessageChannel !== "undefined") {
   // 使用setTimeout
 }
 
-function flushWork() {
+function flushWork(hasTimeRemaining: boolean, initialTime: number) {
   isHostCallbackScheduled = false;
   isPerformingWork = true;
-  return workLoop();
+  const previousPriorityLevel = currentPriorityLevel;
+  try {
+    return workLoop(hasTimeRemaining, initialTime);
+  } finally {
+    currentTask = null;
+    currentPriorityLevel = previousPriorityLevel;
+    isPerformingWork = false;
+  }
 }
 
 function performWorkUntilDeadline() {
   if (scheduledHostCallback !== null) {
+    const currentTime = getCurrentTime();
+    startTime = currentTime;
+
+    // 是否有剩余时间
+    const hasTimeRemaining = true;
     let hasMoreWork = true;
 
     try {
       // 执行flushWork
-      hasMoreWork = scheduledHostCallback();
+      hasMoreWork = scheduledHostCallback(hasTimeRemaining, currentTime);
     } finally {
       // TODO 如果队列中还有任务，则继续为其创建一个宏任务以继续执行
       if (hasMoreWork) {
@@ -165,19 +180,29 @@ function performWorkUntilDeadline() {
 /**
  * @description: 执行过期的任务
  */
-function workLoop() {
+function workLoop(hasTimeRemaining: boolean, initialTime: number) {
+  let currentTime = initialTime;
   // 取出当前优先级最高的任务
-  let currentTask = peek(taskQueue);
+  currentTask = peek(taskQueue);
   while (currentTask !== null) {
+    if (currentTask.expirationTime > currentTime && !hasTimeRemaining) {
+      // 如果当前的任务还没有过期而且已经到达截止时间了，则跳出循环
+      break;
+    }
+
     // 获取真正的更新函数
     const callback = currentTask.callback;
     if (typeof callback === "function") {
       currentTask.callback = null;
-      callback();
+      currentPriorityLevel = currentTask.priorityLevel;
+      const didUserCallbackTimeout = currentTask.expirationTime <= currentTime;
+      callback(didUserCallbackTimeout);
       if (currentTask === peek(taskQueue)) {
         // 弹出当前执行的任务
         pop(taskQueue);
       }
+    } else {
+      pop(taskQueue);
     }
     // 取出下一个任务执行
     currentTask = peek(taskQueue);

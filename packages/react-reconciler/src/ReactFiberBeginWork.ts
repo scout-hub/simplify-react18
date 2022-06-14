@@ -2,8 +2,10 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-31 12:02:14
+ * @LastEditTime: 2022-06-14 22:00:56
  */
+import type { Fiber } from "./ReactInternalTypes";
+import { Lanes, NoLanes } from "./ReactFiberLane";
 import { shouldSetTextContent } from "packages/react-dom/src/client/ReactDOMHostConfig";
 import { mountChildFibers, reconcileChildFibers } from "./ReactChildFiber";
 import { renderWithHooks } from "./ReactFiberHooks";
@@ -16,7 +18,11 @@ import {
   IndeterminateComponent,
 } from "./ReactWorkTags";
 
-export function beginWork(current, workInProgress) {
+export function beginWork(
+  current: Fiber | null,
+  workInProgress: Fiber,
+  renderLanes: Lanes
+) {
   // 首屏渲染只有hostRoot存在current节点，其他节点还未被创建
   // hostRoot的workInPgress树中的HostRoot是在prepareFreshStack函数中创建
   if (current !== null) {
@@ -24,9 +30,13 @@ export function beginWork(current, workInProgress) {
   } else {
     // mount阶段
   }
+  // 在进入begin流程前，先清除workInProgress中的lanes，否则会导致HostRoot不能进入bailout逻辑，
+  // 导致后续的更新不会触发，还会导致root上的pendingLanes一直不为空
+  // 会让performConcurrentWorkOnRoot一直被schedule下去
+  // workInProgress.lanes = NoLanes;
   switch (workInProgress.tag) {
     case HostRoot: {
-      return updateHostRoot(current, workInProgress);
+      return updateHostRoot(current, workInProgress, renderLanes);
     }
     case IndeterminateComponent:
       return mountIndeterminateComponent(
@@ -43,7 +53,11 @@ export function beginWork(current, workInProgress) {
   return null;
 }
 
-function updateHostRoot(current, workInProgress) {
+function updateHostRoot(
+  current: Fiber | null,
+  workInProgress: Fiber,
+  renderLanes: Lanes
+) {
   const prevState = workInProgress.memoizedState;
   const prevChildren = prevState.element;
   processUpdateQueue(workInProgress);

@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 09:54:52
+ * @LastEditTime: 2022-06-14 21:49:53
  */
 import { isString } from "packages/shared/src";
 import { NoFlags } from "./ReactFiberFlags";
@@ -68,13 +68,21 @@ export function createWorkInProgress(current, pendingProps) {
     workInProgress.stateNode = current.stateNode;
     workInProgress.alternate = current;
     current.alternate = workInProgress;
+  } else {
   }
+  workInProgress.flags = current.flags;
+  workInProgress.childLanes = current.childLanes;
+  workInProgress.lanes = current.lanes;
+
   workInProgress.child = current.child;
   workInProgress.sibling = current.sibling;
   workInProgress.index = current.index;
   workInProgress.memoizedProps = current.memoizedProps;
   workInProgress.memoizedState = current.memoizedState;
   workInProgress.updateQueue = current.updateQueue;
+
+  workInProgress.sibling = current.sibling;
+  workInProgress.index = current.index;
 
   return workInProgress;
 }

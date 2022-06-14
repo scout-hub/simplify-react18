@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 11:10:29
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 17:12:44
+ * @LastEditTime: 2022-06-14 22:08:00
  */
 import type { FiberRoot } from "./ReactInternalTypes";
 
@@ -22,6 +22,7 @@ export const NoLane: Lane = 0b0000000000000000000000000000000;
 // 同步更新的优先级为最高优先级
 export const SyncLane = 0b0000000000000000000000000000001;
 
+export const InputContinuousHydrationLane: Lane = 0b0000000000000000000000000000010;
 export const InputContinuousLane: Lane = 0b0000000000000000000000000000100;
 
 // 默认优先级，例如使用setTimeout，请求数据返回等造成的更新
@@ -147,6 +148,20 @@ export function getNextLanes(root: FiberRoot, wipLanes: Lanes): Lanes {
 }
 
 /**
+ * @description: 标记root更新完成后的相关状态
+ */
+export function markRootFinished(root: FiberRoot, remainingLanes: Lanes) {}
+
+export function includesBlockingLane(root: FiberRoot, lanes: Lanes) {
+  const SyncDefaultLanes = InputContinuousLane | DefaultLane;
+  return (lanes & SyncDefaultLanes) !== NoLanes;
+}
+
+export function includesExpiredLane(root: FiberRoot, lanes: Lanes) {
+  return (lanes & root.expiredLanes) !== NoLanes;
+}
+
+/**
  * @description: 获得一个二进制数中以最低位1所形成的数
  * 比如 0b101 & -0b101 ===> 0b001 === 1;  0b110 & -0b110 ===> 0b010 === 2
  */
@@ -157,6 +172,7 @@ export function getHighestPriorityLane(lanes: Lanes): Lane {
 export function includesNonIdleWork(lanes: Lanes) {
   return (lanes & NonIdleLanes) !== NoLanes;
 }
+
 /**
  * @description: 从lanes中获取最高优先级的lane
  */

@@ -2,13 +2,16 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 17:39:05
+ * @LastEditTime: 2022-06-14 22:08:47
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
   getHighestPriorityLane,
+  includesBlockingLane,
+  includesExpiredLane,
   Lane,
   Lanes,
+  markRootFinished,
   SyncLane,
 } from "./ReactFiberLane";
 import { createWorkInProgress } from "./ReactFiber";
@@ -45,13 +48,14 @@ import {
 import { getCurrentEventPriority } from "packages/react-dom/src/client/ReactDOMHostConfig";
 
 // 当前正在工作的根应用fiber
-let workInProgressRoot = null;
+let workInProgressRoot: FiberRoot | null = null;
 // 当前正在工作的fiber
 let workInProgress: Fiber | null = null;
 
 let currentEventTime: number = NoTimestamp;
 
 let workInProgressRootRenderLanes: Lanes = NoLanes;
+let subtreeRenderLanes: Lanes = NoLanes;
 
 /**
  * @description: 计算事件的开始时间
@@ -234,41 +238,61 @@ function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
  * @description: 所有并发任务的入口，即通过schedular调度的任务
  * @param root
  */
-function performConcurrentWorkOnRoot(root) {
+function performConcurrentWorkOnRoot(root: FiberRoot, didTimeout: boolean) {
+  // 这里进入了react中的事件，这里可以把currentEventTime清除了，下一次更新的时候会重新计算
+  currentEventTime = NoTimestamp;
+
+  // 获取最高任务的优先级
+  const lanes = getNextLanes(
+    root,
+    root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes
+  );
+
+  if (lanes === NoLanes) {
+    return null;
+  }
+
   // todo 判断是否需要开启时间切片
-  const shouldTimeSlice = false;
-  shouldTimeSlice ? renderRootConcurrent(root) : renderRootSync(root);
+  const shouldTimeSlice =
+    !includesBlockingLane(root, lanes) &&
+    !includesExpiredLane(root, lanes) &&
+    !didTimeout;
+  shouldTimeSlice ? renderRootConcurrent(root) : renderRootSync(root, lanes);
   const finishedWork = root.current.alternate;
   root.finishedWork = finishedWork;
   finishConcurrentRender(root);
 }
 
-function renderRootConcurrent(roor) {}
+function renderRootConcurrent(root) {}
 
 /**
  * @description: 同步执行根节点渲染
  * @param root
  */
-function renderRootSync(root) {
-  if (workInProgressRoot !== root) {
+function renderRootSync(root: FiberRoot, lanes: Lanes) {
+  // 如果根应用节点或者优先级改变，则创建一个新的workInProgress
+  if (workInProgressRoot !== root || workInProgressRootRenderLanes !== lanes) {
     // 为接下去新一次渲染工作初始化参数
-    prepareFreshStack(root);
+    prepareFreshStack(root, lanes);
   }
   workLoopSync();
   // 表示render结束，没有正在进行中的render
   workInProgressRoot = null;
+  workInProgressRootRenderLanes = NoLanes;
 }
 
 /**
  * @description: 为接下去新一次渲染工作初始化参数
  * @param root
  */
-function prepareFreshStack(root) {
+function prepareFreshStack(root: FiberRoot, lanes: Lanes) {
   root.finishedWork = null;
+  root.finishedLanes = NoLanes;
   workInProgressRoot = root;
   // 为当前节点创建一个内存中的fiber节点（双缓存机制）
   const rootWorkInProgress = createWorkInProgress(root.current, null);
   workInProgress = rootWorkInProgress;
+  workInProgressRootRenderLanes = subtreeRenderLanes = lanes;
   return workInProgressRoot;
 }
 
@@ -293,6 +317,11 @@ function commitRootImpl(root) {
   root.finishedWork = null;
   // commitRoot总是同步完成的。所以我们现在可以清除这些，以允许一个新的回调被调度。
   root.callbackNode = null;
+  root.callbackPriority = NoLane;
+
+  // TODO
+  const remainingLanes = 1;
+  markRootFinished(root, remainingLanes);
 
   workInProgressRoot = null;
   workInProgress = null;
@@ -319,11 +348,11 @@ function workLoopSync() {
  * @description: 以fiber节点为单位开始beginWork和completeWork
  * @param unitOfWork
  */
-function performUnitOfWork(unitOfWork) {
+function performUnitOfWork(unitOfWork: Fiber) {
   // 首屏渲染只有当前应用的根结点存在current，其它节点current为null
   const current = unitOfWork.alternate;
   let next;
-  next = beginWork(current, unitOfWork);
+  next = beginWork(current, unitOfWork, subtreeRenderLanes);
   unitOfWork.memoizedProps = unitOfWork.pendingProps;
 
   // 不存在子fiber节点了，说明节点已经处理完，此时进入completeWork
