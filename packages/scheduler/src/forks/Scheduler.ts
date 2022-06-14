@@ -184,4 +184,4 @@ function workLoop() {
   }
 }
 
-export { unstable_scheduleCallback };
+export { unstable_scheduleCallback, getCurrentTime as unstable_now };

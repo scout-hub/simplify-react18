@@ -2,10 +2,13 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 15:44:53
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 17:25:14
+ * @LastEditTime: 2022-06-14 12:47:21
  */
 
+import { DefaultEventPriority } from "packages/react-reconciler/src/ReactEventPriorities";
 import { Fiber } from "packages/react-reconciler/src/ReactInternalTypes";
+import { DOMEventName } from "../events/DOMEventNames";
+import { getEventPriority } from "../events/ReactDOMEventListener";
 import { createElement, setInitialProperties } from "./ReactDOMComponent";
 import { precacheFiberNode, updateFiberProps } from "./ReactDOMComponentTree";
 
@@ -77,4 +80,15 @@ export function createTextInstance(text: string) {
  */
 export function appendInitialChild(parentInstance, child): void {
   parentInstance.appendChild(child);
+}
+
+/**
+ * @description: 获取事件的优先级
+ */
+export function getCurrentEventPriority() {
+  const currentEvent = window.event;
+  if (currentEvent === undefined) {
+    return DefaultEventPriority;
+  }
+  return getEventPriority(currentEvent.type as DOMEventName);
 }

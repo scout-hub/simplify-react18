@@ -2,8 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 15:02:16
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 17:28:42
+ * @LastEditTime: 2022-06-14 12:46:07
  */
+import { DefaultEventPriority } from "packages/react-reconciler/src/ReactEventPriorities";
 import { getClosestInstanceFromNode } from "../client/ReactDOMComponentTree";
 import { DOMEventName } from "./DOMEventNames";
 import { dispatchEventForPluginEventSystem } from "./DOMPluginEventSystem";
@@ -50,11 +51,13 @@ function dispatchDiscreteEvent(
  * @description: 获取事件优先级
  * @param {DOMEventName} domEventName
  */
-function getEventPriority(domEventName: DOMEventName) {
+export function getEventPriority(domEventName: DOMEventName) {
   switch (domEventName) {
     case "click":
     case "mousedown":
       return DiscreteEventPriority;
+    default:
+      return DefaultEventPriority;
   }
 }
 

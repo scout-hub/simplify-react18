@@ -2,27 +2,58 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-13 21:41:44
+ * @LastEditTime: 2022-06-14 12:47:50
  */
+import { Lane } from "./ReactFiberLane";
+import type { Fiber } from "./ReactInternalTypes";
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber";
 import { beginWork } from "./ReactFiberBeginWork";
 import { commitMutationEffects } from "./ReactFiberCommitWork";
 import { completeWork } from "./ReactFiberCompleteWork";
-import { Fiber } from "./ReactInternalTypes";
+import { NoTimestamp, NoLane } from "./ReactFiberLane";
 import { HostRoot } from "./ReactWorkTags";
-import { scheduleCallback } from "./Scheduler";
+import { now, scheduleCallback } from "./Scheduler";
+import { getCurrentUpdatePriority } from "./ReactEventPriorities";
+import { getCurrentEventPriority } from "packages/react-dom/src/client/ReactDOMHostConfig";
 
 // 当前正在工作的根应用fiber
 let workInProgressRoot = null;
 // 当前正在工作的fiber
 let workInProgress: Fiber | null = null;
 
+let currentEventTime: number = NoTimestamp;
+
+/**
+ * @description: 计算事件的开始时间
+ */
+export function requestEventTime() {
+  // 处于一个浏览器事件中产生的任务应该具有相同开始时间，比如click事件中多次调用setState产生的事件
+  if (currentEventTime !== NoTimestamp) {
+    return currentEventTime;
+  }
+  currentEventTime = now();
+  return currentEventTime;
+}
+
+/**
+ * @description: 计算事件的优先级
+ */
+export function requestUpdateLane(fiber: Fiber): Lane {
+  const updateLane = getCurrentUpdatePriority();
+  if (updateLane !== NoLane) {
+    return updateLane;
+  }
+  // 大部分事件更新产生的优先级
+  const eventLane = getCurrentEventPriority();
+  return eventLane;
+}
+
 /**
  * @description: 调度fiber节点上的更新
  * @param fiber
  */
-export function scheduleUpdateOnFiber(fiber) {
+export function scheduleUpdateOnFiber(fiber, lane: Lane, eventTime?: number) {
   /**
    * react在render阶段从当前应用的根节点开始进行树的深度优先遍历处理，
    * 在更新的时候，当前处理的fiber节点可能不是当前应用的根节点，因此需要通过

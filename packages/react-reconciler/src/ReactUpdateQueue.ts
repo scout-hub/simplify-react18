@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 14:43:08
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 10:34:47
+ * @LastEditTime: 2022-06-14 10:43:31
  */
 import { assign } from "packages/shared/src";
 import { Lane, Lanes, NoLanes } from "./ReactFiberLane";
@@ -18,7 +18,7 @@ export type Update<State> = {
 };
 
 export type SharedQueue<State> = {
-  pending: Update<State> | null;
+  pending: Update<State> | null; // 指向Update环状链表的最后一个Update
   lanes: Lanes;
 };
 
@@ -81,8 +81,6 @@ export function createUpdate(): Update<any> {
 
 /**
  * @description: 向当前fiber节点的updateQueue中添加Update
- * @param fiber
- * @param update
  */
 export function enqueueUpdate(fiber, update) {
   const updateQueue = fiber.updateQueue;
@@ -91,7 +89,13 @@ export function enqueueUpdate(fiber, update) {
   const pending = sharedQueue.pending;
   // 构建循环链表
   if (pending === null) {
+    // 这是第一个update，自身和自身形成环状链表
     update.next = update;
+  } else {
+    // 1、将当前插入的Update的next赋值为第一个Update
+    update.next = pending.next;
+    // 2、将当前最后一个Update的next赋值为插入的Update
+    pending.next = update;
   }
   // shared.pending 会保证始终指向最后一个插入的update
   sharedQueue.pending = update;
