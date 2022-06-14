@@ -2,10 +2,11 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-30 17:37:17
+ * @LastEditTime: 2022-06-14 09:54:52
  */
 import { isString } from "packages/shared/src";
 import { NoFlags } from "./ReactFiberFlags";
+import { NoLanes } from "./ReactFiberLane";
 import {
   HostComponent,
   HostRoot,
@@ -42,10 +43,13 @@ class FiberNode {
   sibling = null;
   child = null;
   index = 0;
-  alternate = null;
   updateQueue = null;
   memoizedState = null;
+  memoizedProps = null;
+  lanes = NoLanes;
+  childLanes = NoLanes;
   flags = NoFlags;
+  alternate = null;
 
   constructor(public tag, public pendingProps, public key) {}
 }
