@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-30 16:32:33
+ * @LastEditTime: 2022-06-14 14:07:12
  */
 import { peek, pop, push } from "../SchedulerMinHeap";
 import {
@@ -44,7 +44,7 @@ let scheduledHostCallback: null | Function = null;
 let isMessageLoopRunning = false;
 
 /**
- * @description: 调度任务
+ * @description: 调度任务 高优先级任务插队
  * @param priorityLevel 优先级
  * @param callback 需要调度的回调
  */

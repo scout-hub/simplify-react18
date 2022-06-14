@@ -2,10 +2,14 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 20:46:52
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 12:28:52
+ * @LastEditTime: 2022-06-14 13:25:52
  */
 import { createFiberRoot } from "./ReactFiberRoot";
-import { requestEventTime, requestUpdateLane, scheduleUpdateOnFiber } from "./ReactFiberWorkLoop";
+import {
+  requestEventTime,
+  requestUpdateLane,
+  scheduleUpdateOnFiber,
+} from "./ReactFiberWorkLoop";
 import { createUpdate, enqueueUpdate } from "./ReactUpdateQueue";
 
 /**
@@ -29,13 +33,13 @@ export function updateContainer(element, container) {
   const eventTime = requestEventTime();
   const lane = requestUpdateLane(current);
   // 创建更新，目前只有hostRoot使用（hostRoot和classComponent共用同一种update结构，和function component不同）
-  const update = createUpdate();
-  // 将update的payload做为需要挂载在根节点的组件
+  const update = createUpdate(eventTime, lane);
+  // hostRoot的payload对应为需要挂载在根节点的组件
   update.payload = { element };
   // 存储更新，添加到更新队列中
   enqueueUpdate(current, update);
   // 调度该fiber节点的更新
-  const root = scheduleUpdateOnFiber(current, 1, eventTime);
+  const root = scheduleUpdateOnFiber(current, lane, eventTime);
   if (root !== null) {
     // TODO 处理非紧急更新
   }

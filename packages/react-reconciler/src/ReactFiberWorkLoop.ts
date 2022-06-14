@@ -2,16 +2,20 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 12:47:50
+ * @LastEditTime: 2022-06-14 14:12:32
  */
-import { Lane } from "./ReactFiberLane";
-import type { Fiber } from "./ReactInternalTypes";
+import type { Fiber, FiberRoot } from "./ReactInternalTypes";
+import {
+  Lane,
+  markRootUpdated,
+  markStarvedLanesAsExpired,
+} from "./ReactFiberLane";
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber";
 import { beginWork } from "./ReactFiberBeginWork";
 import { commitMutationEffects } from "./ReactFiberCommitWork";
 import { completeWork } from "./ReactFiberCompleteWork";
-import { NoTimestamp, NoLane } from "./ReactFiberLane";
+import { NoTimestamp, NoLane, mergeLanes } from "./ReactFiberLane";
 import { HostRoot } from "./ReactWorkTags";
 import { now, scheduleCallback } from "./Scheduler";
 import { getCurrentUpdatePriority } from "./ReactEventPriorities";
@@ -53,28 +57,51 @@ export function requestUpdateLane(fiber: Fiber): Lane {
  * @description: 调度fiber节点上的更新
  * @param fiber
  */
-export function scheduleUpdateOnFiber(fiber, lane: Lane, eventTime?: number) {
+export function scheduleUpdateOnFiber(fiber, lane: Lane, eventTime: number) {
   /**
    * react在render阶段从当前应用的根节点开始进行树的深度优先遍历处理，
    * 在更新的时候，当前处理的fiber节点可能不是当前应用的根节点，因此需要通过
    * markUpdateLaneFromFiberToRoot向上去查找当前应用的根节点
    */
-  const root = markUpdateLaneFromFiberToRoot(fiber);
+  const root = markUpdateLaneFromFiberToRoot(fiber, lane);
   if (root === null) {
     return null;
   }
+
+  markRootUpdated(root, lane, eventTime);
+
   // 异步调度应用（concurrent模式）
-  ensureRootIsScheduled(root);
+  ensureRootIsScheduled(root, eventTime);
 }
 
 /**
  * @description: 将当前fiber的更新冒泡到当前应用的根节点上，冒泡过程中会更新路径上fiber的优先级
  */
-function markUpdateLaneFromFiberToRoot(sourceFiber) {
-  // TODO 优先级计算
+function markUpdateLaneFromFiberToRoot(
+  sourceFiber: Fiber,
+  lane: Lane
+): FiberRoot | null {
+  // 更新当前fiber节点的lannes，表示当前节点需要更新
+  sourceFiber.lanes = mergeLanes(sourceFiber.lanes, lane);
+  let alternate = sourceFiber.alternate;
+
+  // alternate存在表示更新阶段，需要同步更新alternate上的lanes
+  if (alternate !== null) {
+    alternate.lanes = mergeLanes(alternate.lanes, lane);
+  }
+
+  // 从当前需要更新的fiber节点向上遍历，遍历到根节点（root fiber）并更新每个fiber节点上的childLanes属性
   let node = sourceFiber;
   let parent = sourceFiber.return;
   while (parent !== null) {
+    // 收集需要更新的子节点的lane，存放在父fiber上的childLanes上，childLanes有值表示当前节点下有子节点需要更新
+    parent.childLanes = mergeLanes(parent.childLanes, lane);
+    alternate = parent.alternate;
+    // 同步更新alternate上的childLanes
+    if (alternate !== null) {
+      alternate.childLanes = mergeLanes(alternate.childLanes, lane);
+    }
+
     node = parent;
     parent = parent.return;
   }
@@ -90,7 +117,12 @@ function markUpdateLaneFromFiberToRoot(sourceFiber) {
  * @description: 调度应用
  * @param root
  */
-function ensureRootIsScheduled(root) {
+function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
+  const existingCallbackNode = root.callbackNode;
+
+  // 判读某些lane上的任务是否已经过期，过期的话就标记为过期，然后接下去就可以执行它们
+  markStarvedLanesAsExpired(root, eventTime);
+
   // 调度一个新的回调
   let newCallbackNode;
 

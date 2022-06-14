@@ -2,10 +2,12 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:20:49
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-28 19:17:24
+ * @LastEditTime: 2022-06-14 14:06:02
  */
+import type { Fiber } from "./ReactInternalTypes";
 import { createHostRootFiber } from "./ReactFiber";
 import { initializeUpdateQueue } from "./ReactUpdateQueue";
+import { createLaneMap, NoLane, NoLanes } from "./ReactFiberLane";
 
 export function createFiberRoot(containerInfo, tag, initialChildren = null) {
   // 1、创建整个React应用的FiberRootNode，这个FiberRootNode是一个管理者的作用
@@ -14,7 +16,7 @@ export function createFiberRoot(containerInfo, tag, initialChildren = null) {
   const root = new FiberRootNode(containerInfo, tag);
   // 1、创建未初始化的的RootFiber
   // 2、通过调用ReactDOM.render渲染出来的，比如ReactDOM.render(<App />,xxxx)，其中App就是一个RootFiber
-  const uninitializedFiber: any = createHostRootFiber();
+  const uninitializedFiber: Fiber = createHostRootFiber();
   // 将FiberRootNode的current指向这个未初始化的RootFiber
   root.current = uninitializedFiber;
   // 当前应用（App）的stateNode指向FiberRootNode
@@ -31,6 +33,9 @@ class FiberRootNode {
   // 指向当前的RootFiber应用
   current: any = null;
   finishedWork = null;
+  callbackNode = null;
+  pendingLanes = NoLane;
+  eventTimes = createLaneMap(NoLanes);
 
   constructor(public containerInfo, public tag) {}
 }

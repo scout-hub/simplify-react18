@@ -2,10 +2,10 @@
  * @Author: Zhouqi
  * @Date: 2022-05-30 15:32:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 09:50:18
+ * @LastEditTime: 2022-06-14 14:05:19
  */
 import type { Flags } from "./ReactFiberFlags";
-import type { Lanes } from "./ReactFiberLane";
+import type { LaneMap, Lanes } from "./ReactFiberLane";
 import type { WorkTag } from "./ReactWorkTags";
 
 export type Fiber = {
@@ -35,6 +35,13 @@ export type Fiber = {
 
   // 指向该fiber在另一次更新时对应的fiber
   alternate: Fiber | null; // 双缓存树，指向缓存的fiber。更新阶段，两颗树互相交替。
+};
+
+export type FiberRoot = {
+  current: Fiber;
+  pendingLanes: Lanes;
+  callbackNode: any;
+  eventTimes: LaneMap<number>;
 };
 
 export type Dispatch<A> = (a: A) => void;

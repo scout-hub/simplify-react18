@@ -2,17 +2,18 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 14:43:08
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 10:43:31
+ * @LastEditTime: 2022-06-14 13:17:42
  */
-import { assign } from "packages/shared/src";
-import { Lane, Lanes, NoLanes } from "./ReactFiberLane";
+import type { Lane, Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
+import { assign } from "packages/shared/src";
+import { NoLanes } from "./ReactFiberLane";
 
 export type Update<State> = {
-  eventTime?: number; // 任务时间，通过performance.now()获取的毫秒数
-  lane?: Lane; // 优先级
+  eventTime: number; // 任务时间，通过performance.now()获取的毫秒数
+  lane: Lane; // 优先级
   tag: 0 | 1 | 2 | 3; // 更新类型 UpdateState | ReplaceState | ForceUpdate | CaptureUpdate
-  payload: any; // 更新挂载的数据，不同类型组件挂载的数据不同。对于ClassComponent，payload为this.setState的第一个传参。对于HostRoot，payload为ReactDOM.render的第一个传参。
+  payload: any; // 更新挂载的数据，不同类型组件挂载的数据不同。对于ClassComponent，payload为this.setState的第一个传参。对于HostRoot，payload为root.render的第一个传参。
   callback: (() => {}) | null; // 更新的回调函数 commit layout子阶段中有使用
   next: Update<State> | null; // 连接其他update，构成一个链表
 };
@@ -68,9 +69,11 @@ export function initializeUpdateQueue<State>(fiber: Fiber): void {
  * 注：每一个fiber可能都存在多个Update的情况，这些Update通过next连接形成链表并保存在fiber的updateQueue中，
  * 比如一个class component调用多次setState就会产生多个Update
  */
-export function createUpdate(): Update<any> {
+export function createUpdate(eventTime: number, lane: Lane): Update<any> {
   const update: Update<any> = {
-    eventTime: 0,
+    eventTime,
+    lane,
+
     payload: null,
     callback: null,
     next: null,
