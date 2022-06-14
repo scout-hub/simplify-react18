@@ -2,10 +2,15 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 16:16:16
+ * @LastEditTime: 2022-06-14 16:47:10
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
-import type { Lane, Lanes } from "./ReactFiberLane";
+import {
+  getHighestPriorityLane,
+  Lane,
+  Lanes,
+  SyncLane,
+} from "./ReactFiberLane";
 import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber";
 import { beginWork } from "./ReactFiberBeginWork";
@@ -150,24 +155,48 @@ function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
     return;
   }
 
+  // 使用优先级最高的任务的优先级来表示回调函数的优先级
+  const newCallbackPriority = getHighestPriorityLane(nextLanes);
+  const existingCallbackPriority = root.callbackPriority;
+
+  /**
+   * 与现有的任务优先级一样的情况，直接返回
+   * 这就是一个onclick事件中多次setState只会触发一次更新的原因，
+   * 同一优先级的Update只会被调度一次（复用），而所有产生的Update已经通过链表的形式存储在queue.pending中，
+   * 这些Update在后续调度过程中一起调度即可
+   */
+  if (existingCallbackPriority === newCallbackPriority) {
+    return;
+  }
+
+  // 走到这儿说明新任务的优先级大于现有任务的优先级，如果存在现有任务则取消现有的任务的执行
+  if (existingCallbackNode != null) {
+    cancelCallback(existingCallbackNode);
+  }
+
   // 调度一个新的回调
   let newCallbackNode;
+  if (newCallbackPriority === SyncLane) {
+    // 同步任务的更新
+  } else {
+    // 设置任务优先级，防止浏览器因没有空闲时间导致任务卡死
+    // 先写死NormalPriority
+    let schedulerPriorityLevel = NormalPriority;
+    // TODO 计算任务超时等级
 
-  // 设置任务优先级，防止浏览器因没有空闲时间导致任务卡死
-  // 先写死NormalPriority
-  let schedulerPriorityLevel = NormalPriority;
-  // TODO 计算任务超时等级
+    // 低优先级的异步更新任务走performConcurrentWorkOnRoot
+    // performConcurrentWorkOnRoot在浏览器没有空闲时间的时候执行shouldYield终止循环
+    // 等浏览器有空闲时间的时候恢复执行
 
-  // 低优先级的异步更新任务走performConcurrentWorkOnRoot
-  // performConcurrentWorkOnRoot在浏览器没有空闲时间的时候执行shouldYield终止循环
-  // 等浏览器有空闲时间的时候恢复执行
+    // 非同步任务通过scheduler去调度任务
+    newCallbackNode = scheduleCallback(
+      schedulerPriorityLevel,
+      performConcurrentWorkOnRoot.bind(null, root)
+    );
+  }
 
-  // 非同步任务通过scheduler去调度任务
-  newCallbackNode = scheduleCallback(
-    schedulerPriorityLevel,
-    performConcurrentWorkOnRoot.bind(null, root)
-  );
   root.callbackNode = newCallbackNode;
+  root.callbackPriority = newCallbackPriority;
 }
 
 /**
