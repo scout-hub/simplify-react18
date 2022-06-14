@@ -2,15 +2,34 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 14:43:08
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-30 14:44:37
+ * @LastEditTime: 2022-06-14 10:34:47
  */
 import { assign } from "packages/shared/src";
+import { Lane, Lanes, NoLanes } from "./ReactFiberLane";
+import type { Fiber } from "./ReactInternalTypes";
 
-export type Update = {
-  tag: 0 | 1 | 2 | 3;
-  payload: any;
-  callback: (() => {}) | null;
-  next: Update | null;
+export type Update<State> = {
+  eventTime?: number; // 任务时间，通过performance.now()获取的毫秒数
+  lane?: Lane; // 优先级
+  tag: 0 | 1 | 2 | 3; // 更新类型 UpdateState | ReplaceState | ForceUpdate | CaptureUpdate
+  payload: any; // 更新挂载的数据，不同类型组件挂载的数据不同。对于ClassComponent，payload为this.setState的第一个传参。对于HostRoot，payload为ReactDOM.render的第一个传参。
+  callback: (() => {}) | null; // 更新的回调函数 commit layout子阶段中有使用
+  next: Update<State> | null; // 连接其他update，构成一个链表
+};
+
+export type SharedQueue<State> = {
+  pending: Update<State> | null;
+  lanes: Lanes;
+};
+
+export type UpdateQueue<State> = {
+  baseState: State; // 本次更新前该Fiber节点的state，Update基于该state计算更新后的state
+  // 本次更新前该Fiber节点已保存的Update。以链表形式存在，链表头为firstBaseUpdate，链表尾为lastBaseUpdate。
+  firstBaseUpdate: Update<State> | null;
+  lastBaseUpdate: Update<State> | null;
+  // 触发更新时，产生的Update会保存在shared.pending中形成单向环状链表。当由Update计算state时这个环会被剪开并连接在lastBaseUpdate后面。
+  shared: SharedQueue<State>;
+  effects: Array<Update<State>> | null; // 数组。保存update.callback !== null的Update
 };
 
 export const UpdateState = 0;
@@ -29,31 +48,33 @@ export const UpdateState = 0;
  * @description: 初始化当前fiber的updateQueue
  * @param fiber
  */
-export function initializeUpdateQueue(fiber): void {
-  const queue = {
-    // 本次更新前该Fiber节点的state，Update基于该state计算更新后的state
+export function initializeUpdateQueue<State>(fiber: Fiber): void {
+  const queue: UpdateQueue<State> = {
     baseState: fiber.memoizedState,
-    // 本次更新前该Fiber节点已保存的Update。以链表形式存在，链表头为firstBaseUpdate，链表尾为lastBaseUpdate。
     firstBaseUpdate: null,
     lastBaseUpdate: null,
     shared: {
-      // 触发更新时，产生的Update会保存在shared.pending中形成单向环状链表。当由Update计算state时这个环会被剪开并连接在lastBaseUpdate后面。
       pending: null,
+      lanes: NoLanes,
     },
     effects: null,
   };
+  // 保存到fiber的updateQueue中
   fiber.updateQueue = queue;
 }
 
 /**
  * @description: 创建Update，保存更新状态相关内容的对象
+ * 注：每一个fiber可能都存在多个Update的情况，这些Update通过next连接形成链表并保存在fiber的updateQueue中，
+ * 比如一个class component调用多次setState就会产生多个Update
  */
-export function createUpdate(): Update {
-  const update: Update = {
-    payload: null, // 更新挂载的数据，不同类型组件挂载的数据不同
-    callback: null, // 更新的回调函数
-    next: null, // 与其他Update连接形成链表
-    tag: UpdateState, // 更新的类型
+export function createUpdate(): Update<any> {
+  const update: Update<any> = {
+    eventTime: 0,
+    payload: null,
+    callback: null,
+    next: null,
+    tag: UpdateState,
   };
   return update;
 }
