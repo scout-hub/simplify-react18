@@ -2,11 +2,16 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 12:49:25
+ * @LastEditTime: 2022-06-14 17:46:04
  */
+import type { Lane } from "./ReactFiberLane";
 import { is, isFunction } from "packages/shared/src";
 import ReactSharedInternals from "packages/shared/src/ReactSharedInternals";
-import { scheduleUpdateOnFiber } from "./ReactFiberWorkLoop";
+import {
+  requestEventTime,
+  requestUpdateLane,
+  scheduleUpdateOnFiber,
+} from "./ReactFiberWorkLoop";
 import type {
   BasicStateAction,
   Dispatch,
@@ -15,7 +20,9 @@ import type {
 } from "./ReactInternalTypes";
 
 type Update<S> = {
+  lane: Lane;
   action: S;
+  eagerState: S | null;
   next: Update<S>;
 };
 
@@ -118,9 +125,13 @@ function mountWorkInProgressHook(): Hook {
  * @description: 更新hook上的state
  */
 function dispatchSetState<S>(fiber: Fiber, queue: any, action: S) {
+  // 计算事件的优先级
+  const lane = requestUpdateLane(fiber);
   // 创建一个update
   const update: Update<S> = {
+    lane,
     action,
+    eagerState: null,
     next: null as any, // 指向下一个update，用于构建环状链表
   };
   // 判断是否是render阶段产生的更新，即直接在执行function component函数时调用了dispatchSetState
@@ -139,9 +150,10 @@ function dispatchSetState<S>(fiber: Fiber, queue: any, action: S) {
         return;
       }
     }
+    const eventTime = requestEventTime();
+    // 调度fiber节点的更新
+    scheduleUpdateOnFiber(fiber, lane, eventTime);
   }
-  // 调度fiber节点的更新
-  scheduleUpdateOnFiber(fiber);
 }
 
 /**

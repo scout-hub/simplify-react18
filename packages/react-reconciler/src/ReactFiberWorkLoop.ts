@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 17:13:12
+ * @LastEditTime: 2022-06-14 17:39:05
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -11,7 +11,6 @@ import {
   Lanes,
   SyncLane,
 } from "./ReactFiberLane";
-import { NormalPriority } from "packages/scheduler/src/SchedulerPriorities";
 import { createWorkInProgress } from "./ReactFiber";
 import { beginWork } from "./ReactFiberBeginWork";
 import { commitMutationEffects } from "./ReactFiberCommitWork";
@@ -193,6 +192,7 @@ function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
   let newCallbackNode;
   if (newCallbackPriority === SyncLane) {
     // 同步任务的更新
+    console.log("SyncLane");
   } else {
     // 设置任务优先级，防止浏览器因没有空闲时间导致任务卡死
     let schedulerPriorityLevel;
@@ -215,7 +215,6 @@ function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
         schedulerPriorityLevel = NormalSchedulerPriority;
         break;
     }
-
     // 低优先级的异步更新任务走performConcurrentWorkOnRoot
     // performConcurrentWorkOnRoot在浏览器没有空闲时间的时候执行shouldYield终止循环
     // 等浏览器有空闲时间的时候恢复执行
