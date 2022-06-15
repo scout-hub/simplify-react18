@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 13:52:17
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 15:16:20
+ * @LastEditTime: 2022-06-15 11:56:00
  */
 import { DOMEventName } from "./DOMEventNames";
 import { registerTwoPhaseEvent } from "./EventRegistry";
@@ -29,5 +29,3 @@ export function registerSimpleEvents() {
     registerSimpleEvent(domEventName, "on" + capitalizedEvent);
   }
 }
-
-export { DiscreteEventPriority } from "./ReactEventPriorities";
