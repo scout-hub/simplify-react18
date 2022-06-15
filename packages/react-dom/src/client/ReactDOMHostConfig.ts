@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 15:44:53
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 12:47:21
+ * @LastEditTime: 2022-06-15 17:39:21
  */
 
 import { DefaultEventPriority } from "packages/react-reconciler/src/ReactEventPriorities";
@@ -87,8 +87,23 @@ export function appendInitialChild(parentInstance, child): void {
  */
 export function getCurrentEventPriority() {
   const currentEvent = window.event;
-  if (currentEvent === undefined) {
+  if (currentEvent === void 0) {
     return DefaultEventPriority;
   }
   return getEventPriority(currentEvent.type as DOMEventName);
 }
+
+// 是否支持Promise
+const localPromise = typeof Promise === "function" ? Promise : void 0;
+
+// 是否支持setTimeout
+const scheduleTimeout: any =
+  typeof setTimeout === "function" ? setTimeout : undefined;
+
+// 执行微任务的函数
+export const scheduleMicrotask =
+  typeof queueMicrotask === "function"
+    ? queueMicrotask
+    : localPromise !== void 0
+    ? (callback) => localPromise.resolve(null).then(callback)
+    : scheduleTimeout;
