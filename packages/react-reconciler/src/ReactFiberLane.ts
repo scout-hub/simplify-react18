@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 11:10:29
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-15 10:14:29
+ * @LastEditTime: 2022-06-15 17:01:12
  */
 import type { FiberRoot } from "./ReactInternalTypes";
 
@@ -156,9 +156,29 @@ export function getNextLanes(root: FiberRoot, wipLanes: Lanes): Lanes {
 }
 
 /**
- * @description: 标记root更新完成后的相关状态
+ * @description: 进行本轮更新的收尾工作，将完成工作的lane、eventTime重置，并将它们
+ * 从pendingLanes，expiredLanes去除
  */
-export function markRootFinished(root: FiberRoot, remainingLanes: Lanes) {}
+export function markRootFinished(root: FiberRoot, remainingLanes: Lanes) {
+  // 获取不再需要执行的任务
+  const noLongerPendingLanes = root.pendingLanes & ~remainingLanes;
+  
+  root.pendingLanes = remainingLanes;
+  root.expiredLanes &= remainingLanes;
+
+  const eventTimes = root.eventTimes;
+  const expirationTimes = root.expirationTimes;
+
+  let lanes = noLongerPendingLanes;
+
+  while (lanes > 0) {
+    const index = pickArbitraryLaneIndex(lanes);
+    const lane = 1 << index;
+    eventTimes[index] = NoTimestamp;
+    expirationTimes[index] = NoTimestamp;
+    lanes &= ~lane;
+  }
+}
 
 export function includesBlockingLane(root: FiberRoot, lanes: Lanes) {
   const SyncDefaultLanes = InputContinuousLane | DefaultLane;

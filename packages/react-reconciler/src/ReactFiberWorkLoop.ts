@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-15 11:02:25
+ * @LastEditTime: 2022-06-15 17:04:04
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -317,17 +317,28 @@ function commitRoot(root) {
 
 function commitRootImpl(root) {
   const finishedWork = root.finishedWork;
+
+  if (finishedWork === null) return;
+
   root.finishedWork = null;
+  root.finishedLanes = NoLanes;
+
   // commitRoot总是同步完成的。所以我们现在可以清除这些，以允许一个新的回调被调度。
   root.callbackNode = null;
   root.callbackPriority = NoLane;
 
-  // TODO
-  const remainingLanes = 1;
+  /**
+   * 剩余需要调度的lanes为HostRoot的lanes和其子树lanes的并集，childLanes有剩余的情况：
+   * 一个子树高优先级任务打断了一个低优先级的任务，低优先级任务的lanes会被保存，并且lanes会
+   * 存储到父节点的childLanes属性上，我们可以通过childLanes去获取它。具体逻辑在bubbleProperties中
+   */
+  let remainingLanes = mergeLanes(finishedWork.lanes, finishedWork.childLanes);
   markRootFinished(root, remainingLanes);
 
   workInProgressRoot = null;
   workInProgress = null;
+
+  // TODO 副作用
 
   // TODO beforeMutationEffect阶段
 
