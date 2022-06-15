@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 21:20:08
+ * @LastEditTime: 2022-06-15 11:23:52
  */
 import { peek, pop, push } from "../SchedulerMinHeap";
 import {
@@ -35,6 +35,10 @@ const IDLE_PRIORITY_TIMEOUT = 1073741823; // 一些没有必要的任务，可�
 
 // 过期任务队列
 const taskQueue = [];
+
+// 延期任务队列
+const timerQueue = [];
+
 // 任务id
 let taskIdCounter = 1;
 // 标记是否正在进行任务处理，防止任务再次进入
@@ -56,7 +60,7 @@ function unstable_scheduleCallback(priorityLevel, callback) {
   const currentTime = getCurrentTime();
   const startTime = currentTime;
 
-  // 1、根据优先级计算超时时间
+  // 1、根据优先级计算超时时间，超时时间越小说明优先级越高
   let timeout;
   switch (priorityLevel) {
     case ImmediatePriority:
@@ -90,7 +94,7 @@ function unstable_scheduleCallback(priorityLevel, callback) {
     sortIndex: -1, // 任务排序序号，初始化-1
   };
 
-  // TODO 如果任务开始时间大于当前时间，说明任务没有过期
+  // TODO 如果任务开始时间大于当前时间，说明任务没有过期，需要放入延时队列timerQueue中
   if (startTime > currentTime) {
   } else {
     // 任务开始时间<=当前时间，说明任务过期了，需要添加到taskQueue队列中以进行任务调度
@@ -197,6 +201,7 @@ function workLoop(hasTimeRemaining: boolean, initialTime: number) {
       currentPriorityLevel = currentTask.priorityLevel;
       const didUserCallbackTimeout = currentTask.expirationTime <= currentTime;
       callback(didUserCallbackTimeout);
+      // TODO 当前任务没有执行完的情况
       if (currentTask === peek(taskQueue)) {
         // 弹出当前执行的任务
         pop(taskQueue);

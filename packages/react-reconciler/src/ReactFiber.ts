@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 21:49:53
+ * @LastEditTime: 2022-06-15 10:28:22
  */
 import { isString } from "packages/shared/src";
 import { NoFlags } from "./ReactFiberFlags";
@@ -103,6 +103,7 @@ function createFiberFromTypeAndProps(type, key, pendingProps) {
     // 说明是普通元素节点
     fiberTag = HostComponent;
   }
+  // TODO 组件
   const fiber = createFiber(fiberTag, pendingProps, key);
   fiber.elementType = type;
   fiber.type = type;

@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 22:00:56
+ * @LastEditTime: 2022-06-15 11:10:58
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { Lanes, NoLanes } from "./ReactFiberLane";
@@ -18,6 +18,9 @@ import {
   IndeterminateComponent,
 } from "./ReactWorkTags";
 
+// 是否有更新
+let didReceiveUpdate: boolean = false;
+
 export function beginWork(
   current: Fiber | null,
   workInProgress: Fiber,
@@ -29,6 +32,7 @@ export function beginWork(
     // update阶段，可以复用current（即旧的fiber节点）
   } else {
     // mount阶段
+    didReceiveUpdate = false;
   }
   // 在进入begin流程前，先清除workInProgress中的lanes，否则会导致HostRoot不能进入bailout逻辑，
   // 导致后续的更新不会触发，还会导致root上的pendingLanes一直不为空
@@ -53,6 +57,9 @@ export function beginWork(
   return null;
 }
 
+/**
+ * @description: 更新当前应用的根节点
+ */
 function updateHostRoot(
   current: Fiber | null,
   workInProgress: Fiber,

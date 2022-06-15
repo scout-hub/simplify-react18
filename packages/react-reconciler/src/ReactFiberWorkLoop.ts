@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-15 10:06:47
+ * @LastEditTime: 2022-06-15 11:02:25
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -154,7 +154,7 @@ function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
   // 判读某些lane上的任务是否已经过期，过期的话就标记为过期，然后接下去就可以执行它们
   markStarvedLanesAsExpired(root, eventTime);
 
-  // 获取优先级最高的任务的优先级
+  // 获取优先级最高的任务的优先级（有没有任务需要调度）
   const nextLanes = getNextLanes(
     root,
     root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes
@@ -244,17 +244,18 @@ function performConcurrentWorkOnRoot(root: FiberRoot, didTimeout: boolean) {
   // 这里进入了react中的事件，这里可以把currentEventTime清除了，下一次更新的时候会重新计算
   currentEventTime = NoTimestamp;
 
-  // 获取最高任务的优先级
+  // 获取下一个优先级最高的任务
   const lanes = getNextLanes(
     root,
     root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes
   );
 
+  // 没有任务了直接返回
   if (lanes === NoLanes) {
     return null;
   }
 
-  // todo 判断是否需要开启时间切片
+  // 判断是否需要开启时间切片 1、是否有阻塞 2、任务是否过期
   const shouldTimeSlice =
     !includesBlockingLane(root, lanes) &&
     !includesExpiredLane(root, lanes) &&
@@ -355,6 +356,7 @@ function performUnitOfWork(unitOfWork: Fiber) {
   const current = unitOfWork.alternate;
   let next;
   next = beginWork(current, unitOfWork, subtreeRenderLanes);
+  // 属性已经更新到dom上了，memoizedProps更新为pendingProps
   unitOfWork.memoizedProps = unitOfWork.pendingProps;
 
   // 不存在子fiber节点了，说明节点已经处理完，此时进入completeWork
