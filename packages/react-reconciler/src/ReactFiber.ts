@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-15 10:28:22
+ * @LastEditTime: 2022-06-15 22:30:37
  */
 import { isString } from "packages/shared/src";
 import { NoFlags } from "./ReactFiberFlags";
@@ -69,6 +69,13 @@ export function createWorkInProgress(current, pendingProps) {
     workInProgress.alternate = current;
     current.alternate = workInProgress;
   } else {
+    workInProgress.pendingProps = pendingProps;
+    // 复用current的一些属性值
+    workInProgress.type = current.type;
+    // 重置flags、subtreeFlags、deletions
+    workInProgress.flags = NoFlags;
+    workInProgress.subtreeFlags = NoFlags;
+    workInProgress.deletions = null;
   }
   workInProgress.flags = current.flags;
   workInProgress.childLanes = current.childLanes;

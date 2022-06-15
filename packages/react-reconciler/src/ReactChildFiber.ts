@@ -2,12 +2,16 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-31 15:28:52
+ * @LastEditTime: 2022-06-15 22:36:52
  */
 
 import { isArray, isNumber, isObject, isString } from "packages/shared/src";
 import { REACT_ELEMENT_TYPE } from "packages/shared/src/ReactSymbols";
-import { createFiberFromElement, createFiberFromText } from "./ReactFiber";
+import {
+  createFiberFromElement,
+  createFiberFromText,
+  createWorkInProgress,
+} from "./ReactFiber";
 import { Placement } from "./ReactFiberFlags";
 import type { Fiber } from "./ReactInternalTypes";
 
@@ -126,3 +130,27 @@ function ChildReconciler(shouldTrackSideEffects) {
 
 export const reconcileChildFibers = ChildReconciler(true);
 export const mountChildFibers = ChildReconciler(false);
+
+/**
+ * @description: 克隆子fiber节点
+ */
+export function cloneChildFibers(current: Fiber | null, workInProgress: Fiber) {
+  let currentChild = workInProgress.child;
+  // 没有子节点了，直接退出
+  if (currentChild === null) {
+    return;
+  }
+  let newChild = createWorkInProgress(currentChild, currentChild.pendingProps);
+  newChild.return = workInProgress;
+  // 为currentChild的兄弟fiber创建workInProgress
+  while (currentChild.sibling !== null) {
+    currentChild = currentChild.sibling;
+    newChild = newChild.sibling = createWorkInProgress(
+      currentChild,
+      currentChild.pendingProps
+    );
+    newChild.return = workInProgress;
+  }
+  // 最后一个child的sisbling没有了，为null
+  newChild.sibling = null;
+}

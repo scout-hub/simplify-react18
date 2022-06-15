@@ -2,13 +2,14 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-15 17:37:54
+ * @LastEditTime: 2022-06-15 22:39:06
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
   getHighestPriorityLane,
   includesBlockingLane,
   includesExpiredLane,
+  includesSomeLane,
   Lane,
   Lanes,
   markRootFinished,
@@ -45,8 +46,14 @@ import {
   IdleEventPriority,
   lanesToEventPriority,
 } from "./ReactEventPriorities";
-import { getCurrentEventPriority, scheduleMicrotask } from "packages/react-dom/src/client/ReactDOMHostConfig";
-import { flushSyncCallbacks, scheduleSyncCallback } from "./ReactFiberSyncTaskQueue";
+import {
+  getCurrentEventPriority,
+  scheduleMicrotask,
+} from "packages/react-dom/src/client/ReactDOMHostConfig";
+import {
+  flushSyncCallbacks,
+  scheduleSyncCallback,
+} from "./ReactFiberSyncTaskQueue";
 
 // 当前正在工作的根应用fiber
 let workInProgressRoot: FiberRoot | null = null;
@@ -241,10 +248,18 @@ function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
 }
 
 /**
- * @description: 不同过Schedular调度的同步任务的入口
+ * @description: 不通过Schedular调度的同步任务的入口
  */
 function performSyncWorkOnRoot(root: FiberRoot) {
-  console.log(root);
+  let lanes = getNextLanes(root, NoLanes);
+  // 没有同步的任务了，则直接返回
+  if (!includesSomeLane(lanes, SyncLane)) return null;
+
+  renderRootSync(root, lanes);
+
+  const finishedWork = root.current.alternate;
+  root.finishedWork = finishedWork;
+
   return null;
 }
 
@@ -281,7 +296,7 @@ function performConcurrentWorkOnRoot(root: FiberRoot, didTimeout: boolean) {
 function renderRootConcurrent(root) {}
 
 /**
- * @description: 同步执行根节点渲染
+ * @description: 同步执行渲染工作
  * @param root
  */
 function renderRootSync(root: FiberRoot, lanes: Lanes) {
@@ -357,6 +372,9 @@ function commitRootImpl(root) {
   commitMutationEffects(root, finishedWork);
 
   // TODO layout阶段
+
+  // 渲染完成，将current指向workInProgress
+  root.current = finishedWork;
 }
 
 /**

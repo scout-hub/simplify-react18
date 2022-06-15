@@ -2,12 +2,16 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-15 11:10:58
+ * @LastEditTime: 2022-06-15 22:39:14
  */
 import type { Fiber } from "./ReactInternalTypes";
-import { Lanes, NoLanes } from "./ReactFiberLane";
+import { includesSomeLane, Lanes, NoLanes } from "./ReactFiberLane";
 import { shouldSetTextContent } from "packages/react-dom/src/client/ReactDOMHostConfig";
-import { mountChildFibers, reconcileChildFibers } from "./ReactChildFiber";
+import {
+  cloneChildFibers,
+  mountChildFibers,
+  reconcileChildFibers,
+} from "./ReactChildFiber";
 import { renderWithHooks } from "./ReactFiberHooks";
 import { processUpdateQueue } from "./ReactUpdateQueue";
 import {
@@ -30,6 +34,26 @@ export function beginWork(
   // hostRoot的workInPgress树中的HostRoot是在prepareFreshStack函数中创建
   if (current !== null) {
     // update阶段，可以复用current（即旧的fiber节点）
+    const oldProps = current.memoizedProps;
+    const newProps = workInProgress.pendingProps;
+    if (oldProps !== newProps) {
+      // 属性更新，标记didReceiveUpdate为true，说明这个fiber需要继续beginWork的其它工作
+      didReceiveUpdate = true;
+    } else {
+      const hasScheduledUpdateOrContext = checkScheduledUpdateOrContext(
+        current,
+        renderLanes
+      );
+      if (!hasScheduledUpdateOrContext) {
+        // 说明该fiber不需要进行接下去beginWork的其它工作，转而去看看子节点是否要处理
+        didReceiveUpdate = false;
+        return attemptEarlyBailoutIfNoScheduledUpdate(
+          current,
+          workInProgress,
+          renderLanes
+        );
+      }
+    }
   } else {
     // mount阶段
     didReceiveUpdate = false;
@@ -55,6 +79,44 @@ export function beginWork(
     // return updateHostText(current, workInProgress);
   }
   return null;
+}
+
+function checkScheduledUpdateOrContext(
+  current: Fiber,
+  renderLanes: Lanes
+): boolean {
+  // 在执行bailout之前判断该fiber是否需要执行的任务，如果有就不能进行bailoutOnAlreadyFinishedWork
+  const updateLanes = current.lanes;
+  if (includesSomeLane(updateLanes, renderLanes)) {
+    return true;
+  }
+  return false;
+}
+
+function attemptEarlyBailoutIfNoScheduledUpdate(
+  current: Fiber,
+  workInProgress: Fiber,
+  renderLanes: Lanes
+) {
+  switch (workInProgress.tag) {
+    case HostRoot:
+      break;
+    default:
+      break;
+  }
+  return bailoutOnAlreadyFinishedWork(current, workInProgress, renderLanes);
+}
+
+function bailoutOnAlreadyFinishedWork(
+  current: Fiber | null,
+  workInProgress: Fiber,
+  renderLanes: Lanes
+): Fiber | null {
+  // 判断子fiber是否有任务需要进行，如果也没有，则直接返回
+  if (!includesSomeLane(renderLanes, workInProgress.childLanes)) return null;
+  // 当前这个fiber不需要工作了，但是它的子fiber还需要工作，这里克隆一份子fiber
+  cloneChildFibers(current, workInProgress);
+  return workInProgress.child;
 }
 
 /**
