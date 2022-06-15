@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-15 17:04:04
+ * @LastEditTime: 2022-06-15 17:28:06
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -46,6 +46,7 @@ import {
   lanesToEventPriority,
 } from "./ReactEventPriorities";
 import { getCurrentEventPriority } from "packages/react-dom/src/client/ReactDOMHostConfig";
+import { scheduleSyncCallback } from "./ReactFiberSyncTaskQueue";
 
 // 当前正在工作的根应用fiber
 let workInProgressRoot: FiberRoot | null = null;
@@ -198,7 +199,7 @@ function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
   let newCallbackNode;
   if (newCallbackPriority === SyncLane) {
     // 同步任务的更新
-    console.log("SyncLane");
+    scheduleSyncCallback(performSyncWorkOnRoot.bind(null, root));
   } else {
     // 设置任务优先级，防止浏览器因没有空闲时间导致任务卡死
     let schedulerPriorityLevel;
@@ -234,6 +235,14 @@ function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
 
   root.callbackNode = newCallbackNode;
   root.callbackPriority = newCallbackPriority;
+}
+
+/**
+ * @description: 不同过Schedular调度的同步任务的入口
+ */
+function performSyncWorkOnRoot(root: FiberRoot) {
+  console.log(root);
+  return null;
 }
 
 /**
