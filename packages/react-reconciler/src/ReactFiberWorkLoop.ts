@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 22:08:47
+ * @LastEditTime: 2022-06-15 10:06:47
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -90,13 +90,15 @@ export function scheduleUpdateOnFiber(fiber, lane: Lane, eventTime: number) {
   /**
    * react在render阶段从当前应用的根节点开始进行树的深度优先遍历处理，
    * 在更新的时候，当前处理的fiber节点可能不是当前应用的根节点，因此需要通过
-   * markUpdateLaneFromFiberToRoot向上去查找当前应用的根节点
+   * markUpdateLaneFromFiberToRoot向上去查找当前应用的根节点，同时对查找路径上的
+   * fiber进行lane的更新
    */
   const root = markUpdateLaneFromFiberToRoot(fiber, lane);
   if (root === null) {
     return null;
   }
 
+  // 给root节点加上更新标记，pendingLanes
   markRootUpdated(root, lane, eventTime);
 
   // 异步调度应用（concurrent模式）

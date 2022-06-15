@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 11:10:29
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 22:08:00
+ * @LastEditTime: 2022-06-15 10:14:29
  */
 import type { FiberRoot } from "./ReactInternalTypes";
 
@@ -61,6 +61,14 @@ export function markRootUpdated(
   eventTime: number
 ) {
   root.pendingLanes |= updateLane;
+
+  // 进入到scheduleUpdateOnFiber是紧急更新，如果存在非紧急更新需要先unblock
+  // 如果updateLane是IdleLane的优先级非常低，不需要去管，因为它不会去阻塞其它任务
+  // if (updateLane !== IdleLane) {
+  //   root.suspendedLanes = NoLanes;
+  //   root.pingedLanes = NoLanes;
+  // }
+
   // 一个三十一位的数组，分别对应着31位lane
   const eventTimes = root.eventTimes;
   const index = laneToIndex(updateLane);

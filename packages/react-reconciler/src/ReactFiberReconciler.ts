@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 20:46:52
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 13:25:52
+ * @LastEditTime: 2022-06-15 09:56:33
  */
 import { createFiberRoot } from "./ReactFiberRoot";
 import {
@@ -41,6 +41,6 @@ export function updateContainer(element, container) {
   // 调度该fiber节点的更新
   const root = scheduleUpdateOnFiber(current, lane, eventTime);
   if (root !== null) {
-    // TODO 处理非紧急更新
+    // TODO 处理非紧急更新 transition
   }
 }
