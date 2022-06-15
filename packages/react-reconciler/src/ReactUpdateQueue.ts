@@ -2,11 +2,11 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 14:43:08
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 13:17:42
+ * @LastEditTime: 2022-06-15 16:34:43
  */
 import type { Lane, Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
-import { assign } from "packages/shared/src";
+import { assign, isFunction } from "packages/shared/src";
 import { NoLanes } from "./ReactFiberLane";
 
 export type Update<State> = {
@@ -104,8 +104,8 @@ export function enqueueUpdate(fiber, update) {
   sharedQueue.pending = update;
 }
 
-export function processUpdateQueue(workInProgress) {
-  const queue = workInProgress.updateQueue;
+export function processUpdateQueue<State>(workInProgress: Fiber) {
+  const queue: UpdateQueue<State> = workInProgress.updateQueue;
 
   let firstBaseUpdate = queue.firstBaseUpdate;
   let lastBaseUpdate = queue.lastBaseUpdate;
@@ -153,22 +153,43 @@ export function processUpdateQueue(workInProgress) {
   }
 
   if (firstBaseUpdate !== null) {
+    let newLanes = NoLanes;
+    
     let newState = queue.baseState;
+    let newBaseState: State | null = null;
 
     let newLastBaseUpdate = null;
     let newFirstBaseUpdate = null;
-    let newBaseState = null;
 
-    const update = firstBaseUpdate;
-    newState = getStateFromUpdate(workInProgress, queue, update, newState);
-    // TODO 多个update的情况 循环处理
+    let update = firstBaseUpdate;
+    do {
+      newState = getStateFromUpdate(workInProgress, queue, update, newState);
+      // 可能当所有的update都处理完的时候，payload的执行又产生的新的update被添加到了updateQueue.shared.pending
+      // 这个时候还需要继续执行新的更新
+      if (update.next === null) {
+        pendingQueue = queue.shared.pending;
+        if (pendingQueue === null) {
+          break;
+        } else {
+          // 产生了新的更新，进行上述同样的链表操作
+          const lastPendingUpdate = pendingQueue;
+          const firstPendingUpdate = lastPendingUpdate.next!;
+          lastPendingUpdate.next = null;
+          update = firstPendingUpdate;
+          queue.lastBaseUpdate = lastPendingUpdate;
+          queue.shared.pending = null;
+        }
+      }
+    } while (true);
+
     if (newLastBaseUpdate === null) {
       newBaseState = newState;
     }
-    queue.baseState = newBaseState;
+    queue.baseState = newBaseState!;
     queue.firstBaseUpdate = newFirstBaseUpdate;
     queue.lastBaseUpdate = newLastBaseUpdate;
     workInProgress.memoizedState = newState;
+    workInProgress.lanes = newLanes;
   }
 }
 
@@ -176,7 +197,12 @@ function getStateFromUpdate(workInProgress, queue, update, prevState) {
   switch (update.tag) {
     case UpdateState:
       const payload = update.payload;
-      let partialState = payload;
+      let partialState;
+      if (isFunction(payload)) {
+        partialState = payload();
+      } else {
+        partialState = payload;
+      }
       if (partialState == null) {
         // 不需要更新
         return prevState;
