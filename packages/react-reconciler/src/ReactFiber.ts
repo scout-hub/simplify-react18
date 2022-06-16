@@ -2,8 +2,11 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-16 15:07:20
+ * @LastEditTime: 2022-06-16 17:03:42
  */
+import type { WorkTag } from "./ReactWorkTags";
+import type { Fiber } from "./ReactInternalTypes";
+import type { Lanes } from "./ReactFiberLane";
 import { isString } from "packages/shared/src";
 import { NoFlags } from "./ReactFiberFlags";
 import { NoLanes } from "./ReactFiberLane";
@@ -13,8 +16,6 @@ import {
   HostText,
   IndeterminateComponent,
 } from "./ReactWorkTags";
-import type { WorkTag } from "./ReactWorkTags";
-import type { Fiber } from "./ReactInternalTypes";
 
 /**
  * @description: 创建一个标记为HostRoot的fiber树根节点
@@ -99,14 +100,19 @@ export function createWorkInProgress(current, pendingProps) {
 /**
  * @description: 创建元素的fiber节点
  */
-export function createFiberFromElement(element) {
+export function createFiberFromElement(element: any, lanes: Lanes): Fiber {
   const { type, key } = element;
   let pendingProps = element.props;
-  const fiber = createFiberFromTypeAndProps(type, key, pendingProps);
+  const fiber = createFiberFromTypeAndProps(type, key, pendingProps, lanes);
   return fiber;
 }
 
-function createFiberFromTypeAndProps(type, key, pendingProps) {
+function createFiberFromTypeAndProps(
+  type: any,
+  key: any,
+  pendingProps: any,
+  lanes: Lanes
+): Fiber {
   let fiberTag: WorkTag = IndeterminateComponent;
   if (isString(type)) {
     // 说明是普通元素节点
@@ -116,13 +122,15 @@ function createFiberFromTypeAndProps(type, key, pendingProps) {
   const fiber = createFiber(fiberTag, pendingProps, key);
   fiber.elementType = type;
   fiber.type = type;
+  fiber.lanes = lanes;
   return fiber;
 }
 
 /**
  * @description: 创建文本节点对应的fiber
  */
-export function createFiberFromText(content: string): Fiber {
+export function createFiberFromText(content: string, lanes: Lanes): Fiber {
   const fiber = createFiber(HostText, content, null);
+  fiber.lanes = lanes;
   return fiber;
 }
