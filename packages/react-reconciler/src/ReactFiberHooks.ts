@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-16 14:10:14
+ * @LastEditTime: 2022-06-16 14:39:11
  */
 import { Lane, Lanes, NoLanes } from "./ReactFiberLane";
 import { is, isFunction } from "packages/shared/src";
@@ -18,11 +18,13 @@ import type {
   Dispatcher,
   Fiber,
 } from "./ReactInternalTypes";
+import { markWorkInProgressReceivedUpdate } from "./ReactFiberBeginWork";
 
 type Update<S> = {
   lane: Lane;
   action: S;
   eagerState: S | null;
+  hasEagerState: boolean;
   next: Update<S>;
 };
 
@@ -84,7 +86,23 @@ export function renderWithHooks(
   const children = Component();
   // console.log(children);
   currentlyRenderingFiber = null;
+  renderLanes = NoLanes;
+  currentHook = null;
+  workInProgressHook = null;
   return children;
+}
+
+/**
+ * @description: 清除一个fiber节点上的副作用标记。当一节点出现在render流程中，并且lanes不为空，
+ * 但是节点不需要工作，会调用该函数清除副作用并结束更新流程。
+ * 比如setState同一个值
+ */
+export function bailoutHooks(
+  current: Fiber,
+  workInProgress: Fiber,
+  lanes: Lanes
+) {
+  // TODO
 }
 
 function basicStateReducer<S>(state: S, action: BasicStateAction<S>) {
@@ -167,15 +185,39 @@ function updateReducer<S>(
     let newState = current.baseState;
 
     let newBaseState = null;
-    let newBaseQueueFirst = null;
-    let newBaseQueueLast = null;
+    // let newBaseQueueFirst = null;
+    // let newBaseQueueLast = null;
     let update = first;
 
     // 循环处理所有Update，进行state的计算
     // 循环终止条件：update不存在或者且update !== first（只有一个Update的情况）
     do {
+      // TODO 优先级不足，跳过这个更新，如果这是第一次跳过，则上一次的更新状态是这次的基状态
+      // 这次更新有足够的优先级
+      // if (newBaseQueueLast !== null) {
+      //   // TODO
+      // }
+      // 使用之前已经计算好的state
+      if (update.hasEagerState) {
+        newState = update.eagerState;
+      } else {
+        const action = update.action;
+        // 计算新的state
+        newState = reducer(newState, action);
+      }
       update = update.next;
     } while (update !== null && update !== first);
+
+    newBaseState = newState;
+
+    // 新旧state是否相同，如果不同，标记receivedUpdate为true
+    if (!is(newState, hook.memoizedState)) {
+      markWorkInProgressReceivedUpdate();
+    }
+
+    hook.memoizedState = newState;
+    hook.baseState = newBaseState;
+    queue.lastRenderedState = newState;
   }
 
   const dispatch: Dispatch<BasicStateAction<S>> = queue.dispatch;
@@ -275,6 +317,7 @@ function dispatchSetState<S>(fiber: Fiber, queue: any, action: S) {
     lane,
     action,
     eagerState: null,
+    hasEagerState: false,
     next: null as any, // 指向下一个update，用于构建环状链表
   };
   // 判断是否是render阶段产生的更新，即直接在执行function component函数时调用了dispatchSetState
@@ -288,6 +331,9 @@ function dispatchSetState<S>(fiber: Fiber, queue: any, action: S) {
       const currentState = queue.lastRenderedState;
       // 获取期望的state，也就是通过调用useState返回的dispatch函数，将新的state计算方式传入并调用的结果
       const eagerState = lastRenderedReducer(currentState, action);
+      // 缓存新的计算结果
+      update.hasEagerState = true;
+      update.eagerState = eagerState;
       // 如果期望的state和上一次渲染阶段的state一致，则不需要触发更新逻辑
       if (is(eagerState, currentState)) {
         return;

@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-16 11:56:55
+ * @LastEditTime: 2022-06-16 14:42:24
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { includesSomeLane, Lanes, NoLanes } from "./ReactFiberLane";
@@ -12,7 +12,7 @@ import {
   mountChildFibers,
   reconcileChildFibers,
 } from "./ReactChildFiber";
-import { renderWithHooks } from "./ReactFiberHooks";
+import { bailoutHooks, renderWithHooks } from "./ReactFiberHooks";
 import { processUpdateQueue } from "./ReactUpdateQueue";
 import {
   FunctionComponent,
@@ -75,7 +75,7 @@ export function beginWork(
         renderLanes
       );
     case HostComponent:
-      return updateHostComponent(current, workInProgress);
+      return updateHostComponent(current, workInProgress, renderLanes);
     case HostText:
       return null;
     // return updateHostText(current, workInProgress);
@@ -96,6 +96,13 @@ export function beginWork(
 }
 
 /**
+ * @description: 标记didReceiveUpdate为true
+ */
+export function markWorkInProgressReceivedUpdate() {
+  didReceiveUpdate = true;
+}
+
+/**
  * @description: 更新FunctionComponent
  */
 function updateFunctionComponent(
@@ -113,7 +120,15 @@ function updateFunctionComponent(
     null,
     renderLanes
   );
-  // console.log(didReceiveUpdate);
+
+  // 不需要更新，直接bailoutHooks
+  if (current !== null && !didReceiveUpdate) {
+    bailoutHooks(current, workInProgress, renderLanes);
+    return bailoutOnAlreadyFinishedWork(current, workInProgress, renderLanes);
+  }
+
+  reconcileChildren(current, workInProgress, nextChildren, renderLanes);
+  return workInProgress.child;
 }
 
 function checkScheduledUpdateOrContext(
@@ -176,7 +191,7 @@ function updateHostRoot(
   }
 
   // 创建子fiber节点
-  reconcileChildren(current, workInProgress, nextChildren);
+  reconcileChildren(current, workInProgress, nextChildren, renderLanes);
 
   // 返回子fiber节点
   return workInProgress.child;
@@ -185,7 +200,12 @@ function updateHostRoot(
 /**
  * @description: 处理子fiber节点
  */
-function reconcileChildren(current, workInProgress, nextChildren) {
+function reconcileChildren(
+  current: Fiber | null,
+  workInProgress: Fiber,
+  nextChildren: any,
+  renderLanes: Lanes
+) {
   // current为null说明是首次创建阶段，除了hostRoot节点
   if (current === null) {
     workInProgress.child = mountChildFibers(workInProgress, null, nextChildren);
@@ -200,17 +220,13 @@ function reconcileChildren(current, workInProgress, nextChildren) {
 }
 
 /**
- * @author: Zhouqi
  * @description: Function组件首次渲染会进入这里
- * @param _current
- * @param workInProgress
- * @param Component
  */
 function mountIndeterminateComponent(
-  _current,
-  workInProgress,
-  Component,
-  renderLanes
+  _current: Fiber | null,
+  workInProgress: Fiber,
+  Component: Function,
+  renderLanes: Lanes
 ) {
   const props = workInProgress.pendingProps;
   // value值是jsx经过babel处理后得到的vnode对象
@@ -224,11 +240,18 @@ function mountIndeterminateComponent(
   );
   // return;
   workInProgress.tag = FunctionComponent;
-  reconcileChildren(null, workInProgress, value);
+  reconcileChildren(null, workInProgress, value, renderLanes);
   return workInProgress.child;
 }
 
-function updateHostComponent(current, workInProgress) {
+/**
+ * @description: 更新普通元素
+ */
+function updateHostComponent(
+  current: Fiber | null,
+  workInProgress: Fiber,
+  renderLanes: Lanes
+) {
   const { type, pendingProps: nextProps } = workInProgress;
   let nextChildren = nextProps.children;
   // 判断是否只有唯一文本子节点，这种情况不需要为子节点创建fiber节点
@@ -238,6 +261,6 @@ function updateHostComponent(current, workInProgress) {
   } else {
     // TODO
   }
-  reconcileChildren(current, workInProgress, nextChildren);
+  reconcileChildren(current, workInProgress, nextChildren, renderLanes);
   return workInProgress.child;
 }
