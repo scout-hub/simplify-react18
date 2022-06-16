@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-16 17:08:17
+ * @LastEditTime: 2022-06-16 17:36:57
  */
 import type { Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -99,6 +99,22 @@ function ChildReconciler(shouldTrackSideEffects) {
         newChildren[newIndex],
         lanes
       );
+      // 没有可以复用的节点，跳出循环
+      if (newFiber === null) {
+        if (oldFiber === null) {
+          oldFiber = nextOldFiber;
+          throw Error("reconcileChildrenArray old fiber is null");
+        }
+        break;
+      }
+
+      if (shouldTrackSideEffects) {
+        if (oldFiber && newFiber.alternate === null) {
+          // 匹配到元素但是没有复用的情况
+          throw Error("reconcileChildrenArray 匹配到元素但是没有复用的情况");
+        }
+      }
+      lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIndex);
       console.log(newFiber);
     }
 
@@ -119,6 +135,20 @@ function ChildReconciler(shouldTrackSideEffects) {
     }
 
     return null;
+  }
+
+  /**
+   * @description: 当前fiber节点需要摆放的位置
+   */  
+  function placeChild(
+    newFiber: Fiber,
+    lastPlacedIndex: number,
+    newIndex: number
+  ): number {
+    newFiber.index = newIndex;
+    // mount的时候lastPlacedIndex不需要操作，没有意义
+    if (!shouldTrackSideEffects) return lastPlacedIndex;
+    return 0;
   }
 
   /**
