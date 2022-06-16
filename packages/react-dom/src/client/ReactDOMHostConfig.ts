@@ -2,14 +2,14 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 15:44:53
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-15 17:39:21
+ * @LastEditTime: 2022-06-16 21:56:30
  */
 
 import { DefaultEventPriority } from "packages/react-reconciler/src/ReactEventPriorities";
 import { Fiber } from "packages/react-reconciler/src/ReactInternalTypes";
 import { DOMEventName } from "../events/DOMEventNames";
 import { getEventPriority } from "../events/ReactDOMEventListener";
-import { createElement, setInitialProperties } from "./ReactDOMComponent";
+import { createElement, diffProperties, setInitialProperties } from "./ReactDOMComponent";
 import { precacheFiberNode, updateFiberProps } from "./ReactDOMComponentTree";
 
 /**
@@ -107,3 +107,20 @@ export const scheduleMicrotask =
     : localPromise !== void 0
     ? (callback) => localPromise.resolve(null).then(callback)
     : scheduleTimeout;
+
+/**
+ * @description: 属性更新
+ */
+export function prepareUpdate(
+  domElement: Element,
+  type: string,
+  oldProps: any,
+  newProps: any
+) {
+  return diffProperties(
+    domElement,
+    type,
+    oldProps,
+    newProps,
+  );
+}

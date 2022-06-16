@@ -2,13 +2,16 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:23:10
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-01 17:24:10
+ * @LastEditTime: 2022-06-16 22:20:57
  */
+import type { Lanes } from "./ReactFiberLane";
+import type { Fiber } from "./ReactInternalTypes";
 import {
   appendInitialChild,
   createInstance,
   createTextInstance,
   finalizeInitialChildren,
+  prepareUpdate,
 } from "packages/react-dom/src/client/ReactDOMHostConfig";
 import {
   FunctionComponent,
@@ -16,6 +19,7 @@ import {
   HostRoot,
   HostText,
 } from "./ReactWorkTags";
+import { Update } from "./ReactFiberFlags";
 
 /*
  * @Author: Zhouqi
@@ -23,7 +27,11 @@ import {
  * @LastEditors: Zhouqi
  * @LastEditTime: 2022-05-31 13:22:37
  */
-export function completeWork(current, workInProgress) {
+export function completeWork(
+  current: Fiber | null,
+  workInProgress: Fiber,
+  renderLanes: Lanes
+) {
   const newProps = workInProgress.pendingProps;
   switch (workInProgress.tag) {
     // 函数式组件
@@ -36,11 +44,12 @@ export function completeWork(current, workInProgress) {
       // console.log(fiberRoot);
       return null;
     }
-    // 创建普通元素节点
+    // 普通元素节点
     case HostComponent: {
       const type = workInProgress.type;
       if (current !== null && workInProgress !== null) {
         // 更新
+        updateHostComponent(current, workInProgress, type, newProps);
       } else {
         // 创建元素
         const instance = createInstance(type, newProps, workInProgress);
@@ -61,6 +70,36 @@ export function completeWork(current, workInProgress) {
     }
   }
   return null;
+}
+
+/**
+ * @description: 更新普通元素
+ */
+function updateHostComponent(
+  current: Fiber,
+  workInProgress: Fiber,
+  type: any,
+  newProps: any
+) {
+  const oldProps = current.memoizedProps;
+  // 新旧props一样，直接返回
+  if (newProps === oldProps) {
+    return;
+  }
+  const instance: Element = workInProgress.stateNode;
+  // 新旧的属性不一样，找出变化的属性进行更新
+  const updatePayload = prepareUpdate(instance, type, oldProps, newProps);
+  workInProgress.updateQueue = updatePayload;
+  if (updatePayload) {
+    markUpdate(workInProgress);
+  }
+}
+
+/**
+ * @description: 标记更新
+ */
+function markUpdate(workInProgress: Fiber) {
+  workInProgress.flags |= Update;
 }
 
 /**

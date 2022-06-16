@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-16 09:03:47
+ * @LastEditTime: 2022-06-16 21:49:34
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -63,7 +63,7 @@ let workInProgress: Fiber | null = null;
 let currentEventTime: number = NoTimestamp;
 
 let workInProgressRootRenderLanes: Lanes = NoLanes;
-let subtreeRenderLanes: Lanes = NoLanes;
+export let subtreeRenderLanes: Lanes = NoLanes;
 
 /**
  * @description: 计算事件的开始时间
@@ -409,14 +409,17 @@ function performUnitOfWork(unitOfWork: Fiber) {
   }
 }
 
-function completeUnitOfWork(unitOfWork) {
+/**
+ * @description: completeWork
+ */
+function completeUnitOfWork(unitOfWork: Fiber) {
   let completedWork = unitOfWork;
   do {
     const current = completedWork.alternate;
-    const returnFiber = completedWork.return;
+    const returnFiber = completedWork.return!;
 
     let next;
-    next = completeWork(current, completedWork);
+    next = completeWork(current, completedWork, subtreeRenderLanes);
 
     if (next !== null) {
       workInProgress = next;

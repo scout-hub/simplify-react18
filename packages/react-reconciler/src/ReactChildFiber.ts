@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-16 18:07:05
+ * @LastEditTime: 2022-06-16 21:39:40
  */
 import type { Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -53,7 +53,14 @@ function ChildReconciler(shouldTrackSideEffects) {
         );
       }
     }
-    return null;
+
+    // 新节点是文本节点的情况
+    if ((isString(newChild) && newChild !== "") || isNumber(newChild)) {
+      throw Error("reconcileChildFibers newChild is Text Node");
+    }
+
+    // newChild没有匹配到上面的情况，可以当作不存在了，删除剩余的子节点
+    return deleteRemainingChildren(returnFiber, currentFirstChild);
   }
 
   /**
@@ -126,7 +133,13 @@ function ChildReconciler(shouldTrackSideEffects) {
       oldFiber = nextOldFiber;
     }
 
-    // old fiber不存在，表示需要创建新的fiber
+    // 已经遍历完所有的新节点了，剩余的老节点都需要删除掉
+    if (newIndex === childrenLength) {
+      deleteRemainingChildren(returnFiber, oldFiber);
+      return resultingFirstChild;
+    }
+
+    // 新节点还没有遍历完，但是old fiber已经遍历完了，那么剩下的新节点只需要插入到后面就行了
     if (oldFiber === null) {
       for (; newIndex < newChildren.length; newIndex++) {
         const newFiber = createChild(returnFiber, newChildren[newIndex], lanes);
