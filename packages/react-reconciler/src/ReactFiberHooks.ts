@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-16 12:00:27
+ * @LastEditTime: 2022-06-16 14:10:14
  */
 import { Lane, Lanes, NoLanes } from "./ReactFiberLane";
 import { is, isFunction } from "packages/shared/src";
@@ -44,6 +44,7 @@ export type UpdateQueue<S, A> = {
 const { ReactCurrentDispatcher } = ReactSharedInternals;
 
 let workInProgressHook: Hook | null = null;
+// 当前正在内存中渲染的fiber
 let currentlyRenderingFiber: Fiber | null = null;
 let renderLanes: Lanes = NoLanes;
 let currentHook: Hook | null = null;
@@ -131,25 +132,109 @@ function updateReducer<S>(
 ): [S, Dispatch<BasicStateAction<S>>] {
   const hook = updateWorkInProgressHook();
   const queue = hook.queue;
+  if (queue === null) throw Error("queue is null");
+
+  queue.lastRenderedReducer = reducer;
+  const current = currentHook!;
+  // baseQueue指向链表的最后一位
+  let baseQueue = current.baseQueue;
+  // pending指向链表的最后一位
+  const pendingQueue = queue.pending;
+
+  // 最后挂起的Update还没处理，把它加到baseQueue上
+  if (pendingQueue !== null) {
+    if (baseQueue != null) {
+      // 合并baseQueue和pendingQueue
+      // 1、假设baseQueue为 1->2->1  baseQueue.next是1
+      const baseFirst = baseQueue.next;
+      // 2、假设pendingQueue为 3->4->3 pendingQueue.next是3
+      const pendingFirst = pendingQueue.next;
+      // 3、2->3   ===>  1->2->3->4
+      baseQueue.next = pendingFirst;
+      // 4、4->1   ===>  1->2->3->4->1
+      pendingQueue.next = baseFirst;
+    }
+
+    // baseQueue为 1->2->3->4->1
+    current.baseQueue = baseQueue = pendingQueue;
+    queue.pending = null;
+  }
+
+  // 存在baseQueue需要处理
+  if (baseQueue !== null) {
+    // 获取第一个Update
+    const first = baseQueue.next;
+    let newState = current.baseState;
+
+    let newBaseState = null;
+    let newBaseQueueFirst = null;
+    let newBaseQueueLast = null;
+    let update = first;
+
+    // 循环处理所有Update，进行state的计算
+    // 循环终止条件：update不存在或者且update !== first（只有一个Update的情况）
+    do {
+      update = update.next;
+    } while (update !== null && update !== first);
+  }
+
   const dispatch: Dispatch<BasicStateAction<S>> = queue.dispatch;
   return [hook.memoizedState, dispatch];
 }
 
+/**
+ * @description: 从current hook中复制得到workInProgressHook
+ */
 function updateWorkInProgressHook(): Hook {
   // 下一个hook
   let nextCurrentHook: null | Hook;
+  // currentHook不存在
   if (currentHook === null) {
+    // 获取current Fiber
     const current = currentlyRenderingFiber?.alternate;
     if (current != null) {
+      // current存在则获取hook数据
       nextCurrentHook = current.memoizedState;
     } else {
       nextCurrentHook = null;
     }
   } else {
+    // currentHook存在则通过next获取下一个hook
     nextCurrentHook = currentHook.next;
   }
 
-  console.log(nextCurrentHook);
+  let nextWorkInProgressHook: null | Hook;
+  if (workInProgressHook === null) {
+    nextWorkInProgressHook = currentlyRenderingFiber?.memoizedState;
+  } else {
+    nextWorkInProgressHook = workInProgressHook.next;
+  }
+
+  if (nextWorkInProgressHook !== null) {
+    // 存在workInProgressHook，直接复用
+    workInProgressHook = nextWorkInProgressHook;
+    nextWorkInProgressHook = workInProgressHook.next;
+    currentHook = nextCurrentHook;
+  } else {
+    if (nextCurrentHook === null) throw Error("nextCurrentHook is null");
+    currentHook = nextCurrentHook;
+    const { memoizedState, baseState, baseQueue, queue } = currentHook;
+    // 从current hook复制一份
+    const newHook: Hook = {
+      memoizedState,
+      baseState,
+      baseQueue,
+      queue,
+      next: null,
+    };
+    if (workInProgressHook === null) {
+      // 这是第一个hook
+      currentlyRenderingFiber!.memoizedState = workInProgressHook = newHook;
+    } else {
+      // 添加到hook链表的最后
+      workInProgressHook = workInProgressHook.next = newHook;
+    }
+  }
 
   return workInProgressHook!;
 }
