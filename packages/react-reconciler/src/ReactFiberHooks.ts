@@ -2,9 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-15 17:08:42
+ * @LastEditTime: 2022-06-16 12:00:27
  */
-import type { Lane } from "./ReactFiberLane";
+import { Lane, Lanes, NoLanes } from "./ReactFiberLane";
 import { is, isFunction } from "packages/shared/src";
 import ReactSharedInternals from "packages/shared/src/ReactSharedInternals";
 import {
@@ -45,21 +45,35 @@ const { ReactCurrentDispatcher } = ReactSharedInternals;
 
 let workInProgressHook: Hook | null = null;
 let currentlyRenderingFiber: Fiber | null = null;
+let renderLanes: Lanes = NoLanes;
+let currentHook: Hook | null = null;
 
 const HooksDispatcherOnMount: Dispatcher = {
   useState: mountState,
 };
 
 const HooksDispatcherOnUpdate = {
-  useState: mountState,
+  useState: updateState,
 };
 
-export function renderWithHooks(current, workInProgress, Component) {
+/**
+ * @description: 渲染hook函数组件
+ */
+export function renderWithHooks(
+  current: Fiber | null,
+  workInProgress,
+  Component: Function,
+  props: any,
+  secondArg: any,
+  nextRenderLanes: Lanes
+) {
+  renderLanes = nextRenderLanes;
   // 赋值currentlyRenderingFiber为当前的workInProgress
   currentlyRenderingFiber = workInProgress;
   // 重置memoizedState和updateQueue
   workInProgress.memoizedState = null;
   workInProgress.updateQueue = null;
+  workInProgress.lanes = NoLanes;
 
   ReactCurrentDispatcher.current =
     current === null || current.memoizedState === null
@@ -76,6 +90,9 @@ function basicStateReducer<S>(state: S, action: BasicStateAction<S>) {
   return isFunction(action) ? (action as () => S)() : action;
 }
 
+/**
+ * @description: mount阶段的useState函数
+ */
 function mountState<S, A>(
   initialState: S | (() => S)
 ): [S, Dispatch<BasicStateAction<S>>] {
@@ -99,6 +116,47 @@ function mountState<S, A>(
   return [hook.memoizedState, dispatch];
 }
 
+/**
+ * @description: update阶段的useState函数
+ */
+function updateState<S>(
+  initialState: (() => S) | S
+): [S, Dispatch<BasicStateAction<S>>] {
+  return updateReducer(basicStateReducer, initialState);
+}
+
+function updateReducer<S>(
+  reducer,
+  initialArg
+): [S, Dispatch<BasicStateAction<S>>] {
+  const hook = updateWorkInProgressHook();
+  const queue = hook.queue;
+  const dispatch: Dispatch<BasicStateAction<S>> = queue.dispatch;
+  return [hook.memoizedState, dispatch];
+}
+
+function updateWorkInProgressHook(): Hook {
+  // 下一个hook
+  let nextCurrentHook: null | Hook;
+  if (currentHook === null) {
+    const current = currentlyRenderingFiber?.alternate;
+    if (current != null) {
+      nextCurrentHook = current.memoizedState;
+    } else {
+      nextCurrentHook = null;
+    }
+  } else {
+    nextCurrentHook = currentHook.next;
+  }
+
+  console.log(nextCurrentHook);
+
+  return workInProgressHook!;
+}
+
+/**
+ * @description: 生成workInProgressHook
+ */
 function mountWorkInProgressHook(): Hook {
   const hook: Hook = {
     memoizedState: null,

@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-15 22:39:14
+ * @LastEditTime: 2022-06-16 11:56:55
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { includesSomeLane, Lanes, NoLanes } from "./ReactFiberLane";
@@ -53,6 +53,7 @@ export function beginWork(
           renderLanes
         );
       }
+      didReceiveUpdate = false;
     }
   } else {
     // mount阶段
@@ -70,15 +71,49 @@ export function beginWork(
       return mountIndeterminateComponent(
         current,
         workInProgress,
-        workInProgress.type
+        workInProgress.type,
+        renderLanes
       );
     case HostComponent:
       return updateHostComponent(current, workInProgress);
     case HostText:
       return null;
     // return updateHostText(current, workInProgress);
+    case FunctionComponent:
+      const Component = workInProgress.type;
+      const unresolvedProps = workInProgress.pendingProps;
+      // TODO workInProgress.elementType === Component?
+      const resolvedProps = unresolvedProps;
+      return updateFunctionComponent(
+        current,
+        workInProgress,
+        Component,
+        resolvedProps,
+        renderLanes
+      );
   }
   return null;
+}
+
+/**
+ * @description: 更新FunctionComponent
+ */
+function updateFunctionComponent(
+  current: Fiber | null,
+  workInProgress: Fiber,
+  Component: Function,
+  nextProps: any,
+  renderLanes: number
+) {
+  const nextChildren = renderWithHooks(
+    current,
+    workInProgress,
+    Component,
+    nextProps,
+    null,
+    renderLanes
+  );
+  // console.log(didReceiveUpdate);
 }
 
 function checkScheduledUpdateOrContext(
@@ -171,9 +206,22 @@ function reconcileChildren(current, workInProgress, nextChildren) {
  * @param workInProgress
  * @param Component
  */
-function mountIndeterminateComponent(_current, workInProgress, Component) {
+function mountIndeterminateComponent(
+  _current,
+  workInProgress,
+  Component,
+  renderLanes
+) {
+  const props = workInProgress.pendingProps;
   // value值是jsx经过babel处理后得到的vnode对象
-  const value = renderWithHooks(_current, workInProgress, Component);
+  const value = renderWithHooks(
+    _current,
+    workInProgress,
+    Component,
+    props,
+    null,
+    renderLanes
+  );
   // return;
   workInProgress.tag = FunctionComponent;
   reconcileChildren(null, workInProgress, value);
