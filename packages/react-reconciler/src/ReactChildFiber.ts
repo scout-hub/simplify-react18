@@ -2,9 +2,10 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-15 22:36:52
+ * @LastEditTime: 2022-06-16 15:31:42
  */
-
+import type { Lanes } from "./ReactFiberLane";
+import type { Fiber } from "./ReactInternalTypes";
 import { isArray, isNumber, isObject, isString } from "packages/shared/src";
 import { REACT_ELEMENT_TYPE } from "packages/shared/src/ReactSymbols";
 import {
@@ -12,8 +13,7 @@ import {
   createFiberFromText,
   createWorkInProgress,
 } from "./ReactFiber";
-import { Placement } from "./ReactFiberFlags";
-import type { Fiber } from "./ReactInternalTypes";
+import { ChildDeletion, Placement } from "./ReactFiberFlags";
 
 /**
  * @description: 创建diff的函数
@@ -23,18 +23,33 @@ function ChildReconciler(shouldTrackSideEffects) {
   /**
    * @description: diff的入口
    */
-  function reconcileChildFibers(returnFiber, currentFirstChild, newChild) {
+  function reconcileChildFibers(
+    returnFiber: Fiber,
+    currentFirstChild: Fiber | null,
+    newChild: any,
+    lanes: Lanes
+  ) {
     if (isObject(newChild)) {
       // 处理单个子节点的情况
       switch (newChild.$$typeof) {
         case REACT_ELEMENT_TYPE:
           return placeSingleChild(
-            reconcileSingleElement(returnFiber, currentFirstChild, newChild)
+            reconcileSingleElement(
+              returnFiber,
+              currentFirstChild,
+              newChild,
+              lanes
+            )
           );
       }
       // 处理多个子节点的情况
       if (isArray(newChild)) {
-        return reconcileChildrenArray(returnFiber, currentFirstChild, newChild);
+        return reconcileChildrenArray(
+          returnFiber,
+          currentFirstChild,
+          newChild,
+          lanes
+        );
       }
     }
     return null;
@@ -46,15 +61,22 @@ function ChildReconciler(shouldTrackSideEffects) {
   function reconcileChildrenArray(
     returnFiber: Fiber,
     currentFirstChild: Fiber | null,
-    newChildren: Array<any>
-  ) {
+    newChildren: Array<any>,
+    lanes: Lanes
+  ): Fiber | null {
     let oldFiber = currentFirstChild;
     let newIndex = 0;
+    let lastPlacedIndex = 0;
+    let nextOldFiber = null;
+    const childrenLength = newChildren.length;
+
     let previousNewFiber: Fiber | null = null;
     let resultingFirstChild: Fiber | null = null;
 
-    // TODO  diff
+    // diff
+    for (; oldFiber !== null && newIndex < childrenLength; newIndex++) {}
 
+    // old fiber不存在，表示需要创建新的fiber
     if (oldFiber === null) {
       for (; newIndex < newChildren.length; newIndex++) {
         const newFiber = createChild(returnFiber, newChildren[newIndex]);
@@ -75,8 +97,6 @@ function ChildReconciler(shouldTrackSideEffects) {
 
   /**
    * @description: 创建子fiber节点
-   * @param {Fiber} returnFiber
-   * @param {any} newChild
    */
   function createChild(returnFiber: Fiber, newChild: any) {
     // 处理文本子节点
@@ -102,22 +122,84 @@ function ChildReconciler(shouldTrackSideEffects) {
 
   /**
    * @description: diff单个节点
-   * @param returnFiber
-   * @param currentFirstChild
-   * @param newChild
    */
-  function reconcileSingleElement(returnFiber, currentFirstChild, element) {
+  function reconcileSingleElement(
+    returnFiber: Fiber,
+    currentFirstChild: Fiber | null,
+    element: any,
+    lanes: Lanes
+  ) {
+    const key = element.key;
     let child = currentFirstChild;
-    // TODO 老的节点存在情况根据type和key进行节点的复用
-    // while (child !== null) {}
+    // 老的节点存在情况根据type和key进行节点的复用
+    while (child !== null) {
+      // key相同，可能可以复用，接下去判断type
+      if (child.key === key) {
+        const elementType = element.type;
+        if (child.elementType === elementType) {
+          // 这里是single elment的处理，也就是只有一个子节点，所以如果存在兄弟节点，需要全部删除
+          deleteRemainingChildren(returnFiber, child.sibling);
+          const existing = useFiber(child, element.props);
+          existing.return = returnFiber;
+          return existing;
+        }
+        // type不同，删除下面所有的子节点
+        deleteRemainingChildren(returnFiber, child);
+        break;
+      } else {
+        // key不同，直接删除
+        deleteChild(returnFiber, child);
+      }
+      child = child.sibling;
+    }
     // 没有节点复用（比如首屏渲染的hostRoot的current是没有child节点的）
     // 直接创建fiber节点
-    const created = createFiberFromElement(element);
+    const created: Fiber = createFiberFromElement(element);
     created.return = returnFiber;
     return created;
   }
 
-  function placeSingleChild(newFiber) {
+  /**
+   * @description: 创建当前fiber的workInProgress
+   */
+  function useFiber(fiber: Fiber, pendingProps: any): Fiber {
+    const clone = createWorkInProgress(fiber, pendingProps);
+    clone.index = 0;
+    clone.sibling = null;
+    return clone;
+  }
+
+  /**
+   * @description: 给需要删除的节点加上标记并添加到父节点的deletions上
+   */
+  function deleteChild(returnFiber: Fiber, childToDelete: Fiber) {
+    const deletions = returnFiber.deletions;
+    // 如果deletions不存在，则创建一个[]
+    if (deletions === null) {
+      returnFiber.deletions = [childToDelete];
+      returnFiber.flags |= ChildDeletion;
+    } else {
+      // 添加需要删除的fiber
+      deletions.push(childToDelete);
+    }
+  }
+
+  /**
+   * @description: 删除子节点
+   */
+  function deleteRemainingChildren(
+    returnFiber: Fiber,
+    currentFirstChild: Fiber | null
+  ) {
+    let childToDelete = currentFirstChild;
+    while (childToDelete !== null) {
+      deleteChild(returnFiber, childToDelete);
+      childToDelete = childToDelete.sibling;
+    }
+    return null;
+  }
+
+  function placeSingleChild(newFiber: Fiber): Fiber {
     // 首次渲染时的hostRoot节点会进入到这个条件
     if (shouldTrackSideEffects && newFiber.alternate === null) {
       newFiber.flags |= Placement;

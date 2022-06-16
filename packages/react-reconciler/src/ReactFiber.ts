@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-15 22:30:37
+ * @LastEditTime: 2022-06-16 15:07:20
  */
 import { isString } from "packages/shared/src";
 import { NoFlags } from "./ReactFiberFlags";
@@ -49,6 +49,8 @@ class FiberNode {
   lanes = NoLanes;
   childLanes = NoLanes;
   flags = NoFlags;
+  subtreeFlags = NoFlags;
+  deletions = null;
   alternate = null;
 
   constructor(public tag, public pendingProps, public key) {}

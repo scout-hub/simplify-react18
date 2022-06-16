@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-16 14:42:24
+ * @LastEditTime: 2022-06-16 15:25:29
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { includesSomeLane, Lanes, NoLanes } from "./ReactFiberLane";
@@ -208,13 +208,19 @@ function reconcileChildren(
 ) {
   // current为null说明是首次创建阶段，除了hostRoot节点
   if (current === null) {
-    workInProgress.child = mountChildFibers(workInProgress, null, nextChildren);
+    workInProgress.child = mountChildFibers(
+      workInProgress,
+      null,
+      nextChildren,
+      renderLanes
+    );
   } else {
     // 说明是更新节点，hostRoot节点首次渲染也会进入这里
     workInProgress.child = reconcileChildFibers(
       workInProgress,
       current.child,
-      nextChildren
+      nextChildren,
+      renderLanes
     );
   }
 }
@@ -258,8 +264,6 @@ function updateHostComponent(
   const isDirectTextChild = shouldSetTextContent(type, nextProps);
   if (isDirectTextChild) {
     nextChildren = null;
-  } else {
-    // TODO
   }
   reconcileChildren(current, workInProgress, nextChildren, renderLanes);
   return workInProgress.child;
