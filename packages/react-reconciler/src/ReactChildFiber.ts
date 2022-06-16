@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-16 17:36:57
+ * @LastEditTime: 2022-06-16 18:07:05
  */
 import type { Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -114,14 +114,28 @@ function ChildReconciler(shouldTrackSideEffects) {
           throw Error("reconcileChildrenArray 匹配到元素但是没有复用的情况");
         }
       }
+
       lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIndex);
-      console.log(newFiber);
+
+      if (previousNewFiber === null) {
+        resultingFirstChild = newFiber;
+      } else {
+        previousNewFiber.sibling = newFiber;
+      }
+      previousNewFiber = newFiber;
+      oldFiber = nextOldFiber;
     }
 
     // old fiber不存在，表示需要创建新的fiber
     if (oldFiber === null) {
       for (; newIndex < newChildren.length; newIndex++) {
         const newFiber = createChild(returnFiber, newChildren[newIndex], lanes);
+        if (newFiber === null) {
+          throw Error("newFiber null");
+          // continue;
+        }
+        lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIndex);
+
         // 前一个fiber是null说明当前这个newFiber就是要返回的第一个子fiber
         if (previousNewFiber === null) {
           resultingFirstChild = newFiber;
@@ -139,7 +153,7 @@ function ChildReconciler(shouldTrackSideEffects) {
 
   /**
    * @description: 当前fiber节点需要摆放的位置
-   */  
+   */
   function placeChild(
     newFiber: Fiber,
     lastPlacedIndex: number,
@@ -148,7 +162,22 @@ function ChildReconciler(shouldTrackSideEffects) {
     newFiber.index = newIndex;
     // mount的时候lastPlacedIndex不需要操作，没有意义
     if (!shouldTrackSideEffects) return lastPlacedIndex;
-    return 0;
+    const current = newFiber.alternate;
+
+    if (current !== null) {
+      const oldIndex = current.index;
+      if (oldIndex < lastPlacedIndex) {
+        // 节点移动的情况
+        throw Error("节点移动的情况");
+      } else {
+        // 节点可以保持在原位置
+        return oldIndex;
+      }
+    } else {
+      // 插入节点的情况
+      newFiber.flags |= Placement;
+      return lastPlacedIndex;
+    }
   }
 
   /**
