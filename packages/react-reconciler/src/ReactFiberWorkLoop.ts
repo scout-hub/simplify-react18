@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-16 21:49:34
+ * @LastEditTime: 2022-06-17 13:32:49
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -54,6 +54,7 @@ import {
   flushSyncCallbacks,
   scheduleSyncCallback,
 } from "./ReactFiberSyncTaskQueue";
+import { MutationMask, NoFlags } from "./ReactFiberFlags";
 
 // 当前正在工作的根应用fiber
 let workInProgressRoot: FiberRoot | null = null;
@@ -290,6 +291,7 @@ function performConcurrentWorkOnRoot(root: FiberRoot, didTimeout: boolean) {
   shouldTimeSlice ? renderRootConcurrent(root) : renderRootSync(root, lanes);
   const finishedWork = root.current.alternate;
   root.finishedWork = finishedWork;
+  root.finishedLanes = lanes;
   finishConcurrentRender(root);
 }
 
@@ -330,7 +332,7 @@ function prepareFreshStack(root: FiberRoot, lanes: Lanes) {
  * @description: render工作完成，进入commit阶段
  * @param root
  */
-function finishConcurrentRender(root) {
+function finishConcurrentRender(root: FiberRoot) {
   commitRoot(root);
 }
 
@@ -338,11 +340,11 @@ function finishConcurrentRender(root) {
  * @description: 提交阶段
  * @param root
  */
-function commitRoot(root) {
+function commitRoot(root: FiberRoot) {
   commitRootImpl(root);
 }
 
-function commitRootImpl(root) {
+function commitRootImpl(root: FiberRoot) {
   const finishedWork = root.finishedWork;
 
   if (finishedWork === null) return;
@@ -367,12 +369,19 @@ function commitRootImpl(root) {
 
   // TODO 副作用
 
-  // TODO beforeMutationEffect阶段
+  // 判断是否需要进行工作，一般都是dom操作
+  const subtreeHasEffects =
+    (finishedWork.subtreeFlags & MutationMask) !== NoFlags;
+  const rootHasEffect = (finishedWork.flags & MutationMask) !== NoFlags;
+  
+  console.log(subtreeHasEffects, rootHasEffect);
+  if (subtreeHasEffects || rootHasEffect) {
+    // TODO beforeMutationEffect阶段
 
-  commitMutationEffects(root, finishedWork);
+    commitMutationEffects(root, finishedWork);
 
-  // TODO layout阶段
-
+    // TODO layout阶段'
+  }
   // 渲染完成，将current指向workInProgress
   root.current = finishedWork;
 }

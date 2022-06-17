@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-16 15:25:29
+ * @LastEditTime: 2022-06-17 14:41:13
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { includesSomeLane, Lanes, NoLanes } from "./ReactFiberLane";
@@ -13,7 +13,7 @@ import {
   reconcileChildFibers,
 } from "./ReactChildFiber";
 import { bailoutHooks, renderWithHooks } from "./ReactFiberHooks";
-import { processUpdateQueue } from "./ReactUpdateQueue";
+import { cloneUpdateQueue, processUpdateQueue } from "./ReactUpdateQueue";
 import {
   FunctionComponent,
   HostComponent,
@@ -179,6 +179,9 @@ function updateHostRoot(
 ) {
   const prevState = workInProgress.memoizedState;
   const prevChildren = prevState.element;
+
+  // 克隆一份UpdateQueue
+  cloneUpdateQueue(current!, workInProgress);
   processUpdateQueue(workInProgress);
 
   const nextState = workInProgress.memoizedState;
@@ -244,7 +247,6 @@ function mountIndeterminateComponent(
     null,
     renderLanes
   );
-  // return;
   workInProgress.tag = FunctionComponent;
   reconcileChildren(null, workInProgress, value, renderLanes);
   return workInProgress.child;

@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-16 21:39:40
+ * @LastEditTime: 2022-06-17 14:48:31
  */
 import type { Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -13,7 +13,7 @@ import {
   createFiberFromText,
   createWorkInProgress,
 } from "./ReactFiber";
-import { ChildDeletion, Placement } from "./ReactFiberFlags";
+import { ChildDeletion, Forked, Placement } from "./ReactFiberFlags";
 import { HostText } from "./ReactWorkTags";
 
 /**
@@ -173,6 +173,11 @@ function ChildReconciler(shouldTrackSideEffects) {
     newIndex: number
   ): number {
     newFiber.index = newIndex;
+    // mount阶段直接返回lastPlacedIndex
+    if (!shouldTrackSideEffects) {
+      newFiber.flags |= Forked;
+      return lastPlacedIndex;
+    }
     // mount的时候lastPlacedIndex不需要操作，没有意义
     if (!shouldTrackSideEffects) return lastPlacedIndex;
     const current = newFiber.alternate;

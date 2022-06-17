@@ -2,8 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-31 14:06:28
+ * @LastEditTime: 2022-06-17 13:31:37
  */
+import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
   appendChildToContainer,
   insertInContainerBefore,
@@ -17,16 +18,13 @@ import {
 } from "./ReactWorkTags";
 
 /**
- * @author: Zhouqi
  * @description: commitMutation阶段
- * @param root
- * @param finishedWork
  */
-export function commitMutationEffects(root, finishedWork) {
+export function commitMutationEffects(root: FiberRoot, finishedWork: Fiber) {
   commitMutationEffectsOnFiber(finishedWork, root);
 }
 
-function commitMutationEffectsOnFiber(finishedWork, root) {
+function commitMutationEffectsOnFiber(finishedWork: Fiber, root: FiberRoot) {
   const current = finishedWork.alternate;
   switch (finishedWork.tag) {
     case FunctionComponent: {

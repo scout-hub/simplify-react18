@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:20:49
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 14:33:33
+ * @LastEditTime: 2022-06-17 14:17:52
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { createHostRootFiber } from "./ReactFiber";
@@ -33,6 +33,7 @@ class FiberRootNode {
   current: any = null; // 指向当前的RootFiber应用
   finishedWork = null;
   callbackNode = null;
+  callbackPriority = NoLane;
   pendingLanes = NoLane;
   expiredLanes = NoLanes;
   eventTimes = createLaneMap(NoLanes);

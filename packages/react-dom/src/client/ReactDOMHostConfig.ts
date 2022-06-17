@@ -2,14 +2,18 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 15:44:53
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-16 21:56:30
+ * @LastEditTime: 2022-06-17 14:52:44
  */
 
 import { DefaultEventPriority } from "packages/react-reconciler/src/ReactEventPriorities";
 import { Fiber } from "packages/react-reconciler/src/ReactInternalTypes";
 import { DOMEventName } from "../events/DOMEventNames";
 import { getEventPriority } from "../events/ReactDOMEventListener";
-import { createElement, diffProperties, setInitialProperties } from "./ReactDOMComponent";
+import {
+  createElement,
+  diffProperties,
+  setInitialProperties,
+} from "./ReactDOMComponent";
 import { precacheFiberNode, updateFiberProps } from "./ReactDOMComponentTree";
 
 /**
@@ -43,6 +47,7 @@ export function createInstance(type, props, internalInstanceHandle: Fiber) {
 
 export function finalizeInitialChildren(domElement, type, props) {
   setInitialProperties(domElement, type, props);
+  return false;
 }
 
 /**
@@ -117,10 +122,5 @@ export function prepareUpdate(
   oldProps: any,
   newProps: any
 ) {
-  return diffProperties(
-    domElement,
-    type,
-    oldProps,
-    newProps,
-  );
+  return diffProperties(domElement, type, oldProps, newProps);
 }

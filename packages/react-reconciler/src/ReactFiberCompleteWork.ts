@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:23:10
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-17 12:01:41
+ * @LastEditTime: 2022-06-17 15:02:39
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { Lanes, mergeLanes, NoLanes } from "./ReactFiberLane";
@@ -35,8 +35,7 @@ export function completeWork(
     }
     // 当前应用的根结点
     case HostRoot: {
-      // const fiberRoot = workInProgress.stateNode;
-      // console.log(fiberRoot);
+      bubbleProperties(workInProgress);
       return null;
     }
     // 普通元素节点

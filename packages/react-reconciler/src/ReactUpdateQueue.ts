@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 14:43:08
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-15 16:34:43
+ * @LastEditTime: 2022-06-17 14:31:11
  */
 import type { Lane, Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -154,7 +154,7 @@ export function processUpdateQueue<State>(workInProgress: Fiber) {
 
   if (firstBaseUpdate !== null) {
     let newLanes = NoLanes;
-    
+
     let newState = queue.baseState;
     let newBaseState: State | null = null;
 
@@ -190,6 +190,25 @@ export function processUpdateQueue<State>(workInProgress: Fiber) {
     queue.lastBaseUpdate = newLastBaseUpdate;
     workInProgress.memoizedState = newState;
     workInProgress.lanes = newLanes;
+  }
+}
+
+/**
+ * @description: 从current fiber上克隆一个updateQueue
+ */
+export function cloneUpdateQueue<State>(current: Fiber, workInProgress: Fiber) {
+  const queue: UpdateQueue<State> = workInProgress.updateQueue;
+  const currentQueue: UpdateQueue<State> = current.updateQueue;
+
+  if (queue === currentQueue) {
+    const clone: UpdateQueue<State> = {
+      baseState: currentQueue.baseState,
+      firstBaseUpdate: currentQueue.firstBaseUpdate,
+      lastBaseUpdate: currentQueue.lastBaseUpdate,
+      shared: currentQueue.shared,
+      effects: currentQueue.effects,
+    };
+    workInProgress.updateQueue = clone;
   }
 }
 
