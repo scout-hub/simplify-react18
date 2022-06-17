@@ -2,10 +2,10 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:23:10
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-16 22:20:57
+ * @LastEditTime: 2022-06-17 12:01:41
  */
-import type { Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
+import { Lanes, mergeLanes, NoLanes } from "./ReactFiberLane";
 import {
   appendInitialChild,
   createInstance,
@@ -19,14 +19,8 @@ import {
   HostRoot,
   HostText,
 } from "./ReactWorkTags";
-import { Update } from "./ReactFiberFlags";
+import { NoFlags, StaticMask, Update } from "./ReactFiberFlags";
 
-/*
- * @Author: Zhouqi
- * @Date: 2022-05-28 19:23:10
- * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-31 13:22:37
- */
 export function completeWork(
   current: Fiber | null,
   workInProgress: Fiber,
@@ -36,6 +30,7 @@ export function completeWork(
   switch (workInProgress.tag) {
     // 函数式组件
     case FunctionComponent: {
+      bubbleProperties(workInProgress);
       return null;
     }
     // 当前应用的根结点
@@ -61,6 +56,7 @@ export function completeWork(
         // 初始化挂载属性
         finalizeInitialChildren(instance, type, newProps);
       }
+      bubbleProperties(workInProgress);
       return null;
     }
     // 处理文本节点
@@ -70,6 +66,58 @@ export function completeWork(
     }
   }
   return null;
+}
+
+/**
+ * @description: 将该节点的子节点上的lanes、flags全部收集到该节点的childLanes和subtreeFlags中
+ * 只需要处理一级子节点，因为这个操作会对每一层节点进行处理
+ */
+function bubbleProperties(completedWork: Fiber) {
+  /**
+   * 判断completedWork节点是不是静态节点，即不需要更新的节点
+   * 如果是静态节点，那么该节点对应的current树和workInProgress树的子节点肯定是一样的
+   * 并且它的childrenLanes都是NoLanes
+   * 这个在bailoutOnAlreadyFinishedWork中已经判断了
+   */
+  const didBailout =
+    completedWork.alternate !== null &&
+    completedWork.alternate.child === completedWork.child;
+
+  let newChildLanes = NoLanes;
+  let subtreeFlags = NoFlags;
+
+  if (!didBailout) {
+    let child = completedWork.child;
+    while (child !== null) {
+      newChildLanes = mergeLanes(
+        newChildLanes,
+        mergeLanes(child.lanes, child.childLanes)
+      );
+
+      subtreeFlags |= child.subtreeFlags;
+      subtreeFlags |= child.flags;
+      child.return = completedWork;
+
+      child = child.sibling;
+    }
+  } else {
+    let child = completedWork.child;
+    while (child !== null) {
+      newChildLanes = mergeLanes(
+        newChildLanes,
+        mergeLanes(child.lanes, child.childLanes)
+      );
+
+      subtreeFlags |= child.subtreeFlags & StaticMask;
+      subtreeFlags |= child.flags & StaticMask;
+      child.return = completedWork;
+
+      child = child.sibling;
+    }
+  }
+  completedWork.subtreeFlags |= subtreeFlags;
+  completedWork.childLanes = newChildLanes;
+  return didBailout;
 }
 
 /**
