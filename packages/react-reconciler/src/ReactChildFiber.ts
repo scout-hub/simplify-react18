@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-17 14:48:31
+ * @LastEditTime: 2022-06-17 16:53:21
  */
 import type { Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -425,6 +425,7 @@ export function cloneChildFibers(current: Fiber | null, workInProgress: Fiber) {
     return;
   }
   let newChild = createWorkInProgress(currentChild, currentChild.pendingProps);
+  workInProgress.child = newChild;
   newChild.return = workInProgress;
   // 为currentChild的兄弟fiber创建workInProgress
   while (currentChild.sibling !== null) {

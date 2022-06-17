@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-17 13:32:49
+ * @LastEditTime: 2022-06-17 15:22:03
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -260,7 +260,9 @@ function performSyncWorkOnRoot(root: FiberRoot) {
 
   const finishedWork = root.current.alternate;
   root.finishedWork = finishedWork;
+  root.finishedLanes = lanes;
 
+  commitRoot(root);
   return null;
 }
 
@@ -373,8 +375,7 @@ function commitRootImpl(root: FiberRoot) {
   const subtreeHasEffects =
     (finishedWork.subtreeFlags & MutationMask) !== NoFlags;
   const rootHasEffect = (finishedWork.flags & MutationMask) !== NoFlags;
-  
-  console.log(subtreeHasEffects, rootHasEffect);
+
   if (subtreeHasEffects || rootHasEffect) {
     // TODO beforeMutationEffect阶段
 

@@ -2,14 +2,15 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-17 13:31:37
+ * @LastEditTime: 2022-06-17 17:23:39
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
   appendChildToContainer,
+  commitUpdate,
   insertInContainerBefore,
 } from "packages/react-dom/src/client/ReactDOMHostConfig";
-import { Placement } from "./ReactFiberFlags";
+import { MutationMask, Placement, Update } from "./ReactFiberFlags";
 import {
   FunctionComponent,
   HostComponent,
@@ -24,12 +25,34 @@ export function commitMutationEffects(root: FiberRoot, finishedWork: Fiber) {
   commitMutationEffectsOnFiber(finishedWork, root);
 }
 
+/**
+ * @description: 提交副作用处理
+ */
 function commitMutationEffectsOnFiber(finishedWork: Fiber, root: FiberRoot) {
-  const current = finishedWork.alternate;
+  const current = finishedWork.alternate!;
+  const flags = finishedWork.flags;
+
   switch (finishedWork.tag) {
     case FunctionComponent: {
       recursivelyTraverseMutationEffects(root, finishedWork);
       commitReconciliationEffects(finishedWork);
+      return;
+    }
+    case HostComponent: {
+      recursivelyTraverseMutationEffects(root, finishedWork);
+      commitReconciliationEffects(finishedWork);
+      // 处理节点更新
+      if (flags & Update) {
+        const instance: Element = finishedWork.stateNode;
+        if (instance == null) return;
+        const newProps = finishedWork.memoizedProps;
+        const oldProps = current.memoizedProps;
+        const type = finishedWork.type;
+        const updatePayload = finishedWork.updateQueue;
+        finishedWork.updateQueue = null;
+        if (updatePayload == null) return;
+        commitUpdate(instance, updatePayload, type, oldProps, newProps);
+      }
       return;
     }
     case HostRoot:
@@ -39,15 +62,32 @@ function commitMutationEffectsOnFiber(finishedWork: Fiber, root: FiberRoot) {
   }
 }
 
-function recursivelyTraverseMutationEffects(root, parentFiber) {
-  let child = parentFiber.child;
-  while (child !== null) {
-    commitMutationEffectsOnFiber(child, root);
-    child = child.sibling;
+/**
+ * @description: 处理子fiber节点的副作用
+ */
+function recursivelyTraverseMutationEffects(
+  root: FiberRoot,
+  parentFiber: Fiber
+) {
+  const deletions = parentFiber.deletions;
+  // 删除节点
+  if (deletions !== null) {
+    throw Error("recursivelyTraverseMutationEffects commitDeletionEffects");
+  }
+  // 子节点需要更新
+  if (parentFiber.subtreeFlags & MutationMask) {
+    let child = parentFiber.child;
+    while (child !== null) {
+      commitMutationEffectsOnFiber(child, root);
+      child = child.sibling;
+    }
   }
 }
 
-function commitReconciliationEffects(finishedWork) {
+/**
+ * @description: 提交副作用处理
+ */
+function commitReconciliationEffects(finishedWork: Fiber) {
   const flags = finishedWork.flags;
   if (flags & Placement) {
     commitPlacement(finishedWork);

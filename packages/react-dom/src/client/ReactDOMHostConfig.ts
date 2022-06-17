@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 15:44:53
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-17 14:52:44
+ * @LastEditTime: 2022-06-17 17:22:06
  */
 
 import { DefaultEventPriority } from "packages/react-reconciler/src/ReactEventPriorities";
@@ -13,6 +13,7 @@ import {
   createElement,
   diffProperties,
   setInitialProperties,
+  updateProperties,
 } from "./ReactDOMComponent";
 import { precacheFiberNode, updateFiberProps } from "./ReactDOMComponentTree";
 
@@ -123,4 +124,18 @@ export function prepareUpdate(
   newProps: any
 ) {
   return diffProperties(domElement, type, oldProps, newProps);
+}
+
+/**
+ * @description: 提交dom的更新
+ */
+export function commitUpdate(
+  domElement: Element,
+  updatePayload: Array<any>,
+  type: string,
+  oldProps: any,
+  newProps: any
+): void {
+  updateProperties(domElement, updatePayload, type, oldProps, newProps);
+  updateFiberProps(domElement, newProps);
 }

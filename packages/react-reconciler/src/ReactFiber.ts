@@ -2,13 +2,13 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-16 17:03:42
+ * @LastEditTime: 2022-06-17 16:43:07
  */
 import type { WorkTag } from "./ReactWorkTags";
 import type { Fiber } from "./ReactInternalTypes";
 import type { Lanes } from "./ReactFiberLane";
 import { isString } from "packages/shared/src";
-import { NoFlags } from "./ReactFiberFlags";
+import { NoFlags, StaticMask } from "./ReactFiberFlags";
 import { NoLanes } from "./ReactFiberLane";
 import {
   HostComponent,
@@ -80,7 +80,7 @@ export function createWorkInProgress(current, pendingProps) {
     workInProgress.subtreeFlags = NoFlags;
     workInProgress.deletions = null;
   }
-  workInProgress.flags = current.flags;
+  workInProgress.flags = current.flags & StaticMask;
   workInProgress.childLanes = current.childLanes;
   workInProgress.lanes = current.lanes;
 

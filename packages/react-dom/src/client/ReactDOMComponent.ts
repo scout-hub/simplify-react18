@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:36:13
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-16 22:17:58
+ * @LastEditTime: 2022-06-17 17:26:31
  */
 
 import { isFunction, isNumber, isString } from "packages/shared/src";
@@ -136,4 +136,34 @@ export function diffProperties(
     (updatePayload = updatePayload || []).push(STYLE, styleUpdates);
   }
   return updatePayload;
+}
+
+/**
+ * @description: 更新dom属性
+ */
+export function updateProperties(
+  domElement: Element,
+  updatePayload: Array<any>,
+  tag: string,
+  lastRawProps: any,
+  nextRawProps: any
+) {
+  updateDOMProperties(domElement, updatePayload);
+}
+
+/**
+ * @description: 更新dom属性
+ */
+function updateDOMProperties(domElement: Element, updatePayload: Array<any>) {
+  for (let i = 0; i < updatePayload.length; i += 2) {
+    const propKey = updatePayload[i];
+    const propValue = updatePayload[i + 1];
+    if (propKey === STYLE) {
+      setValueForStyles(domElement, propValue);
+    } else if (propKey === CHILDREN) {
+      setTextContent(domElement, propValue);
+    } else {
+      setValueForProperty(domElement, propKey, propValue);
+    }
+  }
 }
