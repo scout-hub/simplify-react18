@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-15 20:14:41
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-31 15:35:46
+ * @LastEditTime: 2022-06-18 20:38:54
  */
 import { REACT_ELEMENT_TYPE } from "packages/shared/src/ReactSymbols";
 import ReactCurrentOwner from "./ReactCurrentOwner";
@@ -31,7 +31,7 @@ export function createElement(type, config, children) {
       }
     }
   }
-  
+
   const childrenLength = arguments.length - 2;
   if (childrenLength === 1) {
     // 只有一个子节点的情况

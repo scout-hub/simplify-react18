@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-17 16:56:59
+ * @LastEditTime: 2022-06-18 21:10:28
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { includesSomeLane, Lanes, NoLanes } from "./ReactFiberLane";
@@ -15,12 +15,14 @@ import {
 import { bailoutHooks, renderWithHooks } from "./ReactFiberHooks";
 import { cloneUpdateQueue, processUpdateQueue } from "./ReactUpdateQueue";
 import {
+  ClassComponent,
   FunctionComponent,
   HostComponent,
   HostRoot,
   HostText,
   IndeterminateComponent,
 } from "./ReactWorkTags";
+import { constructClassInstance } from "./ReactFiberClassComponent";
 
 // 是否有更新
 let didReceiveUpdate: boolean = false;
@@ -75,6 +77,16 @@ export function beginWork(
         workInProgress.type,
         renderLanes
       );
+    case ClassComponent: {
+      const Component = workInProgress.type;
+      return updateClassComponent(
+        current,
+        workInProgress,
+        Component,
+        null,
+        renderLanes
+      );
+    }
     case HostComponent:
       return updateHostComponent(current, workInProgress, renderLanes);
     case HostText:
@@ -101,6 +113,48 @@ export function beginWork(
  */
 export function markWorkInProgressReceivedUpdate() {
   didReceiveUpdate = true;
+}
+
+/**
+ * @description: 更新class组件
+ */
+function updateClassComponent(
+  current: Fiber | null,
+  workInProgress: Fiber,
+  Component: any,
+  nextProps: any,
+  renderLanes: Lanes
+) {
+  const instance = workInProgress.stateNode;
+  // 首次mount
+  if (instance === null) {
+    constructClassInstance(workInProgress, Component, nextProps);
+  } else {
+    // update
+  }
+  const nextUnitOfWork = finishClassComponent(
+    current,
+    workInProgress,
+    Component,
+    true,
+    false,
+    renderLanes
+  );
+  return nextUnitOfWork;
+}
+
+function finishClassComponent(
+  current: Fiber | null,
+  workInProgress: Fiber,
+  Component: any,
+  shouldUpdate: boolean,
+  hasContext: boolean,
+  renderLanes: Lanes
+) {
+  const instance = workInProgress.stateNode;
+  const nextChildren = instance.render();
+  reconcileChildren(current, workInProgress, nextChildren, renderLanes);
+  return workInProgress.child;
 }
 
 /**
@@ -230,7 +284,7 @@ function reconcileChildren(
 }
 
 /**
- * @description: Function组件首次渲染会进入这里
+ * @description: Function组件渲染会进入这里
  */
 function mountIndeterminateComponent(
   _current: Fiber | null,

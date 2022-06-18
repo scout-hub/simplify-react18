@@ -2,12 +2,12 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-17 16:43:07
+ * @LastEditTime: 2022-06-18 20:52:27
  */
-import type { WorkTag } from "./ReactWorkTags";
+import { ClassComponent, WorkTag } from "./ReactWorkTags";
 import type { Fiber } from "./ReactInternalTypes";
 import type { Lanes } from "./ReactFiberLane";
-import { isString } from "packages/shared/src";
+import { isFunction, isString } from "packages/shared/src";
 import { NoFlags, StaticMask } from "./ReactFiberFlags";
 import { NoLanes } from "./ReactFiberLane";
 import {
@@ -107,6 +107,9 @@ export function createFiberFromElement(element: any, lanes: Lanes): Fiber {
   return fiber;
 }
 
+/**
+ * @description: 根据type和props创建fiber
+ */
 function createFiberFromTypeAndProps(
   type: any,
   key: any,
@@ -114,7 +117,12 @@ function createFiberFromTypeAndProps(
   lanes: Lanes
 ): Fiber {
   let fiberTag: WorkTag = IndeterminateComponent;
-  if (isString(type)) {
+  if (isFunction(type)) {
+    // 判断是不是class组件
+    if (shouldConstruct(type)) {
+      fiberTag = ClassComponent;
+    }
+  } else if (isString(type)) {
     // 说明是普通元素节点
     fiberTag = HostComponent;
   }
@@ -124,6 +132,14 @@ function createFiberFromTypeAndProps(
   fiber.type = type;
   fiber.lanes = lanes;
   return fiber;
+}
+
+/**
+ * @description: 通过原型上的isReactComponent判断是不是class组件
+ */
+function shouldConstruct(Component: Function) {
+  const prototype = Component.prototype;
+  return !!(prototype && prototype.isReactComponent);
 }
 
 /**

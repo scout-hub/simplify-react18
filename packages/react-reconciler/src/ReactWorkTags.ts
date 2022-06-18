@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:39:57
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-05-30 17:36:34
+ * @LastEditTime: 2022-06-18 20:37:14
  */
 export type WorkTag =
   | 0
@@ -34,6 +34,8 @@ export type WorkTag =
 
 // Function组件标记
 export const FunctionComponent = 0;
+// Class组件标记
+export const ClassComponent = 1;
 // Before we know whether it is function or class 还不知道是function还是class类型
 export const IndeterminateComponent = 2;
 // 当前应用的根节点

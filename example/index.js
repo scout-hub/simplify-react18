@@ -2,9 +2,18 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-18 15:54:13
+ * @LastEditTime: 2022-06-18 20:32:27
  */
-const { useState } = React;
+const { useState, Component } = React;
+
+class Demo extends Component {
+  constructor() {
+    super();
+  }
+  render() {
+    return <div>123</div>;
+  }
+}
 
 const App = () => {
   const [num, setNum] = useState(0);
@@ -33,4 +42,4 @@ const App = () => {
   );
 };
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App />);
+root.render(<Demo />);

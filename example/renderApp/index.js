@@ -2,15 +2,25 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-17 11:59:38
+ * @LastEditTime: 2022-06-18 21:10:04
  */
-const { useState } = React;
+const { useState, Component } = React;
+class Demo extends Component {
+  constructor() {
+    super();
+  }
+
+  render() {
+    return <div>123</div>;
+  }
+}
 
 const App = () => {
   const [num, setNum] = useState(1);
 
   return (
     <div className="red">
+      {null}
       <h1>{num}</h1>
       <button
         onClick={(e) => {
@@ -23,4 +33,4 @@ const App = () => {
   );
 };
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App />);
+root.render(<Demo />);

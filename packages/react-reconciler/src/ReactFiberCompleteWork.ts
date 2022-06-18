@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:23:10
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-18 16:44:40
+ * @LastEditTime: 2022-06-18 21:11:28
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { Lanes, mergeLanes, NoLanes } from "./ReactFiberLane";
@@ -14,6 +14,7 @@ import {
   prepareUpdate,
 } from "packages/react-dom/src/client/ReactDOMHostConfig";
 import {
+  ClassComponent,
   FunctionComponent,
   HostComponent,
   HostRoot,
@@ -30,6 +31,10 @@ export function completeWork(
   switch (workInProgress.tag) {
     // 函数式组件
     case FunctionComponent: {
+      bubbleProperties(workInProgress);
+      return null;
+    }
+    case ClassComponent: {
       bubbleProperties(workInProgress);
       return null;
     }

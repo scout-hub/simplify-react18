@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-17 16:53:21
+ * @LastEditTime: 2022-06-18 20:14:51
  */
 import type { Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -88,7 +88,7 @@ function ChildReconciler(shouldTrackSideEffects) {
      * 3、节点位置变化
      *
      * 由于fiber数据结构是个链表，因此不能进行首尾双指针的遍历
-     * 并且react发现香蕉鱼新增和删除节点，更新节点的频率是比较高的
+     * 并且react发现相较于新增和删除节点，更新节点的频率是比较高的
      * 因此，在处理的优先级上以更新作为高优先级的操作。
      * 基于上述原因，diff的时候需要做两次循环，一次遍历节点更新的情况，第二次遍历不是更新的情况
      */
@@ -144,8 +144,8 @@ function ChildReconciler(shouldTrackSideEffects) {
       for (; newIndex < newChildren.length; newIndex++) {
         const newFiber = createChild(returnFiber, newChildren[newIndex], lanes);
         if (newFiber === null) {
-          throw Error("newFiber null");
-          // continue;
+          // 新的节点是个null，比如模板中的{null}，这会占一个位置，但是是个空节点，不需要管
+          continue;
         }
         lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIndex);
 

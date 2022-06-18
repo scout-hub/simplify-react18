@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-18 16:50:37
+ * @LastEditTime: 2022-06-18 21:13:22
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -13,6 +13,7 @@ import {
 } from "packages/react-dom/src/client/ReactDOMHostConfig";
 import { MutationMask, Placement, Update } from "./ReactFiberFlags";
 import {
+  ClassComponent,
   FunctionComponent,
   HostComponent,
   HostRoot,
@@ -34,6 +35,11 @@ function commitMutationEffectsOnFiber(finishedWork: Fiber, root: FiberRoot) {
   const flags = finishedWork.flags;
   switch (finishedWork.tag) {
     case FunctionComponent: {
+      recursivelyTraverseMutationEffects(root, finishedWork);
+      commitReconciliationEffects(finishedWork);
+      return;
+    }
+    case ClassComponent: {
       recursivelyTraverseMutationEffects(root, finishedWork);
       commitReconciliationEffects(finishedWork);
       return;
