@@ -15,4 +15,5 @@ a simplified version of react18 implementation for study
 - react-reconciler
    - [x] createRoot
    - [x] 函数式组件、普通元素的渲染和更新 
+   - [x] 优先级处理
    - [ ] diff（大部分实现）
