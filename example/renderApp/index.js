@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-18 21:10:04
+ * @LastEditTime: 2022-06-18 21:50:02
  */
 const { useState, Component } = React;
 class Demo extends Component {
@@ -33,4 +33,4 @@ const App = () => {
   );
 };
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<Demo />);
+root.render(<App />);

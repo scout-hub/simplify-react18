@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-18 20:14:51
+ * @LastEditTime: 2022-06-18 22:37:52
  */
 import type { Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -74,6 +74,7 @@ function ChildReconciler(shouldTrackSideEffects) {
   ): Fiber | null {
     let oldFiber = currentFirstChild;
     let newIndex = 0;
+    // lastPlacedIndex 上一次dom插入的最远位置 用以判断dom移动的依据
     let lastPlacedIndex = 0;
     let nextOldFiber: Fiber | null = null;
     const childrenLength = newChildren.length;
@@ -93,10 +94,18 @@ function ChildReconciler(shouldTrackSideEffects) {
      * 基于上述原因，diff的时候需要做两次循环，一次遍历节点更新的情况，第二次遍历不是更新的情况
      */
 
-    // 第一轮处理节点更新的情况
+    // 1、第一轮处理节点更新的情况，遇到不能复用的节点就跳出循环
     for (; oldFiber !== null && newIndex < childrenLength; newIndex++) {
       if (oldFiber.index > newIndex) {
-        throw new Error("这是哪种情况？？？");
+        /**
+         * 这种情况，可能是新的children数组种有一个节点是null，但是这个节点不会生成fiber，但是它会参与到diff的过程中
+         * 例如：
+         * 模板中的jsx是这样的，{null}<div>{num}</div>，里面的null是不会生成fiber节点，但是它会在children数组中
+         * 假如num变化使得视图更新了，新的children数组就是[null,div]，这时对children进行diff的时候，第一个遍历到的
+         * 其实是div的fiber节点，而循环对应的是children数组中的null，对于这种情况需要跳出循环即
+         */
+        nextOldFiber = oldFiber;
+        oldFiber = null;
       } else {
         nextOldFiber = oldFiber.sibling;
       }
@@ -106,11 +115,12 @@ function ChildReconciler(shouldTrackSideEffects) {
         newChildren[newIndex],
         lanes
       );
-      // 没有可以复用的节点，跳出循环
+
+      // 当前节点不可复用，跳出循环
       if (newFiber === null) {
+        // 处理children中有null这种情况
         if (oldFiber === null) {
           oldFiber = nextOldFiber;
-          throw Error("reconcileChildrenArray old fiber is null");
         }
         break;
       }
@@ -133,13 +143,13 @@ function ChildReconciler(shouldTrackSideEffects) {
       oldFiber = nextOldFiber;
     }
 
-    // 已经遍历完所有的新节点了，剩余的老节点都需要删除掉
+    // 2、已经遍历完所有的新节点了，剩余的老节点都需要删除掉
     if (newIndex === childrenLength) {
       deleteRemainingChildren(returnFiber, oldFiber);
       return resultingFirstChild;
     }
 
-    // 新节点还没有遍历完，但是old fiber已经遍历完了，那么剩下的新节点只需要插入到后面就行了
+    // 3、新节点还没有遍历完，但是old fiber已经遍历完了，那么剩下的新节点只需要插入到后面就行了
     if (oldFiber === null) {
       for (; newIndex < newChildren.length; newIndex++) {
         const newFiber = createChild(returnFiber, newChildren[newIndex], lanes);
@@ -161,7 +171,98 @@ function ChildReconciler(shouldTrackSideEffects) {
       return resultingFirstChild;
     }
 
+    // 4、剩余复杂情况处理
+
+    // 为剩余未处理的节点生成一个Map映射表
+    const existingChildren = mapRemainingChildren(oldFiber);
+
+    for (; newIndex < newChildren.length; newIndex++) {
+      const newFiber = updateFromMap(
+        existingChildren,
+        returnFiber,
+        newIndex,
+        newChildren[newIndex],
+        lanes
+      );
+      if (newFiber !== null) {
+        // 说明复用到了老的fiber节点，这里需要将当前节点从existingChildren中移除，避免被添加到deletions中
+        if (shouldTrackSideEffects && newFiber.alternate !== null) {
+          existingChildren.delete(
+            newFiber.key === null ? newIndex : newFiber.key
+          );
+        }
+        lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIndex);
+        if (previousNewFiber === null) {
+          resultingFirstChild = newFiber;
+        } else {
+          previousNewFiber.sibling = newFiber;
+        }
+        previousNewFiber = newFiber;
+      }
+    }
+
+    // 剩余还存在existingChildren中的节点都是没有复用的节点，需要删除
+    if (shouldTrackSideEffects) {
+      existingChildren.forEach((child) => deleteChild(returnFiber, child));
+    }
+
+    return resultingFirstChild;
+  }
+
+  /**
+   * @description: 通过Map进行新老节点匹配进行更新
+   */
+  function updateFromMap(
+    existingChildren: Map<string | number, Fiber>,
+    returnFiber: Fiber,
+    newIndex: number,
+    newChild: any,
+    lanes: Lanes
+  ): Fiber | null {
+    if ((isString(newChild) && newChild !== "") || isNumber(newChild)) {
+      // 文本节点没有key，所以不需要检查key，只需要它们都是文本节点就更新
+      const matchedFiber = existingChildren.get(newIndex) || null;
+      return updateTextNode(returnFiber, matchedFiber, "" + newChild, lanes);
+    }
+
+    if (isObject(newChild)) {
+      switch (newChild.$$typeof) {
+        case REACT_ELEMENT_TYPE: {
+          // 找到匹配到的fiber进行更新
+          const matchedFiber =
+            existingChildren.get(
+              newChild.key === null ? newIndex : newChild.key
+            ) || null;
+          return updateElement(returnFiber, matchedFiber, newChild, lanes);
+        }
+      }
+
+      if (isArray(newChild)) {
+        throw Error("updateFromMap newChild is array");
+      }
+    }
     return null;
+  }
+
+  /**
+   * @description: 将剩余为处理的节点通过key或者index构成一个Map映射，便于快速查找节点
+   */
+  function mapRemainingChildren(
+    currentFirstChild: Fiber
+  ): Map<string | number, Fiber> {
+    const existingChildren: Map<string | number, Fiber> = new Map();
+
+    let existingChild: Fiber | null = currentFirstChild;
+
+    while (existingChild !== null) {
+      if (existingChild.key !== null) {
+        existingChildren.set(existingChild.key, existingChild);
+      } else {
+        existingChildren.set(existingChild.index, existingChild);
+      }
+      existingChild = existingChild.sibling;
+    }
+    return existingChildren;
   }
 
   /**
@@ -185,7 +286,15 @@ function ChildReconciler(shouldTrackSideEffects) {
     if (current !== null) {
       const oldIndex = current.index;
       if (oldIndex < lastPlacedIndex) {
-        // 节点移动的情况
+        /**
+         * 节点移动的情况
+         * 例如：
+         * old：0 1 2
+         * new：2 1 0
+         * 当遍历到2时，2在老的位置索引是2，即lastPlacedIndex为2
+         * 当遍历到1时，1在老的位置时1，此时这个索引位置要比lastPlacedIndex小，
+         * 说明1对应的节点需要进行节点移动
+         */
         throw Error("节点移动的情况");
       } else {
         // 节点可以保持在原位置
