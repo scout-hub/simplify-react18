@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-18 15:31:50
+ * @LastEditTime: 2022-06-18 15:51:31
  */
 import { Lane, Lanes, NoLanes } from "./ReactFiberLane";
 import { is, isFunction } from "packages/shared/src";
@@ -322,7 +322,7 @@ function dispatchSetState<S>(fiber: Fiber, queue: any, action: S) {
   };
   // 判断是否是render阶段产生的更新，即直接在执行function component函数时调用了dispatchSetState
   if (fiber === currentlyRenderingFiber) {
-    // TODO
+    throw Error("dispatchSetState while function component is rendering");
   } else {
     enqueueUpdate(fiber, queue, update);
     const alternate = fiber.alternate;
@@ -330,6 +330,7 @@ function dispatchSetState<S>(fiber: Fiber, queue: any, action: S) {
       fiber.lanes === NoLanes &&
       (alternate === null || alternate.lanes === NoLanes)
     ) {
+      // 当前队列是空的，意味着在渲染之前我们可以立马计算出下一个state，如果新旧state是一样的就可以提早bail out
       const lastRenderedReducer = queue.lastRenderedReducer;
       if (lastRenderedReducer !== null) {
         // 获取上一次渲染阶段时的state
@@ -339,7 +340,7 @@ function dispatchSetState<S>(fiber: Fiber, queue: any, action: S) {
         // 缓存新的计算结果
         update.hasEagerState = true;
         update.eagerState = eagerState;
-        // 如果期望的state和上一次渲染阶段的state一致，则不需要触发更新逻辑
+        // 新旧state是一样的就可以提早bail out
         if (is(eagerState, currentState)) {
           return;
         }

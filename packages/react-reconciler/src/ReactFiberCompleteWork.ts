@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:23:10
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-17 15:02:39
+ * @LastEditTime: 2022-06-18 16:44:40
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { Lanes, mergeLanes, NoLanes } from "./ReactFiberLane";
@@ -60,11 +60,34 @@ export function completeWork(
     }
     // 处理文本节点
     case HostText: {
-      workInProgress.stateNode = createTextInstance(newProps);
+      const newText = newProps;
+      if (current && workInProgress.stateNode != null) {
+        // 说明是update阶段，这里需要处理文本节点的副作用
+        const oldText = current.memoizedProps;
+        updateHostText(current, workInProgress, oldText, newText);
+      } else {
+        // mount阶段
+        workInProgress.stateNode = createTextInstance(newProps);
+      }
+      bubbleProperties(workInProgress);
       return null;
     }
   }
   return null;
+}
+
+/**
+ * @description: 为变化的文本节点打上更新的标记
+ */
+function updateHostText(
+  current: Fiber,
+  workInProgress: Fiber,
+  oldText: string,
+  newText: string
+) {
+  if (oldText !== newText) {
+    markUpdate(workInProgress);
+  }
 }
 
 /**

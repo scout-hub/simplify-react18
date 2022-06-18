@@ -2,11 +2,12 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-17 17:23:39
+ * @LastEditTime: 2022-06-18 16:50:37
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
   appendChildToContainer,
+  commitTextUpdate,
   commitUpdate,
   insertInContainerBefore,
 } from "packages/react-dom/src/client/ReactDOMHostConfig";
@@ -31,7 +32,6 @@ export function commitMutationEffects(root: FiberRoot, finishedWork: Fiber) {
 function commitMutationEffectsOnFiber(finishedWork: Fiber, root: FiberRoot) {
   const current = finishedWork.alternate!;
   const flags = finishedWork.flags;
-
   switch (finishedWork.tag) {
     case FunctionComponent: {
       recursivelyTraverseMutationEffects(root, finishedWork);
@@ -59,6 +59,16 @@ function commitMutationEffectsOnFiber(finishedWork: Fiber, root: FiberRoot) {
       recursivelyTraverseMutationEffects(root, finishedWork);
       // commitReconciliationEffects(finishedWork);
       return;
+    case HostText: {
+      recursivelyTraverseMutationEffects(root, finishedWork);
+      commitReconciliationEffects(finishedWork);
+      if (flags & Update) {
+        const textInstance: Element = finishedWork.stateNode;
+        const newText: string = finishedWork.memoizedProps;
+        commitTextUpdate(textInstance, newText);
+      }
+      return;
+    }
   }
 }
 

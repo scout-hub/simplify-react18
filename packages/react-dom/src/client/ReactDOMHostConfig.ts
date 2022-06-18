@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 15:44:53
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-17 17:22:06
+ * @LastEditTime: 2022-06-18 16:50:14
  */
 
 import { DefaultEventPriority } from "packages/react-reconciler/src/ReactEventPriorities";
@@ -138,4 +138,14 @@ export function commitUpdate(
 ): void {
   updateProperties(domElement, updatePayload, type, oldProps, newProps);
   updateFiberProps(domElement, newProps);
+}
+
+/**
+ * @description: 提交文本更新
+ */
+export function commitTextUpdate(
+  textInstance: Element,
+  newText: string
+): void {
+  textInstance.nodeValue = newText;
 }
