@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-16 14:39:11
+ * @LastEditTime: 2022-06-18 15:31:50
  */
 import { Lane, Lanes, NoLanes } from "./ReactFiberLane";
 import { is, isFunction } from "packages/shared/src";
@@ -106,7 +106,7 @@ export function bailoutHooks(
 }
 
 function basicStateReducer<S>(state: S, action: BasicStateAction<S>) {
-  return isFunction(action) ? (action as () => S)() : action;
+  return isFunction(action) ? (action as (S) => S)(state) : action;
 }
 
 /**
@@ -325,18 +325,24 @@ function dispatchSetState<S>(fiber: Fiber, queue: any, action: S) {
     // TODO
   } else {
     enqueueUpdate(fiber, queue, update);
-    const lastRenderedReducer = queue.lastRenderedReducer;
-    if (lastRenderedReducer !== null) {
-      // 获取上一次渲染阶段时的state
-      const currentState = queue.lastRenderedState;
-      // 获取期望的state，也就是通过调用useState返回的dispatch函数，将新的state计算方式传入并调用的结果
-      const eagerState = lastRenderedReducer(currentState, action);
-      // 缓存新的计算结果
-      update.hasEagerState = true;
-      update.eagerState = eagerState;
-      // 如果期望的state和上一次渲染阶段的state一致，则不需要触发更新逻辑
-      if (is(eagerState, currentState)) {
-        return;
+    const alternate = fiber.alternate;
+    if (
+      fiber.lanes === NoLanes &&
+      (alternate === null || alternate.lanes === NoLanes)
+    ) {
+      const lastRenderedReducer = queue.lastRenderedReducer;
+      if (lastRenderedReducer !== null) {
+        // 获取上一次渲染阶段时的state
+        const currentState = queue.lastRenderedState;
+        // 获取期望的state，也就是通过调用useState返回的dispatch函数，将新的state计算方式传入并调用的结果
+        const eagerState = lastRenderedReducer(currentState, action);
+        // 缓存新的计算结果
+        update.hasEagerState = true;
+        update.eagerState = eagerState;
+        // 如果期望的state和上一次渲染阶段的state一致，则不需要触发更新逻辑
+        if (is(eagerState, currentState)) {
+          return;
+        }
       }
     }
     const eventTime = requestEventTime();
