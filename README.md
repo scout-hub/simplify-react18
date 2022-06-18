@@ -3,7 +3,6 @@ a simplified version of react18 implementation for study
 
 ### 目前实现的功能
 
-### 目前实现的功能
 - react
    - [x] useState
 
