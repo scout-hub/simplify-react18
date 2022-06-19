@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-18 15:51:31
+ * @LastEditTime: 2022-06-19 11:49:06
  */
 import { Lane, Lanes, NoLanes } from "./ReactFiberLane";
 import { is, isFunction } from "packages/shared/src";
@@ -103,6 +103,7 @@ export function bailoutHooks(
   lanes: Lanes
 ) {
   // TODO
+  // throw Error("bailoutHooks");
 }
 
 function basicStateReducer<S>(state: S, action: BasicStateAction<S>) {

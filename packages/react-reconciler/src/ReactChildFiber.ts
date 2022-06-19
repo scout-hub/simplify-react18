@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-18 22:37:52
+ * @LastEditTime: 2022-06-19 11:48:17
  */
 import type { Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -126,9 +126,26 @@ function ChildReconciler(shouldTrackSideEffects) {
       }
 
       if (shouldTrackSideEffects) {
+        /**
+         * 通过key匹配到了节点，但是由于类型不同不会复用，此时会创建一个新的fiber，这个fiber还没有alternate
+         *
+         * 例如：
+         * 老节点
+         * <ul>
+         *   <li key="0" className="before">0</li>
+         *   <li key="1">1</li>
+         * </ul>
+         *
+         * 新节点
+         *  <ul>
+         *    <div key="0">0</div>
+         *    <li key="1">1</li>
+         *  </ul>
+         *
+         * li key 0匹配到了div key 0，但是由于类型不同，不能复用，此时需要删除老的li，创建新的div
+         */
         if (oldFiber && newFiber.alternate === null) {
-          // 匹配到元素但是没有复用的情况
-          throw Error("reconcileChildrenArray 匹配到元素但是没有复用的情况");
+          deleteChild(returnFiber, oldFiber);
         }
       }
 

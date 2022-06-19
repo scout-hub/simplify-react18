@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-15 20:14:41
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-18 20:38:54
+ * @LastEditTime: 2022-06-19 11:46:35
  */
 import { REACT_ELEMENT_TYPE } from "packages/shared/src/ReactSymbols";
 import ReactCurrentOwner from "./ReactCurrentOwner";
@@ -18,13 +18,17 @@ import ReactCurrentOwner from "./ReactCurrentOwner";
 export function createElement(type, config, children) {
   const props: any = {};
 
-  let key = null;
+  let key: string | null = null;
   let ref = null;
   let self = null;
   let source = null;
 
   // 解析属性
   if (config != null) {
+    if (hasValidKey(config)) {
+      key = "" + config.key;
+    }
+
     for (const key in config) {
       if (config.hasOwnProperty(key)) {
         props[key] = config[key];
@@ -69,3 +73,8 @@ const ReactElement = function (type, key, ref, self, source, owner, props) {
 
   return element;
 };
+
+/**
+ * @description: 是否是有效的key
+ */
+const hasValidKey = (config) => config.key !== undefined;

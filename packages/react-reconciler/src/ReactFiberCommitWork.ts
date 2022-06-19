@@ -2,14 +2,17 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-18 21:13:22
+ * @LastEditTime: 2022-06-19 14:21:56
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
+  appendChild,
   appendChildToContainer,
   commitTextUpdate,
   commitUpdate,
+  insertBefore,
   insertInContainerBefore,
+  removeChild,
 } from "packages/react-dom/src/client/ReactDOMHostConfig";
 import { MutationMask, Placement, Update } from "./ReactFiberFlags";
 import {
@@ -19,6 +22,8 @@ import {
   HostRoot,
   HostText,
 } from "./ReactWorkTags";
+
+let hostParent: Element | null = null;
 
 /**
  * @description: commitMutation阶段
@@ -88,7 +93,10 @@ function recursivelyTraverseMutationEffects(
   const deletions = parentFiber.deletions;
   // 删除节点
   if (deletions !== null) {
-    throw Error("recursivelyTraverseMutationEffects commitDeletionEffects");
+    for (let i = 0; i < deletions.length; i++) {
+      const childToDelete = deletions[i];
+      commitDeletionEffects(root, parentFiber, childToDelete);
+    }
   }
   // 子节点需要更新
   if (parentFiber.subtreeFlags & MutationMask) {
@@ -97,6 +105,90 @@ function recursivelyTraverseMutationEffects(
       commitMutationEffectsOnFiber(child, root);
       child = child.sibling;
     }
+  }
+}
+
+/**
+ * @description: 提交删除副作用
+ */
+function commitDeletionEffects(
+  root: FiberRoot,
+  returnFiber: Fiber,
+  deletedFiber: Fiber
+) {
+  let parent: Fiber | null = returnFiber;
+  // 找到当前需要删除节点的父节点dom
+  findParent: while (parent !== null) {
+    switch (parent.tag) {
+      case HostComponent: {
+        hostParent = parent.stateNode;
+        break findParent;
+      }
+      case HostRoot: {
+        hostParent = parent.stateNode.containerInfo;
+        break findParent;
+      }
+    }
+    parent = parent.return;
+  }
+  if (hostParent === null) {
+    throw Error("hostParent is null");
+  }
+  commitDeletionEffectsOnFiber(root, returnFiber, deletedFiber);
+  hostParent = null;
+  detachFiberMutation(deletedFiber);
+}
+
+function detachFiberMutation(fiber: Fiber) {
+  // 切断与父fiber的联系
+  const alternate = fiber.alternate;
+  if (alternate !== null) {
+    alternate.return = null;
+  }
+  fiber.return = null;
+}
+
+function commitDeletionEffectsOnFiber(
+  finishedRoot: FiberRoot,
+  nearestMountedAncestor: Fiber,
+  deletedFiber: Fiber
+) {
+  switch (deletedFiber.tag) {
+    case HostComponent:
+    case HostText: {
+      const prevHostParent = hostParent;
+      hostParent = null;
+      // deletedFiber如果存在子节点，则需要将其子节点全部删除
+      recursivelyTraverseDeletionEffects(
+        finishedRoot,
+        nearestMountedAncestor,
+        deletedFiber
+      );
+      hostParent = prevHostParent;
+      if (hostParent !== null) {
+        removeChild(hostParent, deletedFiber.stateNode);
+      } else {
+        throw Error("commitDeletionEffectsOnFiber：hostParent is null");
+      }
+      return;
+    }
+    default:
+      break;
+  }
+}
+
+/**
+ * @description: 删除当前节点的子节点
+ */
+function recursivelyTraverseDeletionEffects(
+  finishedRoot,
+  nearestMountedAncestor,
+  parent
+) {
+  let child = parent.child;
+  while (child !== null) {
+    commitDeletionEffectsOnFiber(finishedRoot, nearestMountedAncestor, child);
+    child = child.sibling;
   }
 }
 
@@ -116,6 +208,12 @@ function commitPlacement(finishedWork) {
   // 找到host节点
   const parentFiber = getHostParentFiber(finishedWork);
   switch (parentFiber.tag) {
+    case HostComponent: {
+      const parent = parentFiber.stateNode;
+      const before = getHostSibling(finishedWork);
+      insertOrAppendPlacementNode(finishedWork, before, parent);
+      break;
+    }
     case HostRoot: {
       // 获取父级Fiber节点，因为插入情况可能有两种，一种是parent.appendChild，另外一种是insertBefore
       // 针对两种方法的插入，对应的锚点节点是不同的
@@ -127,15 +225,38 @@ function commitPlacement(finishedWork) {
   }
 }
 
+function insertOrAppendPlacementNode(
+  node: Fiber,
+  before: Element | null,
+  parent: Element
+) {
+  const tag = node.tag;
+  const isHost = tag === HostComponent || tag === HostText;
+  if (isHost) {
+    const stateNode = node.stateNode;
+    before
+      ? insertBefore(parent, stateNode, before)
+      : appendChild(parent, stateNode);
+  } else {
+    const child = node.child;
+    if (child !== null) {
+      insertOrAppendPlacementNode(child, before, parent);
+      let sibling = child.sibling;
+      while (sibling !== null) {
+        insertOrAppendPlacementNode(sibling, before, parent);
+        sibling = sibling.sibling;
+      }
+    }
+  }
+}
+
 /**
  * @description: 插入dom
- * @param node
- * @param before
- * @param parent
  */
 function insertOrAppendPlacementNodeIntoContainer(node, before, parent) {
   const tag = node.tag;
   const isHost = tag === HostComponent || tag === HostText;
+  console.log(node);
 
   if (isHost) {
     const stateNode = node.stateNode;
@@ -144,6 +265,7 @@ function insertOrAppendPlacementNodeIntoContainer(node, before, parent) {
       ? insertInContainerBefore(parent, stateNode, before)
       : appendChildToContainer(parent, stateNode);
   } else {
+    // 处理非普通元素和文本节点，例如function component需要插入的节点是它的子节点
     let child = node.child;
 
     if (child !== null) {
@@ -173,9 +295,7 @@ const isHostParent = (fiber): boolean =>
   fiber.tag === HostComponent || fiber.tag === HostRoot;
 
 /**
- * 找到fiber节点的兄弟fiber且这个fiber不需要插入真实dom
- * @param fiber 从该节点开始往右边找
- * @returns 找到的dom节点
+ * @description 找到fiber节点的兄弟fiber且这个fiber不需要插入真实dom
  */
 const getHostSibling = (fiber): Element | null => {
   let node = fiber;

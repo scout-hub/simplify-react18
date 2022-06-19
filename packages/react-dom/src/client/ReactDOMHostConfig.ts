@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 15:44:53
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-18 16:50:14
+ * @LastEditTime: 2022-06-19 14:22:19
  */
 
 import { DefaultEventPriority } from "packages/react-reconciler/src/ReactEventPriorities";
@@ -143,9 +143,31 @@ export function commitUpdate(
 /**
  * @description: 提交文本更新
  */
-export function commitTextUpdate(
-  textInstance: Element,
-  newText: string
-): void {
+export function commitTextUpdate(textInstance: Element, newText: string) {
   textInstance.nodeValue = newText;
+}
+
+/**
+ * @description: 删除节点
+ */
+export function removeChild(parentInstance: Element, child: Element) {
+  parentInstance.removeChild(child);
+}
+
+/**
+ * @description: 插入节点
+ */
+export function insertBefore(
+  parentInstance: Element,
+  child: Element,
+  beforeChild: Element
+): void {
+  parentInstance.insertBefore(child, beforeChild);
+}
+
+/**
+ * @description: 添加节点
+ */
+export function appendChild(parentInstance: Element, child: Element): void {
+  parentInstance.appendChild(child);
 }
