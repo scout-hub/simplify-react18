@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-19 15:44:57
+ * @LastEditTime: 2022-06-19 22:27:31
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -45,6 +45,7 @@ import {
   getCurrentUpdatePriority,
   IdleEventPriority,
   lanesToEventPriority,
+  setCurrentUpdatePriority,
 } from "./ReactEventPriorities";
 import {
   getCurrentEventPriority,
@@ -343,7 +344,13 @@ function finishConcurrentRender(root: FiberRoot) {
  * @param root
  */
 function commitRoot(root: FiberRoot) {
+  const previousUpdateLanePriority = getCurrentUpdatePriority();
+  // 将commitRoot的优先级设置为同步执行的优先级
+  setCurrentUpdatePriority(DiscreteEventPriority);
   commitRootImpl(root);
+  // 还原之前的优先级
+  setCurrentUpdatePriority(previousUpdateLanePriority);
+  return null;
 }
 
 function commitRootImpl(root: FiberRoot) {

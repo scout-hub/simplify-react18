@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-19 14:47:55
+ * @LastEditTime: 2022-06-19 20:58:06
  */
 import type { Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -482,8 +482,7 @@ function ChildReconciler(shouldTrackSideEffects) {
       }
       child = child.sibling;
     }
-    // 没有节点复用（比如首屏渲染的hostRoot的current是没有child节点的）
-    // 直接创建fiber节点
+    // 没有节点复用（比如首屏渲染的hostRoot的current是没有child节点的）直接创建fiber节点
     const created: Fiber = createFiberFromElement(element, lanes);
     created.return = returnFiber;
     return created;
@@ -530,7 +529,7 @@ function ChildReconciler(shouldTrackSideEffects) {
   }
 
   function placeSingleChild(newFiber: Fiber): Fiber {
-    // 首次渲染时的hostRoot节点会进入到这个条件
+    // 首次渲染时的hostRoot节点会进入到这个条件，在更新中新创建的节点也会被打上这个标记
     if (shouldTrackSideEffects && newFiber.alternate === null) {
       newFiber.flags |= Placement;
     }

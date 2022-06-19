@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-18 20:52:27
+ * @LastEditTime: 2022-06-19 20:34:47
  */
 import { ClassComponent, WorkTag } from "./ReactWorkTags";
 import type { Fiber } from "./ReactInternalTypes";
@@ -101,9 +101,8 @@ export function createWorkInProgress(current, pendingProps) {
  * @description: 创建元素的fiber节点
  */
 export function createFiberFromElement(element: any, lanes: Lanes): Fiber {
-  const { type, key } = element;
-  let pendingProps = element.props;
-  const fiber = createFiberFromTypeAndProps(type, key, pendingProps, lanes);
+  const { type, key, props } = element;
+  const fiber = createFiberFromTypeAndProps(type, key, props, lanes);
   return fiber;
 }
 
