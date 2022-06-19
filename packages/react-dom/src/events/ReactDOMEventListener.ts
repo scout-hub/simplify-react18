@@ -2,11 +2,12 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 15:02:16
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 17:42:13
+ * @LastEditTime: 2022-06-19 15:51:06
  */
 import {
   DefaultEventPriority,
   DiscreteEventPriority,
+  getCurrentUpdatePriority,
   setCurrentUpdatePriority,
 } from "packages/react-reconciler/src/ReactEventPriorities";
 import { getClosestInstanceFromNode } from "../client/ReactDOMComponentTree";
@@ -52,9 +53,11 @@ function dispatchDiscreteEvent(
   container,
   nativeEvent
 ) {
+  const previousPriority = getCurrentUpdatePriority();
   // 设置事件的优先级
   setCurrentUpdatePriority(DiscreteEventPriority);
   dispatchEvent(domEventName, eventSystemFlags, container, nativeEvent);
+  setCurrentUpdatePriority(previousPriority);
 }
 
 /**

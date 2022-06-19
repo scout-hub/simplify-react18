@@ -2,9 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-19 11:49:06
+ * @LastEditTime: 2022-06-19 15:35:41
  */
-import { Lane, Lanes, NoLanes } from "./ReactFiberLane";
+import { Lane, Lanes, NoLanes, removeLanes } from "./ReactFiberLane";
 import { is, isFunction } from "packages/shared/src";
 import ReactSharedInternals from "packages/shared/src/ReactSharedInternals";
 import {
@@ -94,16 +94,14 @@ export function renderWithHooks(
 
 /**
  * @description: 清除一个fiber节点上的副作用标记。当一节点出现在render流程中，并且lanes不为空，
- * 但是节点不需要工作，会调用该函数清除副作用并结束更新流程。
- * 比如setState同一个值
+ * 但是节点不需要工作，会调用该函数清除副作用并结束更新流程。比如setState同一个值
  */
 export function bailoutHooks(
   current: Fiber,
   workInProgress: Fiber,
   lanes: Lanes
 ) {
-  // TODO
-  // throw Error("bailoutHooks");
+  current.lanes = removeLanes(current.lanes, lanes);
 }
 
 function basicStateReducer<S>(state: S, action: BasicStateAction<S>) {

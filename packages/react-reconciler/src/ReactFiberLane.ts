@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 11:10:29
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-15 20:52:13
+ * @LastEditTime: 2022-06-19 15:27:48
  */
 import type { FiberRoot } from "./ReactInternalTypes";
 
@@ -157,6 +157,10 @@ export function getNextLanes(root: FiberRoot, wipLanes: Lanes): Lanes {
 
 export function includesSomeLane(a: Lanes | Lane, b: Lanes | Lane) {
   return (a & b) !== NoLanes;
+}
+
+export function removeLanes(set: Lanes, subset: Lanes | Lane): Lanes {
+  return set & ~subset;
 }
 
 /**

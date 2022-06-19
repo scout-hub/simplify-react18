@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-18 21:10:28
+ * @LastEditTime: 2022-06-19 15:53:51
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { includesSomeLane, Lanes, NoLanes } from "./ReactFiberLane";
@@ -63,7 +63,7 @@ export function beginWork(
   }
   /**
    * 先清除workInProgress中的lanes
-   * 不清楚会导致root上的pendingLanes一直不为空
+   * 不清除会导致root上的pendingLanes一直不为空
    */
   // workInProgress.lanes = NoLanes;
   switch (workInProgress.tag) {
