@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-19 11:48:17
+ * @LastEditTime: 2022-06-19 14:47:55
  */
 import type { Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -76,6 +76,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     let newIndex = 0;
     // lastPlacedIndex 上一次dom插入的最远位置 用以判断dom移动的依据
     let lastPlacedIndex = 0;
+    // 下一个oldFiber || 缓存当前oldFiber
     let nextOldFiber: Fiber | null = null;
     const childrenLength = newChildren.length;
 
@@ -312,7 +313,8 @@ function ChildReconciler(shouldTrackSideEffects) {
          * 当遍历到1时，1在老的位置时1，此时这个索引位置要比lastPlacedIndex小，
          * 说明1对应的节点需要进行节点移动
          */
-        throw Error("节点移动的情况");
+        newFiber.flags |= Placement;
+        return lastPlacedIndex;
       } else {
         // 节点可以保持在原位置
         return oldIndex;

@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-19 14:21:56
+ * @LastEditTime: 2022-06-19 15:00:32
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -256,7 +256,6 @@ function insertOrAppendPlacementNode(
 function insertOrAppendPlacementNodeIntoContainer(node, before, parent) {
   const tag = node.tag;
   const isHost = tag === HostComponent || tag === HostText;
-  console.log(node);
 
   if (isHost) {
     const stateNode = node.stateNode;
@@ -301,7 +300,13 @@ const getHostSibling = (fiber): Element | null => {
   let node = fiber;
 
   siblings: while (true) {
+    // 如果兄弟节点不存在，说明当前节点是最后一个节点
     while (node.sibling === null) {
+      // 这种场景还不知道是什么，先加个error
+      if (node.return === null) {
+        throw Error("getHostSibling：node.return === null ");
+      }
+      // 根据节点类型判断这个该fiber的父节点是否存在真实dom，像function component fiber是没有对应的stateNode的
       if (node.return === null || isHostParent(node.return)) return null;
       node = node.return;
     }
@@ -309,11 +314,14 @@ const getHostSibling = (fiber): Element | null => {
     node.sibling.return = node.return;
     node = node.sibling;
 
-    while (node.tag !== HostComponent) {
+    // 节点不是普通元素或者文本节点
+    while (node.tag !== HostComponent && node.tag !== HostText) {
+      // 如果这个兄弟节点是需要插入的，则去尝试获取下一个兄弟节点
       if (node.flags & Placement) {
         continue siblings;
       }
 
+      // 例如function component本身是不存在对应的stateNode的，所以如果它的child也不存在，则尝试获取下一个兄弟节点
       if (node.child === null) {
         continue siblings;
       } else {
@@ -322,6 +330,7 @@ const getHostSibling = (fiber): Element | null => {
       }
     }
 
+    // 如果兄弟节点不是需要插入的节点，那么要插入的节点这个兄弟节点就是锚点节点
     if (!(node.flags & Placement)) {
       return node.stateNode;
     }
