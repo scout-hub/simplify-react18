@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 11:10:29
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-19 15:27:48
+ * @LastEditTime: 2022-06-20 16:29:34
  */
 import type { FiberRoot } from "./ReactInternalTypes";
 
@@ -128,6 +128,7 @@ export function getNextLanes(root: FiberRoot, wipLanes: Lanes): Lanes {
 
   // 是否有非空闲的任务，如果有非空闲的任务，需要先执行非空闲的任务，不要去执行空闲的任务
   const nonIdlePendingLanes = pendingLanes & NonIdleLanes;
+  
   // 有未闲置的任务
   if (nonIdlePendingLanes !== NoLanes) {
     // 获取除挂起任务外最高优先级任务的优先级，这里暂时不考虑挂起任务

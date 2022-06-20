@@ -2,28 +2,26 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-19 15:26:02
+ * @LastEditTime: 2022-06-20 17:13:07
  */
 const { useState } = React;
 
 const App = () => {
   const [num, setNum] = useState(0);
-  const [num1, setNum1] = useState(1);
-
   return (
     <div className="red">
-      <h1>{num}</h1>
-      <h1>{num1}</h1>
       <button
-        onClick={(e) => {
-          setNum((num) => num + 1);
+        onClick={() => {
           setTimeout(() => {
-            setNum1((num1) => num1);
-          }, 1000);
+            setNum(1);
+          }, 500);
         }}
       >
-        计数
+        更新
       </button>
+      {Array.from(new Array(60000)).map((item, i) => (
+        <h1 key={i}>{num}</h1>
+      ))}
     </div>
   );
 };

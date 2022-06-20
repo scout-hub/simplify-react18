@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-19 22:27:31
+ * @LastEditTime: 2022-06-20 18:08:37
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -37,6 +37,7 @@ import {
   UserBlockingPriority as UserBlockingSchedulerPriority,
   NormalPriority as NormalSchedulerPriority,
   IdlePriority as IdleSchedulerPriority,
+  shouldYield,
 } from "./Scheduler";
 import {
   ContinuousEventPriority,
@@ -291,14 +292,33 @@ function performConcurrentWorkOnRoot(root: FiberRoot, didTimeout: boolean) {
     !includesBlockingLane(root, lanes) &&
     !includesExpiredLane(root, lanes) &&
     !didTimeout;
-  shouldTimeSlice ? renderRootConcurrent(root) : renderRootSync(root, lanes);
+  // shouldTimeSlice
+  //   ? renderRootConcurrent(root, lanes)
+  //   : renderRootSync(root, lanes);
+  renderRootConcurrent(root, lanes);
   const finishedWork = root.current.alternate;
   root.finishedWork = finishedWork;
   root.finishedLanes = lanes;
   finishConcurrentRender(root);
 }
 
-function renderRootConcurrent(root) {}
+function renderRootConcurrent(root, lanes: Lanes) {
+  // 如果根应用节点或者优先级改变，则创建一个新的workInProgress
+  if (workInProgressRoot !== root || workInProgressRootRenderLanes !== lanes) {
+    // 为接下去新一次渲染工作初始化参数
+    prepareFreshStack(root, lanes);
+  }
+  workLoopConcurrent();
+}
+
+/**
+ * @description: 并发模式调度
+ */
+function workLoopConcurrent() {
+  while (workInProgress !== null && !shouldYield()) {
+    performUnitOfWork(workInProgress);
+  }
+}
 
 /**
  * @description: 同步执行渲染工作

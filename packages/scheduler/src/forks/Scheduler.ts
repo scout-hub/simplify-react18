@@ -2,8 +2,15 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-15 11:23:52
+ * @LastEditTime: 2022-06-20 18:06:19
  */
+import {
+  continuousYieldMs,
+  enableIsInputPending,
+  enableIsInputPendingContinuous,
+  frameYieldMs,
+  maxYieldMs,
+} from "../SchedulerFeatureFlags";
 import { peek, pop, push } from "../SchedulerMinHeap";
 import {
   ImmediatePriority,
@@ -13,7 +20,6 @@ import {
   NormalPriority,
 } from "../SchedulerPriorities";
 
-let startTime = -1;
 let currentTask;
 let getCurrentTime;
 let currentPriorityLevel = NormalPriority;
@@ -49,6 +55,8 @@ let scheduledHostCallback: null | Function = null;
 
 // postMessage发送的消息是否正在执行
 let isMessageLoopRunning = false;
+
+const isInputPending = (navigator as any).scheduling.isInputPending;
 
 /**
  * @description: 调度任务 高优先级任务插队
@@ -221,6 +229,42 @@ function unstable_cancelCallback(task) {
   task.callback = null;
 }
 
+// 剩余分配个一个任务的执行时间
+let frameInterval = frameYieldMs;
+let startTime = -1;
+const continuousInputInterval = continuousYieldMs;
+const maxInterval = maxYieldMs;
+const continuousOptions = { includeContinuous: enableIsInputPendingContinuous };
+
+/**
+ * @description: 是否将控制权交还给浏览器，规定一个切片的时间是5ms，超过这个时间就暂停render，然后在下一个切片中继续工作
+ */
+function shouldYieldToHost() {
+  // 计算任务的执行时间
+  const timeElapsed = getCurrentTime() - startTime;
+  if (timeElapsed < frameInterval) {
+    return false;
+  }
+  // 浏览器是否支持isInputPending，这个方法用来帮助我们判断浏览器是否有离散输入事件要处理
+  if (enableIsInputPending) {
+    // 如果还没有超出50ms的时间，通过isInputPending来判断是否有离散输入事件需要处理
+    if (timeElapsed < continuousInputInterval) {
+      if (isInputPending !== null) {
+        return isInputPending();
+      }
+    } else if (timeElapsed < maxInterval) {
+      // 如果还没有超出300ms的时间，通过isInputPending来判断是否有离散或者连续输入的事件需要处理
+      // 例如mousemove、pointermove事件
+      if (isInputPending !== null) {
+        return isInputPending(continuousOptions);
+      }
+    } else {
+      return true;
+    }
+  }
+  return true;
+}
+
 export {
   unstable_scheduleCallback,
   getCurrentTime as unstable_now,
@@ -230,4 +274,5 @@ export {
   IdlePriority as unstable_IdlePriority,
   LowPriority as unstable_LowPriority,
   NormalPriority as unstable_NormalPriority,
+  shouldYieldToHost as unstable_shouldYield,
 };

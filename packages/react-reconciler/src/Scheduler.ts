@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 11:58:34
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-15 17:24:33
+ * @LastEditTime: 2022-06-20 16:43:54
  */
 import * as Scheduler from "packages/scheduler/src/forks/Scheduler";
 
@@ -14,5 +14,6 @@ export const UserBlockingPriority = Scheduler.unstable_UserBlockingPriority;
 export const NormalPriority = Scheduler.unstable_NormalPriority;
 export const LowPriority = Scheduler.unstable_LowPriority;
 export const IdlePriority = Scheduler.unstable_IdlePriority;
+export const shouldYield = Scheduler.unstable_shouldYield;
 
 export type SchedulerCallback = (isSync: boolean) => SchedulerCallback | null;
