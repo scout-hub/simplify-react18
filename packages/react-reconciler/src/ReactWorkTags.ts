@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:39:57
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-18 20:37:14
+ * @LastEditTime: 2022-06-20 21:24:41
  */
 export type WorkTag =
   | 0
@@ -44,3 +44,5 @@ export const HostRoot = 3;
 export const HostComponent = 5;
 // 文本类型
 export const HostText = 6;
+// 片段
+export const Fragment = 7;

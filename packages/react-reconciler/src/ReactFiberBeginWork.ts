@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-19 15:53:51
+ * @LastEditTime: 2022-06-20 22:31:07
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { includesSomeLane, Lanes, NoLanes } from "./ReactFiberLane";
@@ -16,6 +16,7 @@ import { bailoutHooks, renderWithHooks } from "./ReactFiberHooks";
 import { cloneUpdateQueue, processUpdateQueue } from "./ReactUpdateQueue";
 import {
   ClassComponent,
+  Fragment,
   FunctionComponent,
   HostComponent,
   HostRoot,
@@ -104,8 +105,23 @@ export function beginWork(
         resolvedProps,
         renderLanes
       );
+    case Fragment:
+      return updateFragment(current, workInProgress, renderLanes);
   }
   return null;
+}
+
+/**
+ * @description: 更新片段
+ */
+function updateFragment(
+  current: Fiber | null,
+  workInProgress: Fiber,
+  renderLanes: Lanes
+) {
+  const nextChildren = workInProgress.pendingProps;
+  reconcileChildren(current, workInProgress, nextChildren, renderLanes);
+  return workInProgress.child;
 }
 
 /**

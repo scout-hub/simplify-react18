@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-19 15:00:32
+ * @LastEditTime: 2022-06-20 22:51:35
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -38,6 +38,7 @@ export function commitMutationEffects(root: FiberRoot, finishedWork: Fiber) {
 function commitMutationEffectsOnFiber(finishedWork: Fiber, root: FiberRoot) {
   const current = finishedWork.alternate!;
   const flags = finishedWork.flags;
+
   switch (finishedWork.tag) {
     case FunctionComponent: {
       recursivelyTraverseMutationEffects(root, finishedWork);
@@ -78,6 +79,12 @@ function commitMutationEffectsOnFiber(finishedWork: Fiber, root: FiberRoot) {
         const newText: string = finishedWork.memoizedProps;
         commitTextUpdate(textInstance, newText);
       }
+      return;
+    }
+    default: {
+      recursivelyTraverseMutationEffects(root, finishedWork);
+      commitReconciliationEffects(finishedWork);
+
       return;
     }
   }
@@ -173,7 +180,13 @@ function commitDeletionEffectsOnFiber(
       return;
     }
     default:
-      break;
+      // 删除子节点
+      recursivelyTraverseDeletionEffects(
+        finishedRoot,
+        nearestMountedAncestor,
+        deletedFiber
+      );
+      return;
   }
 }
 

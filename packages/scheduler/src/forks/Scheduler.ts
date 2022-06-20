@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-20 18:06:19
+ * @LastEditTime: 2022-06-20 18:16:49
  */
 import {
   continuousYieldMs,
@@ -56,7 +56,10 @@ let scheduledHostCallback: null | Function = null;
 // postMessage发送的消息是否正在执行
 let isMessageLoopRunning = false;
 
-const isInputPending = (navigator as any).scheduling.isInputPending;
+// 不用bind会报Illegal invocation的错
+const isInputPending = (navigator as any).scheduling.isInputPending.bind(
+  (navigator as any).scheduling
+);
 
 /**
  * @description: 调度任务 高优先级任务插队
@@ -245,7 +248,6 @@ function shouldYieldToHost() {
   if (timeElapsed < frameInterval) {
     return false;
   }
-  // 浏览器是否支持isInputPending，这个方法用来帮助我们判断浏览器是否有离散输入事件要处理
   if (enableIsInputPending) {
     // 如果还没有超出50ms的时间，通过isInputPending来判断是否有离散输入事件需要处理
     if (timeElapsed < continuousInputInterval) {

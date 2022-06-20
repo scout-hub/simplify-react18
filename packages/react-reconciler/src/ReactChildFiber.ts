@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-19 20:58:06
+ * @LastEditTime: 2022-06-20 22:59:17
  */
 import type { Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -10,6 +10,7 @@ import { isArray, isNumber, isObject, isString } from "packages/shared/src";
 import { REACT_ELEMENT_TYPE } from "packages/shared/src/ReactSymbols";
 import {
   createFiberFromElement,
+  createFiberFromFragment,
   createFiberFromText,
   createWorkInProgress,
 } from "./ReactFiber";
@@ -110,6 +111,7 @@ function ChildReconciler(shouldTrackSideEffects) {
       } else {
         nextOldFiber = oldFiber.sibling;
       }
+
       const newFiber = updateSlot(
         returnFiber,
         oldFiber,
@@ -294,7 +296,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     newFiber.index = newIndex;
     // mount阶段直接返回lastPlacedIndex
     if (!shouldTrackSideEffects) {
-      newFiber.flags |= Forked;
+      // newFiber.flags |= Forked;
       return lastPlacedIndex;
     }
     // mount的时候lastPlacedIndex不需要操作，没有意义
@@ -438,7 +440,11 @@ function ChildReconciler(shouldTrackSideEffects) {
         }
       }
 
-      // todo children
+      if (isArray(newChild)) {
+        const created = createFiberFromFragment(newChild, lanes, null);
+        created.return = returnFiber;
+        return created;
+      }
     }
     return null;
   }

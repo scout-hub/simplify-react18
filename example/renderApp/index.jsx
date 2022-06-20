@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-20 17:13:07
+ * @LastEditTime: 2022-06-20 22:44:03
  */
 const { useState } = React;
 
@@ -12,16 +12,19 @@ const App = () => {
     <div className="red">
       <button
         onClick={() => {
-          setTimeout(() => {
-            setNum(1);
-          }, 500);
+          setNum((num) => {
+            if (num === 0) {
+              return num + 1;
+            }
+            return num - 1;
+          });
         }}
       >
         更新
       </button>
-      {Array.from(new Array(60000)).map((item, i) => (
-        <h1 key={i}>{num}</h1>
-      ))}
+      {num === 0
+        ? Array.from(new Array(2)).map((item, i) => <h1 key={i}>{num}</h1>)
+        : null}
     </div>
   );
 };

@@ -2,9 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-19 20:34:47
+ * @LastEditTime: 2022-06-20 21:27:06
  */
-import { ClassComponent, WorkTag } from "./ReactWorkTags";
+import { ClassComponent, Fragment, WorkTag } from "./ReactWorkTags";
 import type { Fiber } from "./ReactInternalTypes";
 import type { Lanes } from "./ReactFiberLane";
 import { isFunction, isString } from "packages/shared/src";
@@ -146,6 +146,16 @@ function shouldConstruct(Component: Function) {
  */
 export function createFiberFromText(content: string, lanes: Lanes): Fiber {
   const fiber = createFiber(HostText, content, null);
+  fiber.lanes = lanes;
+  return fiber;
+}
+
+export function createFiberFromFragment(
+  elements: Element[],
+  lanes: Lanes,
+  key: null | string
+): Fiber {
+  const fiber = createFiber(Fragment, elements, key);
   fiber.lanes = lanes;
   return fiber;
 }

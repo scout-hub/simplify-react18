@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-20 18:08:37
+ * @LastEditTime: 2022-06-20 22:55:06
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -433,7 +433,6 @@ function performUnitOfWork(unitOfWork: Fiber) {
   // 首屏渲染只有当前应用的根结点存在current，其它节点current为null
   const current = unitOfWork.alternate;
   let next;
-  // TODO update阶段依旧有bug
   next = beginWork(current, unitOfWork, subtreeRenderLanes);
   // 属性已经更新到dom上了，memoizedProps更新为pendingProps
   unitOfWork.memoizedProps = unitOfWork.pendingProps;

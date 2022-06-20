@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:23:10
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-18 21:11:28
+ * @LastEditTime: 2022-06-20 22:30:06
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { Lanes, mergeLanes, NoLanes } from "./ReactFiberLane";
@@ -15,6 +15,7 @@ import {
 } from "packages/react-dom/src/client/ReactDOMHostConfig";
 import {
   ClassComponent,
+  Fragment,
   FunctionComponent,
   HostComponent,
   HostRoot,
@@ -29,6 +30,8 @@ export function completeWork(
 ) {
   const newProps = workInProgress.pendingProps;
   switch (workInProgress.tag) {
+    // 片段
+    case Fragment:
     // 函数式组件
     case FunctionComponent: {
       bubbleProperties(workInProgress);
@@ -187,6 +190,12 @@ function appendAllChildren(parent, workInProgress) {
   while (node !== null) {
     if (node.tag === HostComponent || node.tag === HostText) {
       appendInitialChild(parent, node.stateNode);
+    } else if (node.child !== null) {
+      // 如果node不是HostComponent和HostText类型（有可能是没有实际dom的节点，比如fragment）
+      // 这时需要处理当前节点的子节点
+      node.child.return = node;
+      node = node.child;
+      continue;
     }
     while (node.sibling === null) {
       // 处理父fiber
