@@ -2,8 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-20 18:16:49
+ * @LastEditTime: 2022-06-21 22:30:31
  */
+import { isFunction } from "packages/shared/src";
 import {
   continuousYieldMs,
   enableIsInputPending,
@@ -180,8 +181,9 @@ function performWorkUntilDeadline() {
       // 执行flushWork
       hasMoreWork = scheduledHostCallback(hasTimeRemaining, currentTime);
     } finally {
-      // TODO 如果队列中还有任务，则继续为其创建一个宏任务以继续执行
+      // 如果队列中还有任务，则继续为其创建一个宏任务以继续执行
       if (hasMoreWork) {
+        schedulePerformWorkUntilDeadline();
       } else {
         isMessageLoopRunning = false;
         scheduledHostCallback = null;
@@ -200,8 +202,11 @@ function workLoop(hasTimeRemaining: boolean, initialTime: number) {
   // 取出当前优先级最高的任务
   currentTask = peek(taskQueue);
   while (currentTask !== null) {
-    if (currentTask.expirationTime > currentTime && !hasTimeRemaining) {
-      // 如果当前的任务还没有过期而且已经到达截止时间了，则跳出循环
+    //  如果任务还没过期且浏览器没有空闲时间，则中断任务的调度，等到下一个时间切片再去执行任务
+    if (
+      currentTask.expirationTime > currentTime &&
+      (!hasTimeRemaining || shouldYieldToHost())
+    ) {
       break;
     }
 
@@ -211,9 +216,12 @@ function workLoop(hasTimeRemaining: boolean, initialTime: number) {
       currentTask.callback = null;
       currentPriorityLevel = currentTask.priorityLevel;
       const didUserCallbackTimeout = currentTask.expirationTime <= currentTime;
-      callback(didUserCallbackTimeout);
-      // TODO 当前任务没有执行完的情况
-      if (currentTask === peek(taskQueue)) {
+      const continuationCallback = callback(didUserCallbackTimeout);
+      // 如果continuationCallback是一个函数，当前任务因为浏览器没有空闲时间而被中断了，需要继续调度一次
+      // 这个continuationCallback就是performConcurrentWorkOnRoot
+      if (isFunction(continuationCallback)) {
+        currentTask.callback = continuationCallback;
+      } else if (currentTask === peek(taskQueue)) {
         // 弹出当前执行的任务
         pop(taskQueue);
       }
@@ -222,6 +230,9 @@ function workLoop(hasTimeRemaining: boolean, initialTime: number) {
     }
     // 取出下一个任务执行
     currentTask = peek(taskQueue);
+  }
+  if (currentTask !== null) {
+    return true;
   }
 }
 
@@ -248,22 +259,22 @@ function shouldYieldToHost() {
   if (timeElapsed < frameInterval) {
     return false;
   }
-  if (enableIsInputPending) {
-    // 如果还没有超出50ms的时间，通过isInputPending来判断是否有离散输入事件需要处理
-    if (timeElapsed < continuousInputInterval) {
-      if (isInputPending !== null) {
-        return isInputPending();
-      }
-    } else if (timeElapsed < maxInterval) {
-      // 如果还没有超出300ms的时间，通过isInputPending来判断是否有离散或者连续输入的事件需要处理
-      // 例如mousemove、pointermove事件
-      if (isInputPending !== null) {
-        return isInputPending(continuousOptions);
-      }
-    } else {
-      return true;
-    }
-  }
+  // if (enableIsInputPending) {
+  //   // 如果还没有超出50ms的时间，通过isInputPending来判断是否有离散输入事件需要处理
+  //   if (timeElapsed < continuousInputInterval) {
+  //     if (isInputPending !== null) {
+  //       return isInputPending();
+  //     }
+  //   } else if (timeElapsed < maxInterval) {
+  //     // 如果还没有超出300ms的时间，通过isInputPending来判断是否有离散或者连续输入的事件需要处理
+  //     // 例如mousemove、pointermove事件
+  //     if (isInputPending !== null) {
+  //       return isInputPending(continuousOptions);
+  //     }
+  //   } else {
+  //     return true;
+  //   }
+  // }
   return true;
 }
 

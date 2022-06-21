@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 11:10:29
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-20 16:29:34
+ * @LastEditTime: 2022-06-21 20:43:59
  */
 import type { FiberRoot } from "./ReactInternalTypes";
 
@@ -60,6 +60,7 @@ export function markRootUpdated(
   updateLane: Lane,
   eventTime: number
 ) {
+  // 需要进行但是还没有进行的lanes
   root.pendingLanes |= updateLane;
 
   // 进入到scheduleUpdateOnFiber是紧急更新，如果存在非紧急更新需要先unblock

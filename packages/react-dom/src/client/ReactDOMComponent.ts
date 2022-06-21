@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:36:13
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-20 22:16:36
+ * @LastEditTime: 2022-06-21 22:07:37
  */
 
 import { isFunction, isNumber, isString } from "packages/shared/src";
@@ -75,7 +75,7 @@ export function diffProperties(
   let nextProps: any;
   switch (tag) {
     case "input":
-      throw Error("diffProperties input");
+      // throw Error("diffProperties input");
       break;
     default: {
       lastProps = lastRawProps;

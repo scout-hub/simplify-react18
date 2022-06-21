@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-20 22:05:41
+ * @LastEditTime: 2022-06-21 22:19:02
  */
 const { useState } = React;
 
@@ -42,6 +42,7 @@ const App = () => {
   const [num, setNum] = useState(0);
   return (
     <div className="red">
+      <input type="text" />
       <button
         onClick={() => {
           setTimeout(() => {
@@ -51,7 +52,7 @@ const App = () => {
       >
         更新
       </button>
-      {Array.from(new Array(6000)).map((item, i) => (
+      {Array.from(new Array(200000)).map((item, i) => (
         <h1 key={i}>{num}</h1>
       ))}
     </div>

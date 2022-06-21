@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-20 22:55:06
+ * @LastEditTime: 2022-06-21 22:29:44
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -58,6 +58,11 @@ import {
 } from "./ReactFiberSyncTaskQueue";
 import { MutationMask, NoFlags } from "./ReactFiberFlags";
 
+type RootExitStatus = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+const RootInProgress = 0;
+const RootCompleted = 5;
+
 // 当前正在工作的根应用fiber
 let workInProgressRoot: FiberRoot | null = null;
 // 当前正在工作的fiber
@@ -66,6 +71,8 @@ let workInProgress: Fiber | null = null;
 let currentEventTime: number = NoTimestamp;
 
 let workInProgressRootRenderLanes: Lanes = NoLanes;
+let workInProgressRootExitStatus: RootExitStatus = RootInProgress;
+
 export let subtreeRenderLanes: Lanes = NoLanes;
 
 /**
@@ -133,6 +140,7 @@ function markUpdateLaneFromFiberToRoot(
   }
 
   // 从当前需要更新的fiber节点向上遍历，遍历到根节点（root fiber）并更新每个fiber节点上的childLanes属性
+  // 这样就可以通过父节点的childLanes来知道子树所有Update的lanes，不需要遍历子树
   let node = sourceFiber;
   let parent = sourceFiber.return;
   while (parent !== null) {
@@ -162,10 +170,10 @@ function markUpdateLaneFromFiberToRoot(
 function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
   const existingCallbackNode = root.callbackNode;
 
-  // 判读某些lane上的任务是否已经过期，过期的话就标记为过期，然后接下去就可以执行它们
+  // 判读某些lane上的任务是否已经过期，过期的话就标记为过期，然后接下去就可以用同步的执行它们（解决饥饿问题）
   markStarvedLanesAsExpired(root, eventTime);
 
-  // 获取优先级最高的任务的优先级（有没有任务需要调度）
+  // 获取优先级最高的任务（有没有任务需要调度）
   const nextLanes = getNextLanes(
     root,
     root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes
@@ -276,6 +284,8 @@ function performConcurrentWorkOnRoot(root: FiberRoot, didTimeout: boolean) {
   // 这里进入了react中的事件，这里可以把currentEventTime清除了，下一次更新的时候会重新计算
   currentEventTime = NoTimestamp;
 
+  const originalCallbackNode = root.callbackNode;
+
   // 获取下一个优先级最高的任务
   const lanes = getNextLanes(
     root,
@@ -288,20 +298,33 @@ function performConcurrentWorkOnRoot(root: FiberRoot, didTimeout: boolean) {
   }
 
   // 判断是否需要开启时间切片 1、是否有阻塞 2、任务是否过期
-  const shouldTimeSlice =
-    !includesBlockingLane(root, lanes) &&
-    !includesExpiredLane(root, lanes) &&
-    !didTimeout;
-  // shouldTimeSlice
-  //   ? renderRootConcurrent(root, lanes)
-  //   : renderRootSync(root, lanes);
-  renderRootConcurrent(root, lanes);
-  const finishedWork = root.current.alternate;
-  root.finishedWork = finishedWork;
-  root.finishedLanes = lanes;
-  finishConcurrentRender(root);
+  const shouldTimeSlice = true;
+  //   !includesBlockingLane(root, lanes) &&
+  //   !includesExpiredLane(root, lanes) &&
+  //   !didTimeout;
+  const exitStatus = shouldTimeSlice
+    ? renderRootConcurrent(root, lanes)
+    : renderRootSync(root, lanes);
+  if (exitStatus !== RootInProgress) {
+    if (exitStatus === RootCompleted) {
+      const finishedWork = root.current.alternate;
+      root.finishedWork = finishedWork;
+      root.finishedLanes = lanes;
+      finishConcurrentRender(root, exitStatus);
+    }
+  }
+
+  // 说明本次调度的回调任务被中断了，这时需要返回performConcurrentWorkOnRoot，在workLoop中接受这个函数继续调度
+  if (root.callbackNode === originalCallbackNode) {
+    return performConcurrentWorkOnRoot.bind(null, root);
+  }
+
+  return null;
 }
 
+/**
+ * @description: 并发模式下渲染根节点
+ */
 function renderRootConcurrent(root, lanes: Lanes) {
   // 如果根应用节点或者优先级改变，则创建一个新的workInProgress
   if (workInProgressRoot !== root || workInProgressRootRenderLanes !== lanes) {
@@ -309,12 +332,21 @@ function renderRootConcurrent(root, lanes: Lanes) {
     prepareFreshStack(root, lanes);
   }
   workLoopConcurrent();
+  if (workInProgress !== null) {
+    // 可能是因为中断了进入了这里
+    return RootInProgress;
+  } else {
+    workInProgressRoot = null;
+    workInProgressRootRenderLanes = NoLanes;
+    return workInProgressRootExitStatus;
+  }
 }
 
 /**
  * @description: 并发模式调度
  */
 function workLoopConcurrent() {
+  // 留给react render的时间片不够就会中断render
   while (workInProgress !== null && !shouldYield()) {
     performUnitOfWork(workInProgress);
   }
@@ -334,6 +366,7 @@ function renderRootSync(root: FiberRoot, lanes: Lanes) {
   // 表示render结束，没有正在进行中的render
   workInProgressRoot = null;
   workInProgressRootRenderLanes = NoLanes;
+  return workInProgressRootExitStatus;
 }
 
 /**
@@ -347,6 +380,8 @@ function prepareFreshStack(root: FiberRoot, lanes: Lanes) {
   // 为当前节点创建一个内存中的fiber节点（双缓存机制）
   const rootWorkInProgress = createWorkInProgress(root.current, null);
   workInProgress = rootWorkInProgress;
+  // 标记当前应用的根节点正在工作
+  workInProgressRootExitStatus = RootInProgress;
   workInProgressRootRenderLanes = subtreeRenderLanes = lanes;
   return workInProgressRoot;
 }
@@ -355,8 +390,13 @@ function prepareFreshStack(root: FiberRoot, lanes: Lanes) {
  * @description: render工作完成，进入commit阶段
  * @param root
  */
-function finishConcurrentRender(root: FiberRoot) {
-  commitRoot(root);
+function finishConcurrentRender(root: FiberRoot, exitStatus: RootExitStatus) {
+  switch (exitStatus) {
+    case RootCompleted: {
+      commitRoot(root);
+      break;
+    }
+  }
 }
 
 /**
@@ -472,4 +512,8 @@ function completeUnitOfWork(unitOfWork: Fiber) {
     completedWork = returnFiber;
     workInProgress = completedWork;
   } while (completedWork !== null);
+  if (workInProgressRootExitStatus === RootInProgress) {
+    // root已经工作完了
+    workInProgressRootExitStatus = RootCompleted;
+  }
 }

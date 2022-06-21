@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-20 22:59:17
+ * @LastEditTime: 2022-06-21 22:05:35
  */
 import type { Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -15,7 +15,7 @@ import {
   createWorkInProgress,
 } from "./ReactFiber";
 import { ChildDeletion, Forked, Placement } from "./ReactFiberFlags";
-import { HostText } from "./ReactWorkTags";
+import { Fragment, HostText } from "./ReactWorkTags";
 
 /**
  * @description: 创建diff的函数
@@ -368,11 +368,38 @@ function ChildReconciler(shouldTrackSideEffects) {
 
       // newChild是数组的情况
       if (isArray(newChild)) {
-        throw Error("updateSlot newChild is Array");
+        if (key !== null) {
+          throw Error("updateFragment key!==null");
+        }
+        // fragment节点更新的情况
+        return updateFragment(returnFiber, oldFiber, newChild, lanes, null);
       }
     }
 
     return null;
+  }
+
+  /**
+   * @description: 更新片段
+   */
+  function updateFragment(
+    returnFiber: Fiber,
+    current: Fiber | null,
+    fragment: Array<any>,
+    lanes: Lanes,
+    key: null | string
+  ): Fiber {
+    if (current === null || current.tag !== Fragment) {
+      // mount
+      const created = createFiberFromFragment(fragment, lanes, key);
+      created.return = returnFiber;
+      return created;
+    } else {
+      // Update
+      const existing = useFiber(current, fragment);
+      existing.return = returnFiber;
+      return existing;
+    }
   }
 
   /**
