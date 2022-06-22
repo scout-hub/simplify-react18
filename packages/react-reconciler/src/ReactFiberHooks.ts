@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-22 18:40:56
+ * @LastEditTime: 2022-06-22 20:42:48
  */
 import {
   isSubsetOfLanes,
@@ -271,8 +271,10 @@ function updateReducer<S>(
     } while (update !== null && update !== first);
 
     if (newBaseQueueLast === null) {
+      // newBaseQueueLast不存在，说明没有被跳过的Update，所以newBaseState就是当前的Update计算的state
       newBaseState = newState;
     } else {
+      // 形成循环链表
       newBaseQueueLast.next = newBaseQueueFirst as any;
     }
 

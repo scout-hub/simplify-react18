@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-22 21:19:01
+ * @LastEditTime: 2022-06-22 20:33:08
  */
 const { useState } = React;
 
@@ -14,14 +14,14 @@ const App = () => {
       <button
         id="btn1"
         onClick={() => {
-          setNum((num) => num + 2);
+          setNum((num) => num + 1);
         }}
       ></button>
       <button
         onClick={() => {
           const btn = document.getElementById("btn1");
           setTimeout(() => {
-            setNum((num) => num + 1);
+            setNum((num) => num + 2);
           }, 1000);
           setTimeout(() => {
             btn.click();

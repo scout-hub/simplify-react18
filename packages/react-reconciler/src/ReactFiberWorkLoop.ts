@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-22 18:40:38
+ * @LastEditTime: 2022-06-22 21:27:52
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -395,7 +395,6 @@ function prepareFreshStack(root: FiberRoot, lanes: Lanes) {
   root.finishedWork = null;
   root.finishedLanes = NoLanes;
   workInProgressRoot = root;
-  // 为当前节点创建一个内存中的fiber节点（双缓存机制）
   const rootWorkInProgress = createWorkInProgress(root.current, null);
   workInProgress = rootWorkInProgress;
   // 标记当前应用的根节点正在工作

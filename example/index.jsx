@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-22 16:03:30
+ * @LastEditTime: 2022-06-22 21:25:35
  */
 const { useState, useEffect } = React;
 
@@ -56,7 +56,7 @@ const App = () => {
           }, 1000);
           setTimeout(() => {
             btn.click();
-          }, 1060);
+          }, 1010);
         }}
       >
         更新
