@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-22 11:10:13
+ * @LastEditTime: 2022-06-22 18:40:38
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -208,7 +208,7 @@ function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
     return;
   }
 
-  // 走到这儿说明新任务的优先级大于现有任务的优先级，如果存在现有任务则取消现有的任务的执行
+  // 走到这儿说明新任务的优先级大于现有任务的优先级，如果存在现有任务则取消现有的任务的执行（高优先级打断低优先级）
   if (existingCallbackNode != null) {
     cancelCallback(existingCallbackNode);
   }
@@ -297,11 +297,11 @@ function performConcurrentWorkOnRoot(root: FiberRoot, didTimeout: boolean) {
     return null;
   }
 
-  // 判断是否需要开启时间切片 1、是否有阻塞 2、任务是否过期
+  // 判断是否需要开启时间切片 1、是否有阻塞 2、任务是否过期，过期了需要尽快执行（同步）
   const shouldTimeSlice = true;
-  //   !includesBlockingLane(root, lanes) &&
-  //   !includesExpiredLane(root, lanes) &&
-  //   !didTimeout;
+  // !includesBlockingLane(root, lanes) &&
+  // !includesExpiredLane(root, lanes) &&
+  // !didTimeout;
   const exitStatus = shouldTimeSlice
     ? renderRootConcurrent(root, lanes)
     : renderRootSync(root, lanes);
@@ -314,7 +314,13 @@ function performConcurrentWorkOnRoot(root: FiberRoot, didTimeout: boolean) {
     }
   }
 
-  // 说明本次调度的回调任务被中断了，这时需要返回performConcurrentWorkOnRoot，在workLoop中接受这个函数继续调度
+  /**
+   * 说明本次调度的回调任务被中断了，这时需要返回performConcurrentWorkOnRoot，以延续之前中断的任务
+   *
+   * 这两个值不想等的情况：
+   * 1、任务顺利调度完了，root.callbackNode会变成null
+   * 2、有高优先级任务打断了低优先级任务 TODO
+   */
   if (root.callbackNode === originalCallbackNode) {
     return performConcurrentWorkOnRoot.bind(null, root);
   }
@@ -368,9 +374,9 @@ function workLoopConcurrent() {
  * @param root
  */
 function renderRootSync(root: FiberRoot, lanes: Lanes) {
-  // 如果根应用节点或者优先级改变，则创建一个新的workInProgress
+  // 根应用节点或者优先级改变，优先级改变是因为高优先级任务的插入打断了上一次低优先级任务的执行
   if (workInProgressRoot !== root || workInProgressRootRenderLanes !== lanes) {
-    // 为接下去新一次渲染工作初始化参数
+    // 为接下去新一次渲染工作初始化参数，清除上一次渲染已经产生的工作
     prepareFreshStack(root, lanes);
   }
   workLoopSync();
@@ -381,10 +387,11 @@ function renderRootSync(root: FiberRoot, lanes: Lanes) {
 }
 
 /**
- * @description: 为接下去新一次渲染工作初始化参数
+ * @description: 为接下去新一次渲染工作初始化参数并清除上一次渲染已经产生的工作
  * @param root
  */
 function prepareFreshStack(root: FiberRoot, lanes: Lanes) {
+  // 清除上一次渲染已经产生的工作
   root.finishedWork = null;
   root.finishedLanes = NoLanes;
   workInProgressRoot = root;
@@ -463,6 +470,7 @@ function commitRootImpl(root: FiberRoot) {
   }
   // 渲染完成，将current指向workInProgress
   root.current = finishedWork;
+  ensureRootIsScheduled(root, now());
 }
 
 /**

@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 11:10:29
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-21 20:43:59
+ * @LastEditTime: 2022-06-22 18:38:34
  */
 import type { FiberRoot } from "./ReactInternalTypes";
 
@@ -22,7 +22,6 @@ export const NoLane: Lane = 0b0000000000000000000000000000000;
 // 同步更新的优先级为最高优先级
 export const SyncLane = 0b0000000000000000000000000000001;
 
-export const InputContinuousHydrationLane: Lane = 0b0000000000000000000000000000010;
 export const InputContinuousLane: Lane = 0b0000000000000000000000000000100;
 
 // 默认优先级，例如使用setTimeout，请求数据返回等造成的更新
@@ -129,7 +128,7 @@ export function getNextLanes(root: FiberRoot, wipLanes: Lanes): Lanes {
 
   // 是否有非空闲的任务，如果有非空闲的任务，需要先执行非空闲的任务，不要去执行空闲的任务
   const nonIdlePendingLanes = pendingLanes & NonIdleLanes;
-  
+
   // 有未闲置的任务
   if (nonIdlePendingLanes !== NoLanes) {
     // 获取除挂起任务外最高优先级任务的优先级，这里暂时不考虑挂起任务
@@ -209,6 +208,13 @@ export function getHighestPriorityLane(lanes: Lanes): Lane {
 
 export function includesNonIdleWork(lanes: Lanes) {
   return (lanes & NonIdleLanes) !== NoLanes;
+}
+
+/**
+ * @description: 判断subset是不是set的子集
+ */
+export function isSubsetOfLanes(set, subset) {
+  return (set & subset) === subset;
 }
 
 /**

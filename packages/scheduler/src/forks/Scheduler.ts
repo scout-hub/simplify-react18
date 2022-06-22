@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-22 10:45:44
+ * @LastEditTime: 2022-06-22 15:03:11
  */
 import { isFunction } from "packages/shared/src";
 import {
@@ -119,6 +119,7 @@ function unstable_scheduleCallback(priorityLevel, callback) {
       requestHostCallback(flushWork);
     }
   }
+  return newTask;
 }
 
 /**

@@ -2,9 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-22 10:45:00
+ * @LastEditTime: 2022-06-22 16:03:30
  */
-const { useState } = React;
+const { useState, useEffect } = React;
 
 // const App = () => {
 //   const [num, setNum] = useState(0);
@@ -37,22 +37,31 @@ const { useState } = React;
 //     </div>
 //   );
 // };
-
 const App = () => {
   const [num, setNum] = useState(0);
   return (
     <div className="red">
       <input type="text" />
       <button
+        id="btn1"
         onClick={() => {
+          setNum((num) => num + 2);
+        }}
+      ></button>
+      <button
+        onClick={() => {
+          const btn = document.getElementById("btn1");
           setTimeout(() => {
-            setNum(1);
-          }, 500);
+            setNum((num) => num + 1);
+          }, 1000);
+          setTimeout(() => {
+            btn.click();
+          }, 1060);
         }}
       >
         更新
       </button>
-      {Array.from(new Array(60000)).map((item, i) => (
+      {Array.from(new Array(100000)).map((item, i) => (
         <h1 key={i}>{num}</h1>
       ))}
     </div>

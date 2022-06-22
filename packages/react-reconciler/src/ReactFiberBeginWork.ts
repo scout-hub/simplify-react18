@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-20 22:31:07
+ * @LastEditTime: 2022-06-22 18:38:46
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { includesSomeLane, Lanes, NoLanes } from "./ReactFiberLane";
@@ -64,9 +64,9 @@ export function beginWork(
   }
   /**
    * 先清除workInProgress中的lanes
-   * 不清除会导致root上的pendingLanes一直不为空
+   * 不清除会导致root上的pendingLanes一直不为空，会被一直调度
    */
-  // workInProgress.lanes = NoLanes;
+  workInProgress.lanes = NoLanes;
   switch (workInProgress.tag) {
     case HostRoot: {
       return updateHostRoot(current, workInProgress, renderLanes);
