@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-22 21:58:07
+ * @LastEditTime: 2022-06-22 22:32:07
  */
 import {
   isSubsetOfLanes,
@@ -137,6 +137,7 @@ function mountState<S, A>(
   // hook上的queue和Update上的queue一样，是一个环状链表
   hook.queue = queue;
   const dispatch: Dispatch<BasicStateAction<S>> = (queue.dispatch =
+    // 绑定上当前的fiber和queue
     dispatchSetState.bind(null, currentlyRenderingFiber!, queue));
 
   return [hook.memoizedState, dispatch];
