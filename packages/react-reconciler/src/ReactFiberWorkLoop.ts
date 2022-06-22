@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-21 22:29:44
+ * @LastEditTime: 2022-06-22 11:10:13
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -323,7 +323,7 @@ function performConcurrentWorkOnRoot(root: FiberRoot, didTimeout: boolean) {
 }
 
 /**
- * @description: 并发模式下渲染根节点
+ * @description: 并发模式下渲染根应用
  */
 function renderRootConcurrent(root, lanes: Lanes) {
   // 如果根应用节点或者优先级改变，则创建一个新的workInProgress
@@ -331,7 +331,18 @@ function renderRootConcurrent(root, lanes: Lanes) {
     // 为接下去新一次渲染工作初始化参数
     prepareFreshStack(root, lanes);
   }
-  workLoopConcurrent();
+  do {
+    try {
+      workLoopConcurrent();
+      break;
+    } catch (e) {}
+  } while (true);
+
+  /**
+   * 如果workInProgress还存在，说明任务可能被中断了
+   * 即在处理当前这个workInProgress fiber的时候，游览器没有空闲时间了，此时会中断workLoopConcurrent的循环
+   * workInProgress保留当前被中断的fiber，下一次要恢复这个workInProgress fiber的执行
+   */
   if (workInProgress !== null) {
     // 可能是因为中断了进入了这里
     return RootInProgress;

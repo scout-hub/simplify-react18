@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-21 22:30:31
+ * @LastEditTime: 2022-06-22 10:45:44
  */
 import { isFunction } from "packages/shared/src";
 import {
@@ -169,6 +169,7 @@ function flushWork(hasTimeRemaining: boolean, initialTime: number) {
 }
 
 function performWorkUntilDeadline() {
+  // 这个scheduledHostCallback就是flushWork
   if (scheduledHostCallback !== null) {
     const currentTime = getCurrentTime();
     startTime = currentTime;
@@ -202,7 +203,7 @@ function workLoop(hasTimeRemaining: boolean, initialTime: number) {
   // 取出当前优先级最高的任务
   currentTask = peek(taskQueue);
   while (currentTask !== null) {
-    //  如果任务还没过期且浏览器没有空闲时间，则中断任务的调度，等到下一个时间切片再去执行任务
+    //  如果任务还没过期（没执行）且当前帧已经执行完了，没有空闲时间了，则退出循环
     if (
       currentTask.expirationTime > currentTime &&
       (!hasTimeRemaining || shouldYieldToHost())
@@ -231,6 +232,7 @@ function workLoop(hasTimeRemaining: boolean, initialTime: number) {
     // 取出下一个任务执行
     currentTask = peek(taskQueue);
   }
+  // 当前帧已经执行完了，但是过期任务还没到过期时间，这个任务放到下一帧取执行
   if (currentTask !== null) {
     return true;
   }
