@@ -2,12 +2,13 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-22 21:19:01
+ * @LastEditTime: 2022-06-22 21:56:50
  */
 const { useState } = React;
 
 const App = () => {
   const [num, setNum] = useState(0);
+  setNum(1);
   return (
     <div className="red">
       <input type="text" />

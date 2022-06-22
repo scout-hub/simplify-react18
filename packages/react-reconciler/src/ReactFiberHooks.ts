@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-22 20:42:48
+ * @LastEditTime: 2022-06-22 21:58:07
  */
 import {
   isSubsetOfLanes,
@@ -390,9 +390,11 @@ function dispatchSetState<S>(fiber: Fiber, queue: any, action: S) {
     next: null as any, // 指向下一个update，用于构建环状链表
   };
   // 判断是否是render阶段产生的更新，即直接在执行function component函数时调用了dispatchSetState
-  if (fiber === currentlyRenderingFiber) {
-    throw Error("dispatchSetState while function component is rendering");
+  if (isRenderPhaseUpdate(fiber)) {
+    console.warn("dispatchSetState while function component is rendering");
+    // return;
   } else {
+    // Update入队列
     enqueueUpdate(fiber, queue, update);
     const alternate = fiber.alternate;
     if (
@@ -419,6 +421,17 @@ function dispatchSetState<S>(fiber: Fiber, queue: any, action: S) {
     // 调度fiber节点的更新
     scheduleUpdateOnFiber(fiber, lane, eventTime);
   }
+}
+
+/**
+ * @description: 是否处于渲染中，即判断当前更新是不是渲染的时候产生的
+ */
+function isRenderPhaseUpdate(fiber: Fiber) {
+  const alternate = fiber.alternate;
+  return (
+    fiber === currentlyRenderingFiber ||
+    (alternate !== null && alternate === currentlyRenderingFiber)
+  );
 }
 
 /**

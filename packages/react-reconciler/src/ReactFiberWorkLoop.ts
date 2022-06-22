@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-22 21:27:52
+ * @LastEditTime: 2022-06-22 22:04:52
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -119,8 +119,10 @@ export function scheduleUpdateOnFiber(fiber, lane: Lane, eventTime: number) {
   // 给root节点加上更新标记，pendingLanes
   markRootUpdated(root, lane, eventTime);
 
-  // 异步调度应用（concurrent模式）
+  // 调度应用
   ensureRootIsScheduled(root, eventTime);
+
+  return root;
 }
 
 /**
@@ -170,7 +172,7 @@ function markUpdateLaneFromFiberToRoot(
 function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
   const existingCallbackNode = root.callbackNode;
 
-  // 判读某些lane上的任务是否已经过期，过期的话就标记为过期，然后接下去就可以用同步的执行它们（解决饥饿问题）
+  // 判读某些lane上的任务是否已经过期，过期的话就标记为过期，然后接下去就可以用同步的方式执行它们（解决饥饿问题）
   markStarvedLanesAsExpired(root, eventTime);
 
   // 获取优先级最高的任务（有没有任务需要调度）
