@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-22 22:31:11
+ * @LastEditTime: 2022-06-22 22:37:32
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -181,7 +181,7 @@ function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
     root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes
   );
 
-  // 如果nextLanes为空则表示没有任务需要执行，则直接中断更新
+  // 如果nextLanes为空则表示没有任务需要执行，直接结束调度
   if (nextLanes === NoLanes) {
     // existingCallbackNode不为空表示有任务使用了concurrent模式被scheduler调用，但是还未执行
     // nextLanes为空了则表示没有任务了，就算这个任务执行了但是也做不了任何更新，所以需要取消掉
@@ -382,7 +382,14 @@ function renderRootSync(root: FiberRoot, lanes: Lanes) {
     // 为接下去新一次渲染工作初始化参数，清除上一次渲染已经产生的工作
     prepareFreshStack(root, lanes);
   }
-  workLoopSync();
+  do {
+    try {
+      workLoopSync();
+      break;
+    } catch (error) {
+      console.log(error);
+    }
+  } while (true);
   // 表示render结束，没有正在进行中的render
   workInProgressRoot = null;
   workInProgressRootRenderLanes = NoLanes;
@@ -479,8 +486,7 @@ function commitRootImpl(root: FiberRoot) {
  * @description: 循环同步执行过期的任务
  */
 function workLoopSync() {
-  // 对于已经超时的任务，不需要检查是否需要yield，直接执行
-  // 如果存在workInProgress，就执行performUnitOfWork
+  // 对于已经超时（同步）的任务，不需要检查是否需要yield，直接执行
   while (workInProgress !== null) {
     performUnitOfWork(workInProgress);
   }

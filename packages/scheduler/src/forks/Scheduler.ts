@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-22 15:03:11
+ * @LastEditTime: 2022-06-24 15:40:11
  */
 import { isFunction } from "packages/shared/src";
 import {
@@ -24,6 +24,8 @@ import {
 let currentTask;
 let getCurrentTime;
 let currentPriorityLevel = NormalPriority;
+
+const localSetTimeout = typeof setTimeout === "function" ? setTimeout : null;
 // 是否可使用performace.now去获取高精度时间
 const hasPerformanceNow =
   typeof performance === "object" && typeof performance.now === "function";
@@ -108,6 +110,7 @@ function unstable_scheduleCallback(priorityLevel, callback) {
 
   // TODO 如果任务开始时间大于当前时间，说明任务没有过期，需要放入延时队列timerQueue中
   if (startTime > currentTime) {
+    throw Error("startTime > currentTime");
   } else {
     // 任务开始时间<=当前时间，说明任务过期了，需要添加到taskQueue队列中以进行任务调度
     // 过期任务根据过期时间进行排序
@@ -153,7 +156,9 @@ if (typeof MessageChannel !== "undefined") {
     port.postMessage(null);
   };
 } else {
-  // 使用setTimeout
+  schedulePerformWorkUntilDeadline = () => {
+    localSetTimeout!(performWorkUntilDeadline, 0);
+  };
 }
 
 function flushWork(hasTimeRemaining: boolean, initialTime: number) {
@@ -236,7 +241,23 @@ function workLoop(hasTimeRemaining: boolean, initialTime: number) {
   // 当前帧已经执行完了，但是过期任务还没到过期时间，这个任务放到下一帧取执行
   if (currentTask !== null) {
     return true;
+  } else {
+    // taskQueue任务都执行完了，去看看timerQueue是否有任务需要执行
+    const firstTimer = peek(timerQueue);
+    if (firstTimer !== null) {
+      // 让当前任务直接过期，从而可以被调度，让这个任务过期的方式就是直接使用定时器
+      requestHostTimeout(handleTimeout, firstTimer.startTime - currentTime);
+    }
+    return false;
   }
+}
+
+function handleTimeout(currentTime) {}
+
+function requestHostTimeout(callback, ms) {
+  localSetTimeout!(() => {
+    callback(getCurrentTime());
+  }, ms);
 }
 
 /**

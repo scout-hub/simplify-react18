@@ -6,6 +6,7 @@
  */
 type Heap = Array<Node>;
 type Node = {
+  startTime: number;
   id: number;
   sortIndex: number;
 };
