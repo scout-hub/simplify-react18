@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-22 22:32:07
+ * @LastEditTime: 2022-06-24 22:41:29
  */
 import {
   isSubsetOfLanes,
@@ -27,6 +27,16 @@ import type {
   Fiber,
 } from "./ReactInternalTypes";
 import { markWorkInProgressReceivedUpdate } from "./ReactFiberBeginWork";
+import {
+  Flags,
+  Passive as PassiveEffect,
+  PassiveStatic as PassiveStaticEffect,
+} from "./ReactFiberFlags";
+import {
+  HasEffect as HookHasEffect,
+  HookFlags,
+  Passive as HookPassive,
+} from "./ReactHookEffectTags";
 
 type Update<S> = {
   lane: Lane;
@@ -51,6 +61,14 @@ export type UpdateQueue<S, A> = {
   lastRenderedState: S | null;
 };
 
+export type Effect = {
+  tag: HookFlags;
+  create: () => (() => void) | void;
+  destroy: (() => void) | void;
+  deps: Array<any> | null;
+  next: Effect;
+};
+
 const { ReactCurrentDispatcher } = ReactSharedInternals;
 
 let workInProgressHook: Hook | null = null;
@@ -61,10 +79,12 @@ let currentHook: Hook | null = null;
 
 const HooksDispatcherOnMount: Dispatcher = {
   useState: mountState,
+  useEffect: mountEffect,
 };
 
 const HooksDispatcherOnUpdate = {
   useState: updateState,
+  useEffect: updateEffect,
 };
 
 /**
@@ -151,6 +171,63 @@ function updateState<S>(
 ): [S, Dispatch<BasicStateAction<S>>] {
   return updateReducer(basicStateReducer, initialState);
 }
+
+/**
+ * @description: mount阶段的useEffect函数
+ */
+function mountEffect(
+  create: () => (() => void) | void,
+  deps: Array<any> | null
+) {
+  return mountEffectImpl(
+    PassiveEffect | PassiveStaticEffect,
+    HookPassive,
+    create,
+    deps
+  );
+}
+
+function mountEffectImpl(
+  fiberFlags: Flags,
+  hookFlags: HookFlags,
+  create: () => (() => void) | void,
+  deps: Array<any> | null
+) {
+  const hook = mountWorkInProgressHook();
+  const nextDeps = deps === undefined ? null : deps;
+  // 标记上副作用
+  currentlyRenderingFiber!.flags |= fiberFlags;
+  hook.memoizedState = pushEffect(
+    HookHasEffect | hookFlags,
+    create,
+    undefined,
+    nextDeps
+  );
+}
+
+/**
+ * @description: 添加effect
+ */
+function pushEffect(
+  tag: HookFlags,
+  create: () => (() => void) | void,
+  destroy: (() => void) | void,
+  deps: Array<any> | null
+): Effect {
+  const effect: Effect = {
+    tag,
+    create,
+    destroy,
+    deps,
+    next: null as any,
+  };
+  return effect;
+}
+
+/**
+ * @description: update阶段的useEffet函数
+ */
+function updateEffect() {}
 
 function updateReducer<S>(
   reducer,

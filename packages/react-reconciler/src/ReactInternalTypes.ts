@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-30 15:32:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-17 14:18:25
+ * @LastEditTime: 2022-06-24 16:42:19
  */
 import type { Flags } from "./ReactFiberFlags";
 import type { Lane, LaneMap, Lanes } from "./ReactFiberLane";
@@ -26,7 +26,7 @@ export type Fiber = {
   updateQueue: any; // 存放该fiber节点所有的更新
   memoizedState: any; // 类组件保存state信息，函数组件保存hooks信息，dom元素为null
   flags: Flags; // 标记fiber effect，比如fiber节点需要插入还是更新
-  subtreeFlags: Flags, // 子fiber树effect标记
+  subtreeFlags: Flags; // 子fiber树effect标记
   deletions: Array<Fiber> | null; // 需要删除的fiber
 
   pendingProps: any; // 新的props，还在更新阶段的props
@@ -57,4 +57,8 @@ export type BasicStateAction<S> = ((a: S) => S) | S;
 
 export type Dispatcher = {
   useState<S>(initialState: (() => S) | S): [S, Dispatch<BasicStateAction<S>>];
+  useEffect(
+    create: () => (() => void) | void,
+    deps: Array<any> | void | null
+  ): void;
 };

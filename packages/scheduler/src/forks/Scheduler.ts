@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-24 15:40:11
+ * @LastEditTime: 2022-06-24 15:49:33
  */
 import { isFunction } from "packages/shared/src";
 import {
@@ -245,14 +245,19 @@ function workLoop(hasTimeRemaining: boolean, initialTime: number) {
     // taskQueue任务都执行完了，去看看timerQueue是否有任务需要执行
     const firstTimer = peek(timerQueue);
     if (firstTimer !== null) {
-      // 让当前任务直接过期，从而可以被调度，让这个任务过期的方式就是直接使用定时器
+      // 让一个未过期的任务达到过期的状态，只需要延迟startTime-currentTime毫秒就行了
       requestHostTimeout(handleTimeout, firstTimer.startTime - currentTime);
     }
     return false;
   }
 }
 
-function handleTimeout(currentTime) {}
+/**
+ * @description: 将过期任务从timerQueue中取出并添加到taskQeueu中
+ */
+function handleTimeout(currentTime) {
+  throw Error("handleTimeout");
+}
 
 function requestHostTimeout(callback, ms) {
   localSetTimeout!(() => {

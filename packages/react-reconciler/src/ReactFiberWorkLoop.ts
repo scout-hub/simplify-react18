@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-22 22:37:32
+ * @LastEditTime: 2022-06-24 16:53:35
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -344,7 +344,9 @@ function renderRootConcurrent(root, lanes: Lanes) {
     try {
       workLoopConcurrent();
       break;
-    } catch (e) {}
+    } catch (e: any) {
+      throw Error(e);
+    }
   } while (true);
 
   /**
