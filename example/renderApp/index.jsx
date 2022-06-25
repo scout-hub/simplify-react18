@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-24 16:54:34
+ * @LastEditTime: 2022-06-25 17:31:43
  */
 const { useState, useEffect } = React;
 const App = () => {
@@ -10,10 +10,6 @@ const App = () => {
 
   useEffect(() => {
     console.log(1);
-  }, []);
-
-  useEffect(() => {
-    console.log(2);
   }, []);
 
   return (

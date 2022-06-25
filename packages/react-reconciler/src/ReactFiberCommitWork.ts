@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-20 22:51:35
+ * @LastEditTime: 2022-06-25 17:32:27
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -14,7 +14,14 @@ import {
   insertInContainerBefore,
   removeChild,
 } from "packages/react-dom/src/client/ReactDOMHostConfig";
-import { MutationMask, Placement, Update } from "./ReactFiberFlags";
+import {
+  MutationMask,
+  NoFlags,
+  Passive,
+  PassiveMask,
+  Placement,
+  Update,
+} from "./ReactFiberFlags";
 import {
   ClassComponent,
   FunctionComponent,
@@ -22,14 +29,115 @@ import {
   HostRoot,
   HostText,
 } from "./ReactWorkTags";
+import type { HookFlags } from "./ReactHookEffectTags";
+import {
+  HasEffect as HookHasEffect,
+  Passive as HookPassive,
+} from "./ReactHookEffectTags";
+import { FunctionComponentUpdateQueue } from "./ReactFiberHooks";
 
 let hostParent: Element | null = null;
+
+let nextEffect: Fiber | null = null;
 
 /**
  * @description: commitMutation阶段
  */
 export function commitMutationEffects(root: FiberRoot, finishedWork: Fiber) {
   commitMutationEffectsOnFiber(finishedWork, root);
+}
+
+export function commitPassiveMountEffects(
+  root: FiberRoot,
+  finishedWork: Fiber
+) {
+  nextEffect = finishedWork;
+  commitPassiveMountEffects_begin(finishedWork, root);
+}
+
+function commitPassiveMountEffects_begin(subtreeRoot: Fiber, root: FiberRoot) {
+  while (nextEffect !== null) {
+    const fiber = nextEffect;
+    const firstChild = fiber.child;
+    // 找到第一个subtreeFlags中不存在副作用标记的节点，即后代fiber节点不需要处理副作用，当前fiber的兄弟以及祖先可能需要处理副作用
+    if ((fiber.subtreeFlags & PassiveMask) !== NoFlags && firstChild !== null) {
+      firstChild.return = fiber;
+      nextEffect = firstChild;
+    } else {
+      commitPassiveMountEffects_complete(subtreeRoot, root);
+    }
+  }
+}
+
+function commitPassiveMountEffects_complete(
+  subtreeRoot: Fiber,
+  root: FiberRoot
+) {
+  while (nextEffect !== null) {
+    const fiber = nextEffect;
+    // 如果当前fiber存在Passive副作用标记，则去处理副作用
+    if ((fiber.flags & Passive) !== NoFlags) {
+      try {
+        commitPassiveMountOnFiber(root, fiber);
+      } catch (error: any) {
+        throw Error(error);
+      }
+    }
+
+    // 处理完了
+    if (fiber === subtreeRoot) {
+      nextEffect = null;
+      return;
+    }
+
+    // 处理兄弟节点的副作用
+    const sibling = fiber.sibling;
+    if (sibling !== null) {
+      sibling.return = fiber.return;
+      nextEffect = sibling;
+      return;
+    }
+
+    // 处理父fiber的副作用
+    nextEffect = fiber.return;
+  }
+}
+
+/**
+ * @description: 提交副作用处理
+ */
+function commitPassiveMountOnFiber(
+  finishedRoot: FiberRoot,
+  finishedWork: Fiber
+) {
+  switch (finishedWork.tag) {
+    case FunctionComponent: {
+      commitHookEffectListMount(HookPassive | HookHasEffect, finishedWork);
+      break;
+    }
+    case HostRoot: {
+      throw Error("HostRoot");
+    }
+  }
+}
+
+function commitHookEffectListMount(flags: HookFlags, finishedWork: Fiber) {
+  const updateQueue: FunctionComponentUpdateQueue | null =
+    finishedWork.updateQueue;
+  const lastEffect = updateQueue !== null ? updateQueue.lastEffect : null;
+  if (lastEffect !== null) {
+    const firstEffect = lastEffect.next;
+    let effect = firstEffect;
+    do {
+      if ((effect.tag & flags) === flags) {
+        // 取出传入的副作用函数
+        const create = effect.create;
+        // destory就是用户传入的副作用函数中的返回值，这个返回值就是销毁函数
+        effect.destroy = create();
+        effect = effect.next;
+      }
+    } while (effect !== firstEffect);
+  }
 }
 
 /**

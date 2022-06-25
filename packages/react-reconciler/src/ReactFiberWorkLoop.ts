@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-25 16:56:18
+ * @LastEditTime: 2022-06-25 17:01:28
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -17,7 +17,10 @@ import {
 } from "./ReactFiberLane";
 import { createWorkInProgress } from "./ReactFiber";
 import { beginWork } from "./ReactFiberBeginWork";
-import { commitMutationEffects } from "./ReactFiberCommitWork";
+import {
+  commitMutationEffects,
+  commitPassiveMountEffects,
+} from "./ReactFiberCommitWork";
 import { completeWork } from "./ReactFiberCompleteWork";
 import {
   getNextLanes,
@@ -540,6 +543,9 @@ function flushPassiveEffects() {
 
 function flushPassiveEffectsImpl() {
   if (rootWithPendingPassiveEffects === null) return false;
+  const root = rootWithPendingPassiveEffects;
+  rootWithPendingPassiveEffects = null;
+  commitPassiveMountEffects(root, root.current);
   return true;
 }
 
