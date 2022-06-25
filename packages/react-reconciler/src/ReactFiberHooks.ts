@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-25 16:00:52
+ * @LastEditTime: 2022-06-25 16:39:56
  */
 import {
   isSubsetOfLanes,
@@ -199,6 +199,7 @@ function mountEffectImpl(
 ) {
   const hook = mountWorkInProgressHook();
   const nextDeps = deps === undefined ? null : deps;
+  // 标记上passive的标记，这样在commit阶段就能执行副作用
   currentlyRenderingFiber!.flags |= fiberFlags;
   // useEffect的state就是effect
   hook.memoizedState = pushEffect(

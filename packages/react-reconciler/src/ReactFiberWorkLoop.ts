@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-24 16:53:35
+ * @LastEditTime: 2022-06-25 16:56:18
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -56,7 +56,7 @@ import {
   flushSyncCallbacks,
   scheduleSyncCallback,
 } from "./ReactFiberSyncTaskQueue";
-import { MutationMask, NoFlags } from "./ReactFiberFlags";
+import { MutationMask, NoFlags, PassiveMask } from "./ReactFiberFlags";
 
 type RootExitStatus = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -72,6 +72,10 @@ let currentEventTime: number = NoTimestamp;
 
 let workInProgressRootRenderLanes: Lanes = NoLanes;
 let workInProgressRootExitStatus: RootExitStatus = RootInProgress;
+
+// 待执行的useEffect
+let rootWithPendingPassiveEffects: FiberRoot | null = null;
+let rootDoesHavePassiveEffects: boolean = false;
 
 export let subtreeRenderLanes: Lanes = NoLanes;
 
@@ -443,6 +447,20 @@ function commitRoot(root: FiberRoot) {
 }
 
 function commitRootImpl(root: FiberRoot) {
+  // do {
+  //   flushPassiveEffects();
+  // } while (rootWithPendingPassiveEffects !== null);
+  // 在本次commit之前先检查是否还有未执行的useEffect，如果有则去执行它们
+  while (rootWithPendingPassiveEffects !== null) {
+    /**
+     * flushPassiveEffects也会对rootWithPendingPassiveEffects是不是为null做一次判断
+     * 这里是否用while先检查rootWithPendingPassiveEffects更好？
+     * 而不是不管如何都先执行一次flushPassiveEffects，再利用flushPassiveEffects函数去判断？
+     */
+    throw new Error("rootWithPendingPassiveEffects !== null");
+    flushPassiveEffects();
+  }
+
   const finishedWork = root.finishedWork;
 
   if (finishedWork === null) return;
@@ -465,7 +483,20 @@ function commitRootImpl(root: FiberRoot) {
   workInProgressRoot = null;
   workInProgress = null;
 
-  // TODO 副作用
+  // 处理effect副作用
+  if (
+    (finishedWork.subtreeFlags & PassiveMask) !== NoFlags ||
+    (finishedWork.flags & PassiveMask) !== NoFlags
+  ) {
+    if (!rootDoesHavePassiveEffects) {
+      rootDoesHavePassiveEffects = true;
+      // 用Scheduler调度flushPassiveEffects（在布局完成后去调度这些副作用回调）
+      scheduleCallback(NormalSchedulerPriority, () => {
+        flushPassiveEffects();
+        return null;
+      });
+    }
+  }
 
   // 判断是否需要进行工作，一般都是dom操作
   const subtreeHasEffects =
@@ -477,11 +508,39 @@ function commitRootImpl(root: FiberRoot) {
 
     commitMutationEffects(root, finishedWork);
 
-    // TODO layout阶段'
+    // 渲染完成，将current指向workInProgress（双缓存机制的最后一步）
+    root.current = finishedWork;
+
+    // TODO layout阶段
   }
-  // 渲染完成，将current指向workInProgress
-  root.current = finishedWork;
+
+  // 本次提交存在副作用，在布局完成后去调度这些副作用回调
+  if (rootDoesHavePassiveEffects) {
+    rootDoesHavePassiveEffects = false;
+    rootWithPendingPassiveEffects = root;
+  }
+
+  // commit阶段可能会产生新的更新，所以这里再调度一次
   ensureRootIsScheduled(root, now());
+}
+
+/**
+ * @description: 处理effect副作用，返回是否存在副作用的标志
+ */
+function flushPassiveEffects() {
+  if (rootWithPendingPassiveEffects !== null) {
+    try {
+      return flushPassiveEffectsImpl();
+    } catch (error: any) {
+      throw Error(error);
+    }
+  }
+  return false;
+}
+
+function flushPassiveEffectsImpl() {
+  if (rootWithPendingPassiveEffects === null) return false;
+  return true;
 }
 
 /**

@@ -2,12 +2,12 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-24 15:49:33
+ * @LastEditTime: 2022-06-25 16:43:22
  */
 import { isFunction } from "packages/shared/src";
 import {
   continuousYieldMs,
-  enableIsInputPending,
+  // enableIsInputPending,
   enableIsInputPendingContinuous,
   frameYieldMs,
   maxYieldMs,
@@ -60,9 +60,9 @@ let scheduledHostCallback: null | Function = null;
 let isMessageLoopRunning = false;
 
 // 不用bind会报Illegal invocation的错
-const isInputPending = (navigator as any).scheduling.isInputPending.bind(
-  (navigator as any).scheduling
-);
+// const isInputPending = (navigator as any).scheduling.isInputPending.bind(
+//   (navigator as any).scheduling
+// );
 
 /**
  * @description: 调度任务 高优先级任务插队
