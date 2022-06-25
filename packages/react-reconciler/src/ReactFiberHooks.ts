@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-24 22:41:29
+ * @LastEditTime: 2022-06-25 16:00:52
  */
 import {
   isSubsetOfLanes,
@@ -67,6 +67,10 @@ export type Effect = {
   destroy: (() => void) | void;
   deps: Array<any> | null;
   next: Effect;
+};
+
+export type FunctionComponentUpdateQueue = {
+  lastEffect: Effect | null;
 };
 
 const { ReactCurrentDispatcher } = ReactSharedInternals;
@@ -195,8 +199,8 @@ function mountEffectImpl(
 ) {
   const hook = mountWorkInProgressHook();
   const nextDeps = deps === undefined ? null : deps;
-  // 标记上副作用
   currentlyRenderingFiber!.flags |= fiberFlags;
+  // useEffect的state就是effect
   hook.memoizedState = pushEffect(
     HookHasEffect | hookFlags,
     create,
@@ -221,7 +225,32 @@ function pushEffect(
     deps,
     next: null as any,
   };
+  let componentUpdateQueue: null | FunctionComponentUpdateQueue =
+    currentlyRenderingFiber!.updateQueue;
+  // 创建updateQueue不存在的话则创建一个updateQueue
+  if (componentUpdateQueue === null) {
+    componentUpdateQueue = createFunctionComponentUpdateQueue();
+    currentlyRenderingFiber!.updateQueue = componentUpdateQueue;
+    // 自身和自身构成循环链表
+    componentUpdateQueue.lastEffect = effect.next = effect;
+  } else {
+    const lastEffect = componentUpdateQueue.lastEffect;
+    if (lastEffect === null) {
+      componentUpdateQueue.lastEffect = effect.next = effect;
+    } else {
+      const firstEffect = lastEffect.next;
+      effect.next = firstEffect;
+      lastEffect.next = effect;
+      componentUpdateQueue.lastEffect = effect;
+    }
+  }
   return effect;
+}
+
+function createFunctionComponentUpdateQueue(): FunctionComponentUpdateQueue {
+  return {
+    lastEffect: null,
+  };
 }
 
 /**

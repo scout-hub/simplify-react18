@@ -12,6 +12,10 @@ const App = () => {
     console.log(1);
   }, []);
 
+  useEffect(() => {
+    console.log(2);
+  }, []);
+
   return (
     <div className="red">
       {num}
