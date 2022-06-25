@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-25 20:30:10
+ * @LastEditTime: 2022-06-25 20:54:55
  */
 import {
   isSubsetOfLanes,
@@ -105,7 +105,7 @@ export function renderWithHooks(
   renderLanes = nextRenderLanes;
   // 赋值currentlyRenderingFiber为当前的workInProgress
   currentlyRenderingFiber = workInProgress;
-  
+
   // 要开始新的一次hook的memoizedState和updateQueue计算了，这里把之前的数据重置一下
   workInProgress.memoizedState = null;
   workInProgress.updateQueue = null;
@@ -116,7 +116,7 @@ export function renderWithHooks(
       ? HooksDispatcherOnMount
       : HooksDispatcherOnUpdate;
 
-  const children = Component();
+  const children = Component(props, secondArg);
   // console.log(children);
   currentlyRenderingFiber = null;
   renderLanes = NoLanes;

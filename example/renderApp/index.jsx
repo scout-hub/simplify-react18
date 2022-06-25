@@ -2,32 +2,24 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-25 20:29:50
+ * @LastEditTime: 2022-06-25 21:33:16
  */
-const { useState, useEffect } = React;
+const Child = (props) => {
+  const { child } = props;
+  return <p>{child}</p>;
+};
+
 const App = () => {
-  const [num, setNum] = useState(0);
-
-  useEffect(() => {
-    // const timer = setInterval(() => {
-    //   console.log("timer");
-    // }, 1000);
-    // return () => {
-    //   clearInterval(timer);
-    // };
-    console.log(1);
-  }, [num]);
-
+  const title = "hello";
+  const child = "child";
   return (
     <div className="red">
-      {num}
-      <button
-        onClick={(e) => {
-          setNum((num) => num + 1);
-        }}
-      >
-        计数
-      </button>
+      {title}
+      <div>react</div>
+      {["study", "react"].map((item) => (
+        <span>{item}&nbsp;</span>
+      ))}
+      <Child child={child} />
     </div>
   );
 };
