@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-25 16:39:56
+ * @LastEditTime: 2022-06-25 20:30:10
  */
 import {
   isSubsetOfLanes,
@@ -105,7 +105,8 @@ export function renderWithHooks(
   renderLanes = nextRenderLanes;
   // 赋值currentlyRenderingFiber为当前的workInProgress
   currentlyRenderingFiber = workInProgress;
-  // 重置memoizedState和updateQueue
+  
+  // 要开始新的一次hook的memoizedState和updateQueue计算了，这里把之前的数据重置一下
   workInProgress.memoizedState = null;
   workInProgress.updateQueue = null;
   workInProgress.lanes = NoLanes;
@@ -257,7 +258,63 @@ function createFunctionComponentUpdateQueue(): FunctionComponentUpdateQueue {
 /**
  * @description: update阶段的useEffet函数
  */
-function updateEffect() {}
+function updateEffect(
+  create: () => (() => void) | void,
+  deps: Array<any> | null
+) {
+  return updateEffectImpl(PassiveEffect, HookPassive, create, deps);
+}
+
+function updateEffectImpl(
+  fiberFlags: Flags,
+  hookFlags: HookFlags,
+  create: () => (() => void) | void,
+  deps: Array<any> | null
+) {
+  const hook = updateWorkInProgressHook();
+  const nextDeps = deps === undefined ? null : deps;
+  let destroy;
+  if (currentHook !== null) {
+    const prevEffect = currentHook.memoizedState;
+    prevEffect.destroy;
+    if (nextDeps !== null) {
+      const prevDeps = prevEffect.deps;
+      // 前后依赖项相同
+      if (areHookInputsEqual(nextDeps, prevDeps)) {
+        // 这里的pushEffect第一个参数没有添加HookHasEffect标记，所以不会执行副作用
+        hook.memoizedState = pushEffect(hookFlags, create, destroy, nextDeps);
+        return;
+      }
+    }
+  }
+  currentlyRenderingFiber!.flags |= fiberFlags;
+  // 标记了HookHasEffect会在commit阶段触发副作用
+  hook.memoizedState = pushEffect(
+    HookHasEffect | hookFlags,
+    create,
+    destroy,
+    nextDeps
+  );
+}
+
+/**
+ * @description: 新旧依赖是否相同
+ */
+function areHookInputsEqual(
+  nextDeps: Array<any>,
+  prevDeps: Array<any> | null
+): boolean {
+  if (prevDeps === null) {
+    return false;
+  }
+  for (let i = 0; i < prevDeps.length && i < nextDeps.length; i++) {
+    if (is(nextDeps[i], prevDeps[i])) {
+      continue;
+    }
+    return false;
+  }
+  return true;
+}
 
 function updateReducer<S>(
   reducer,
