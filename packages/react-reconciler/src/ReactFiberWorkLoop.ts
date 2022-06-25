@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-25 17:01:28
+ * @LastEditTime: 2022-06-25 20:38:32
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -545,6 +545,8 @@ function flushPassiveEffectsImpl() {
   if (rootWithPendingPassiveEffects === null) return false;
   const root = rootWithPendingPassiveEffects;
   rootWithPendingPassiveEffects = null;
+  // TODO 销毁副作用
+  // commitPassiveUnmountEffects(root.current)
   commitPassiveMountEffects(root, root.current);
   return true;
 }
