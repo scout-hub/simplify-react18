@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-25 17:32:27
+ * @LastEditTime: 2022-06-26 17:03:54
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -15,6 +15,7 @@ import {
   removeChild,
 } from "packages/react-dom/src/client/ReactDOMHostConfig";
 import {
+  LayoutMask,
   MutationMask,
   NoFlags,
   Passive,
@@ -29,23 +30,18 @@ import {
   HostRoot,
   HostText,
 } from "./ReactWorkTags";
-import type { HookFlags } from "./ReactHookEffectTags";
+import { HasEffect, HookFlags } from "./ReactHookEffectTags";
 import {
   HasEffect as HookHasEffect,
   Passive as HookPassive,
+  Layout as HookLayout,
+  Insertion as HookInsertion,
 } from "./ReactHookEffectTags";
 import { FunctionComponentUpdateQueue } from "./ReactFiberHooks";
 
 let hostParent: Element | null = null;
 
 let nextEffect: Fiber | null = null;
-
-/**
- * @description: commitMutation阶段
- */
-export function commitMutationEffects(root: FiberRoot, finishedWork: Fiber) {
-  commitMutationEffectsOnFiber(finishedWork, root);
-}
 
 export function commitPassiveMountEffects(
   root: FiberRoot,
@@ -59,7 +55,7 @@ function commitPassiveMountEffects_begin(subtreeRoot: Fiber, root: FiberRoot) {
   while (nextEffect !== null) {
     const fiber = nextEffect;
     const firstChild = fiber.child;
-    // 找到第一个subtreeFlags中不存在副作用标记的节点，即后代fiber节点不需要处理副作用，当前fiber的兄弟以及祖先可能需要处理副作用
+    // 找到第一个subtreeFlags中不存在PassiveMask副作用标记的节点
     if ((fiber.subtreeFlags & PassiveMask) !== NoFlags && firstChild !== null) {
       firstChild.return = fiber;
       nextEffect = firstChild;
@@ -134,8 +130,8 @@ function commitHookEffectListMount(flags: HookFlags, finishedWork: Fiber) {
         const create = effect.create;
         // destory就是用户传入的副作用函数中的返回值，这个返回值就是销毁函数
         effect.destroy = create();
-        effect = effect.next;
       }
+      effect = effect.next;
     } while (effect !== firstEffect);
   }
 }
@@ -151,6 +147,15 @@ function commitMutationEffectsOnFiber(finishedWork: Fiber, root: FiberRoot) {
     case FunctionComponent: {
       recursivelyTraverseMutationEffects(root, finishedWork);
       commitReconciliationEffects(finishedWork);
+      if (flags & Update) {
+        // 下次layout之前，执行上一个layoutEffect的销毁函数
+        commitHookEffectListUnmount(
+          HookInsertion | HookHasEffect,
+          finishedWork
+        );
+        // HookInsertion暂未实现
+        commitHookEffectListMount(HookInsertion | HookHasEffect, finishedWork);
+      }
       return;
     }
     case ClassComponent: {
@@ -196,6 +201,85 @@ function commitMutationEffectsOnFiber(finishedWork: Fiber, root: FiberRoot) {
       return;
     }
   }
+}
+
+/**
+ * @description: 提交layout阶段的副作用处理
+ */
+export function commitLayoutEffects(
+  finishedWork: Fiber,
+  root: FiberRoot
+): void {
+  nextEffect = finishedWork;
+  commitLayoutEffects_begin(finishedWork, root);
+}
+
+function commitLayoutEffects_begin(subtreeRoot: Fiber, root: FiberRoot) {
+  while (nextEffect !== null) {
+    let fiber = nextEffect;
+    let firstChild = fiber.child;
+    // 找到第一个subtreeFlags中不存在LayoutMask副作用标记的节点
+    if ((fiber.subtreeFlags & LayoutMask) !== NoFlags && firstChild !== null) {
+      firstChild.return = fiber;
+      nextEffect = firstChild;
+    } else {
+      commitLayoutMountEffects_complete(subtreeRoot, root);
+    }
+  }
+}
+
+function commitLayoutMountEffects_complete(
+  subtreeRoot: Fiber,
+  root: FiberRoot
+) {
+  while (nextEffect !== null) {
+    const fiber = nextEffect;
+
+    if ((fiber.flags & LayoutMask) !== NoFlags) {
+      try {
+        commitLayoutEffectOnFiber(root, fiber.alternate, fiber);
+      } catch (error: any) {
+        throw Error(error);
+      }
+    }
+
+    if (fiber === subtreeRoot) {
+      nextEffect = null;
+      return;
+    }
+
+    // 处理兄弟节点
+    const sibling = fiber.sibling;
+    if (sibling !== null) {
+      sibling.return = fiber.return;
+      nextEffect = sibling;
+      return;
+    }
+    // 处理父节点
+    nextEffect = fiber.return;
+  }
+}
+
+function commitLayoutEffectOnFiber(
+  finishedRoot: FiberRoot,
+  current: Fiber | null,
+  finishedWork: Fiber
+) {
+  if ((finishedWork.flags & LayoutMask) !== NoFlags) {
+    switch (finishedWork.tag) {
+      case FunctionComponent: {
+        commitHookEffectListMount(HookLayout | HookHasEffect, finishedWork);
+        break;
+      }
+    }
+  }
+}
+
+/**
+ * @description: commitMutation阶段
+ */
+export function commitMutationEffects(root: FiberRoot, finishedWork: Fiber) {
+  commitMutationEffectsOnFiber(finishedWork, root);
 }
 
 /**
@@ -457,3 +541,77 @@ const getHostSibling = (fiber): Element | null => {
     }
   }
 };
+
+/**
+ * @description: 副作用销毁
+ */
+export function commitPassiveUnmountEffects(firstChild: Fiber): void {
+  nextEffect = firstChild;
+  commitPassiveUnmountEffects_begin();
+}
+
+function commitPassiveUnmountEffects_begin() {
+  while (nextEffect !== null) {
+    const fiber = nextEffect;
+    const child = fiber.child;
+
+    // TODO 节点有删除的情况，需要对删除的节点进行副作用清理
+
+    if ((fiber.subtreeFlags & PassiveMask) !== NoFlags && child !== null) {
+      child.return = fiber;
+      nextEffect = child;
+    } else {
+      commitPassiveUnmountEffects_complete();
+    }
+  }
+}
+
+function commitPassiveUnmountEffects_complete() {
+  while (nextEffect !== null) {
+    const fiber = nextEffect;
+    if ((fiber.flags & Passive) !== NoFlags) {
+      commitPassiveUnmountOnFiber(fiber);
+    }
+
+    // 处理兄弟节点
+    const sibling = fiber.sibling;
+    if (sibling !== null) {
+      sibling.return = fiber.return;
+      nextEffect = sibling;
+      return;
+    }
+
+    // 处理父节点
+    nextEffect = fiber.return;
+  }
+}
+
+function commitPassiveUnmountOnFiber(finishedWork: Fiber) {
+  switch (finishedWork.tag) {
+    case FunctionComponent: {
+      commitHookEffectListUnmount(HookPassive | HookHasEffect, finishedWork);
+      break;
+    }
+  }
+}
+
+function commitHookEffectListUnmount(flags: HookFlags, finishedWork: Fiber) {
+  const updateQueue: FunctionComponentUpdateQueue | null =
+    finishedWork.updateQueue;
+  const lastEffect = updateQueue !== null ? updateQueue.lastEffect : null;
+  if (lastEffect !== null) {
+    const firstEffect = lastEffect.next;
+    let effect = firstEffect;
+    do {
+      if ((effect.tag & flags) === flags) {
+        const destroy = effect.destroy;
+        effect.destroy = undefined;
+        // 执行上一个effect返回的销毁函数
+        if (destroy != null) {
+          destroy();
+        }
+      }
+      effect = effect.next;
+    } while (effect !== firstEffect);
+  }
+}

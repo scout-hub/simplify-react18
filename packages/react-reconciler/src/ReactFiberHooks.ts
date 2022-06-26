@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-25 20:54:55
+ * @LastEditTime: 2022-06-26 16:28:22
  */
 import {
   isSubsetOfLanes,
@@ -31,12 +31,14 @@ import {
   Flags,
   Passive as PassiveEffect,
   PassiveStatic as PassiveStaticEffect,
+  Update as UpdateEffect,
 } from "./ReactFiberFlags";
 import {
   HasEffect as HookHasEffect,
-  HookFlags,
   Passive as HookPassive,
+  Layout as HookLayout,
 } from "./ReactHookEffectTags";
+import type { HookFlags } from "./ReactHookEffectTags";
 
 type Update<S> = {
   lane: Lane;
@@ -71,24 +73,6 @@ export type Effect = {
 
 export type FunctionComponentUpdateQueue = {
   lastEffect: Effect | null;
-};
-
-const { ReactCurrentDispatcher } = ReactSharedInternals;
-
-let workInProgressHook: Hook | null = null;
-// 当前正在内存中渲染的fiber
-let currentlyRenderingFiber: Fiber | null = null;
-let renderLanes: Lanes = NoLanes;
-let currentHook: Hook | null = null;
-
-const HooksDispatcherOnMount: Dispatcher = {
-  useState: mountState,
-  useEffect: mountEffect,
-};
-
-const HooksDispatcherOnUpdate = {
-  useState: updateState,
-  useEffect: updateEffect,
 };
 
 /**
@@ -135,6 +119,47 @@ export function bailoutHooks(
   lanes: Lanes
 ) {
   current.lanes = removeLanes(current.lanes, lanes);
+}
+
+const { ReactCurrentDispatcher } = ReactSharedInternals;
+
+let workInProgressHook: Hook | null = null;
+// 当前正在内存中渲染的fiber
+let currentlyRenderingFiber: Fiber | null = null;
+let renderLanes: Lanes = NoLanes;
+let currentHook: Hook | null = null;
+
+const HooksDispatcherOnMount: Dispatcher = {
+  useState: mountState,
+  useEffect: mountEffect,
+  useLayoutEffect: mountLayoutEffect,
+};
+
+const HooksDispatcherOnUpdate: Dispatcher = {
+  useState: updateState,
+  useEffect: updateEffect,
+  useLayoutEffect: updateLayoutEffect,
+};
+
+/**
+ * @description: mount阶段的useLayoutEffect
+ */
+function mountLayoutEffect(
+  create: () => (() => void) | void,
+  deps: Array<any> | null
+) {
+  let fiberFlags: Flags = UpdateEffect;
+  return mountEffectImpl(fiberFlags, HookLayout, create, deps);
+}
+
+/**
+ * @description: update阶段的useLayoutEffect
+ */
+function updateLayoutEffect(
+  create: () => (() => void) | void,
+  deps: Array<any> | null
+) {
+  return updateEffectImpl(UpdateEffect, HookLayout, create, deps);
 }
 
 function basicStateReducer<S>(state: S, action: BasicStateAction<S>) {
@@ -276,7 +301,7 @@ function updateEffectImpl(
   let destroy;
   if (currentHook !== null) {
     const prevEffect = currentHook.memoizedState;
-    prevEffect.destroy;
+    destroy = prevEffect.destroy;
     if (nextDeps !== null) {
       const prevDeps = prevEffect.deps;
       // 前后依赖项相同

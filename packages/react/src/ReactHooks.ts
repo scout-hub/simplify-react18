@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-06-11 20:11:17
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-24 16:40:22
+ * @LastEditTime: 2022-06-26 14:31:19
  */
 import ReactCurrentDispatcher from "./ReactCurrentDispatcher";
 
@@ -23,3 +23,12 @@ export function useEffect(
   const dispatcher = resolveDispatcher()!;
   return dispatcher.useEffect(create, deps);
 }
+
+export function useLayoutEffect(
+  create: () => (() => void) | void,
+  deps: Array<any> | void | null
+): void {
+  const dispatcher = resolveDispatcher()!;
+  return dispatcher.useLayoutEffect(create, deps);
+}
+

@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-30 15:32:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-24 16:42:19
+ * @LastEditTime: 2022-06-26 14:29:03
  */
 import type { Flags } from "./ReactFiberFlags";
 import type { Lane, LaneMap, Lanes } from "./ReactFiberLane";
@@ -61,4 +61,8 @@ export type Dispatcher = {
     create: () => (() => void) | void,
     deps: Array<any> | void | null
   ): void;
+  useLayoutEffect(
+    create: () => (() => void) | void,
+    deps: Array<any> | void | null
+  );
 };

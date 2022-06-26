@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-26 17:08:42
+ * @LastEditTime: 2022-06-26 17:07:01
  */
 const { useState, useEffect, useLayoutEffect } = React;
 
@@ -16,6 +16,9 @@ const App = () => {
   //     i++;
   //   }
   //   setDirection("column");
+  //   return () => {
+  //     console.log("unmount useEffect");
+  //   };
   // }, [direction]);
 
   // 直接呈现执行useLayoutEffect后的视图
@@ -25,6 +28,9 @@ const App = () => {
       i++;
     }
     setDirection("column");
+    return () => {
+      console.log("unmount useLayoutEffect");
+    };
   }, [direction]);
 
   return (

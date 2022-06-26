@@ -20,4 +20,5 @@ export const PassiveStatic = 0b00100000000000000000000000;
 
 export const StaticMask = LayoutStatic | PassiveStatic | RefStatic;
 export const MutationMask = Placement | Update | ChildDeletion;
+export const LayoutMask = Update;
 export const PassiveMask = Passive | ChildDeletion;

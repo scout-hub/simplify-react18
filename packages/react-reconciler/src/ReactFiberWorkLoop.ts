@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-26 10:28:40
+ * @LastEditTime: 2022-06-26 16:29:32
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -18,8 +18,10 @@ import {
 import { createWorkInProgress } from "./ReactFiber";
 import { beginWork } from "./ReactFiberBeginWork";
 import {
+  commitLayoutEffects,
   commitMutationEffects,
   commitPassiveMountEffects,
+  commitPassiveUnmountEffects,
 } from "./ReactFiberCommitWork";
 import { completeWork } from "./ReactFiberCompleteWork";
 import {
@@ -441,7 +443,7 @@ function finishConcurrentRender(root: FiberRoot, exitStatus: RootExitStatus) {
  */
 function commitRoot(root: FiberRoot) {
   const previousUpdateLanePriority = getCurrentUpdatePriority();
-  // 将commitRoot的优先级设置为同步执行的优先级
+  // 将commitRoot的优先级设置为同步执行的优先级，都已经在commit阶段了，总不能被打断了吧
   setCurrentUpdatePriority(DiscreteEventPriority);
   commitRootImpl(root);
   // 还原之前的优先级
@@ -461,7 +463,7 @@ function commitRootImpl(root: FiberRoot) {
      * 而不是不管如何都先执行一次flushPassiveEffects，再利用flushPassiveEffects函数去判断？
      */
     throw new Error("rootWithPendingPassiveEffects !== null");
-    flushPassiveEffects();
+    // flushPassiveEffects();
   }
 
   const finishedWork = root.finishedWork;
@@ -501,7 +503,6 @@ function commitRootImpl(root: FiberRoot) {
     }
   }
 
-  // 判断是否需要进行工作，一般都是dom操作
   const subtreeHasEffects =
     (finishedWork.subtreeFlags & MutationMask) !== NoFlags;
   const rootHasEffect = (finishedWork.flags & MutationMask) !== NoFlags;
@@ -509,12 +510,14 @@ function commitRootImpl(root: FiberRoot) {
   if (subtreeHasEffects || rootHasEffect) {
     // TODO beforeMutationEffect阶段
 
+    // 处理一些副作用，一般都是dom操作，比如更新删除插入dom
     commitMutationEffects(root, finishedWork);
 
     // 渲染完成，将current指向workInProgress（双缓存机制的最后一步）
     root.current = finishedWork;
 
-    // TODO layout阶段
+    // layout阶段
+    commitLayoutEffects(finishedWork, root);
   }
 
   // 本次提交存在副作用，在布局完成后去调度这些副作用回调
@@ -545,8 +548,9 @@ function flushPassiveEffectsImpl() {
   if (rootWithPendingPassiveEffects === null) return false;
   const root = rootWithPendingPassiveEffects;
   rootWithPendingPassiveEffects = null;
-  // TODO 销毁副作用
-  // commitPassiveUnmountEffects(root.current)
+  // 对之前的副作用进行清理（执行destory）
+  commitPassiveUnmountEffects(root.current);
+  // 处理新生成的副作用
   commitPassiveMountEffects(root, root.current);
   return true;
 }
