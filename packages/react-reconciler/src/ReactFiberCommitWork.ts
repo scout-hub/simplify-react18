@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-26 17:03:54
+ * @LastEditTime: 2022-06-26 17:10:24
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -30,7 +30,7 @@ import {
   HostRoot,
   HostText,
 } from "./ReactWorkTags";
-import { HasEffect, HookFlags } from "./ReactHookEffectTags";
+import { HookFlags } from "./ReactHookEffectTags";
 import {
   HasEffect as HookHasEffect,
   Passive as HookPassive,

@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-26 17:08:31
+ * @LastEditTime: 2022-06-26 20:39:24
  */
 const { useState, useEffect, useLayoutEffect } = React;
 
@@ -10,13 +10,13 @@ const App = () => {
   const [direction, setDirection] = useState("vertical");
 
   // 视图会有一个变化的过程（闪烁）
-  // useEffect(() => {
-  //   let i = 0;
-  //   while (i <= 1000000000) {
-  //     i++;
-  //   }
-  //   setDirection("column");
-  // }, [direction]);
+  useEffect(() => {
+    let i = 0;
+    while (i <= 1000000000) {
+      i++;
+    }
+    setDirection("column");
+  }, [direction]);
 
   // 直接呈现执行useLayoutEffect后的视图
   useLayoutEffect(() => {

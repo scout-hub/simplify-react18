@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-26 16:29:32
+ * @LastEditTime: 2022-06-26 20:41:39
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -455,15 +455,25 @@ function commitRootImpl(root: FiberRoot) {
   // do {
   //   flushPassiveEffects();
   // } while (rootWithPendingPassiveEffects !== null);
-  // 在本次commit之前先检查是否还有未执行的useEffect，如果有则去执行它们，在执行过程中可能会产生新的副作用，因此需要用while循环
+  /**
+   * 在本次commit之前先检查是否还有未执行的useEffect，如果有则去执行它们，在执行过程中可能会产生新的副作用，因此需要用while循环
+   * 
+   * 例如：
+   * useEffect(() => {console.log(1)},[num])
+   * useLayoutEffect(() => {setNum(1)},[num])
+   * 
+   * 第一次进入commitRootImpl，由于执行了useEffect，rootWithPendingPassiveEffects会被赋值为root。
+   * 紧接着由于useLayoutEffec的执行会触发一次同步的副作用回调任务，回调中的setNum触发一个同步的更新任务，这个任务通过微任务的方式执行。
+   * 这个更新执行到第二次commitRootImpl，此时rootWithPendingPassiveEffects是上一次useEffect执行后赋值的root。
+   * 因为useEffect的副作用是在宏任务中触发的，因此需要到下一个事件循环内才能执行，
+   */
   while (rootWithPendingPassiveEffects !== null) {
     /**
      * flushPassiveEffects也会对rootWithPendingPassiveEffects是不是为null做一次判断
      * 这里是否用while先检查rootWithPendingPassiveEffects更好？
      * 而不是不管如何都先执行一次flushPassiveEffects，再利用flushPassiveEffects函数去判断？
      */
-    throw new Error("rootWithPendingPassiveEffects !== null");
-    // flushPassiveEffects();
+    flushPassiveEffects();
   }
 
   const finishedWork = root.finishedWork;
