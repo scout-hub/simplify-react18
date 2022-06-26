@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:36:13
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-21 22:07:37
+ * @LastEditTime: 2022-06-26 14:21:23
  */
 
 import { isFunction, isNumber, isString } from "packages/shared/src";
@@ -89,7 +89,7 @@ export function diffProperties(
 
   // 第一个循环处理属性的删除
   for (propKey in lastProps) {
-    // 如果新的属性存在或者该属性不是lastProps自身的属性或者lastProps[propKey]值是null的话就跳过
+    // 如果新的属性中存在或者该属性不是lastProps自身的属性或者lastProps[propKey]值是null的话就跳过
     if (
       nextProps.hasOwnProperty(propKey) ||
       !lastProps.hasOwnProperty(propKey) ||
@@ -101,8 +101,18 @@ export function diffProperties(
 
     //  处理style属性
     if (propKey === STYLE) {
-      throw Error("diffProperties STYLE");
+      const lastStyle = lastProps[propKey];
+      for (styleName in lastStyle) {
+        if (lastStyle.hasOwnProperty(styleName)) {
+          if (!styleUpdates) {
+            styleUpdates = {};
+          }
+          // 将lastStyle上的style属性都清空
+          styleUpdates[styleName] = "";
+        }
+      }
     } else if (propKey === CHILDREN) {
+      throw Error("diffProperties children");
     } else {
       // 添加需要删除的属性
       (updatePayload = updatePayload || []).push(propKey, null);
@@ -122,7 +132,36 @@ export function diffProperties(
       continue;
     }
     if (propKey === STYLE) {
-      throw Error("diffProperties STYLE");
+      // 如果老的style也存在
+      if (lastProp) {
+        for (styleName in lastProp) {
+          // 如果老的存在，新的不存在，则把当前的style属性值设置为空
+          if (
+            lastProp.hasOwnProperty(styleName) &&
+            (!nextProp || !nextProp.hasOwnProperty(styleName))
+          ) {
+            if (!styleUpdates) {
+              styleUpdates = {};
+            }
+            styleUpdates[styleName] = "";
+          }
+        }
+        // 如果老的style属性值和新的style对应的属性值不一样，则更新属性值
+        for (styleName in nextProp) {
+          if (
+            nextProp.hasOwnProperty(styleName) &&
+            lastProp[styleName] !== nextProp[styleName]
+          ) {
+            if (!styleUpdates) {
+              styleUpdates = {};
+            }
+            styleUpdates[styleName] = nextProp[styleName];
+          }
+        }
+      } else {
+        // 老的整个style对象不存在，则直接用nextProp
+        styleUpdates = nextProp;
+      }
     } else if (propKey === CHILDREN) {
       if (isString(nextProp) || isNumber(nextProp)) {
         (updatePayload = updatePayload || []).push(propKey, "" + nextProp);

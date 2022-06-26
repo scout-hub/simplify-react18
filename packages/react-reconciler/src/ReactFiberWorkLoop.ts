@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-25 20:38:32
+ * @LastEditTime: 2022-06-26 10:28:40
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -453,7 +453,7 @@ function commitRootImpl(root: FiberRoot) {
   // do {
   //   flushPassiveEffects();
   // } while (rootWithPendingPassiveEffects !== null);
-  // 在本次commit之前先检查是否还有未执行的useEffect，如果有则去执行它们
+  // 在本次commit之前先检查是否还有未执行的useEffect，如果有则去执行它们，在执行过程中可能会产生新的副作用，因此需要用while循环
   while (rootWithPendingPassiveEffects !== null) {
     /**
      * flushPassiveEffects也会对rootWithPendingPassiveEffects是不是为null做一次判断
