@@ -2,57 +2,47 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-26 20:39:24
+ * @LastEditTime: 2022-06-26 21:39:35
  */
-const { useState, useEffect, useLayoutEffect } = React;
+const { useReducer } = React;
+
+const initState = { count: 0 };
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case "add":
+      return { count: ++state.count };
+    case "del":
+      return { count: --state.count };
+    default:
+      break;
+  }
+};
+
+const Child = (props) => {
+  const { child } = props;
+  return <div>{child}</div>;
+};
 
 const App = () => {
-  const [direction, setDirection] = useState("vertical");
-
-  // 视图会有一个变化的过程（闪烁）
-  useEffect(() => {
-    let i = 0;
-    while (i <= 1000000000) {
-      i++;
-    }
-    setDirection("column");
-  }, [direction]);
-
-  // 直接呈现执行useLayoutEffect后的视图
-  useLayoutEffect(() => {
-    let i = 0;
-    while (i <= 1000000000) {
-      i++;
-    }
-    setDirection("column");
-  }, [direction]);
-
+  const [state, dispatch] = useReducer(reducer, initState);
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-around",
-        flexDirection: direction,
-        flexWrap: "wrap",
-        width: 600,
-      }}
-    >
-      {Array.from({ length: 30 }).map((item, index) => {
-        const color = "#" + Math.random().toString(16).slice(2, 8);
-        return (
-          <div
-            key={index}
-            style={{
-              width: 100,
-              height: 100,
-              margin: 10,
-              backgroundColor: color,
-            }}
-          >
-            {index}
-          </div>
-        );
-      })}
+    <div>
+      <button
+        onClick={() => {
+          dispatch({ type: "add" });
+        }}
+      >
+        增加
+      </button>
+      <button
+        onClick={() => {
+          dispatch({ type: "del" });
+        }}
+      >
+        减少
+      </button>
+      <Child child={state.count} />
     </div>
   );
 };

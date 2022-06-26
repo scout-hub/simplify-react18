@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-26 16:28:22
+ * @LastEditTime: 2022-06-26 22:02:49
  */
 import {
   isSubsetOfLanes,
@@ -133,13 +133,175 @@ const HooksDispatcherOnMount: Dispatcher = {
   useState: mountState,
   useEffect: mountEffect,
   useLayoutEffect: mountLayoutEffect,
+  useReducer: mountReducer,
 };
 
 const HooksDispatcherOnUpdate: Dispatcher = {
   useState: updateState,
   useEffect: updateEffect,
   useLayoutEffect: updateLayoutEffect,
+  useReducer: updateReducer,
 };
+
+/**
+ * @description: mount阶段的useReducer
+ */
+function mountReducer<S, I, A>(
+  reducer: (S, A) => S,
+  initialArg: I,
+  init?: (I) => S
+): [S, Dispatch<A>] {
+  const hook = mountWorkInProgressHook();
+  // TODO dipatch
+  const dispatch: Dispatch<A> = (action: A) => {};
+  return [hook.memoizedState, dispatch];
+}
+
+/**
+ * @description: update阶段的useReducer
+ */
+function updateReducer<S, I, A>(
+  reducer: (S, A) => S,
+  initialArg: I,
+  init?: (I) => S
+): [S, Dispatch<A>] {
+  const hook = updateWorkInProgressHook();
+  const queue = hook.queue;
+  if (queue === null) throw Error("queue is null");
+
+  queue.lastRenderedReducer = reducer;
+  const current = currentHook!;
+  // baseQueue指向链表的最后一位
+  let baseQueue = current.baseQueue;
+  // pending指向链表的最后一位
+  const pendingQueue = queue.pending;
+
+  // 最后挂起的Update还没处理，把它加到baseQueue上
+  if (pendingQueue !== null) {
+    if (baseQueue != null) {
+      // 合并baseQueue和pendingQueue
+      // 1、假设baseQueue为 1->2->1  baseQueue.next是1
+      const baseFirst = baseQueue.next;
+      // 2、假设pendingQueue为 3->4->3 pendingQueue.next是3
+      const pendingFirst = pendingQueue.next;
+      // 3、2->3   ===>  1->2->3->4
+      baseQueue.next = pendingFirst;
+      // 4、4->1   ===>  1->2->3->4->1
+      pendingQueue.next = baseFirst;
+    }
+
+    // baseQueue为 1->2->3->4->1
+    current.baseQueue = baseQueue = pendingQueue;
+    queue.pending = null;
+  }
+
+  // 存在baseQueue需要处理
+  if (baseQueue !== null) {
+    // 获取第一个Update
+    const first = baseQueue.next;
+    let newState = current.baseState;
+
+    let newBaseState = null;
+    let newBaseQueueFirst: Update<S> | null = null;
+    let newBaseQueueLast: Update<S> | null = null;
+    let update = first;
+
+    // 循环处理所有Update，进行state的计算
+    // 循环终止条件：update不存在或者且update !== first（只有一个Update的情况）
+    do {
+      const updateLane = update.lane;
+      /**
+       * 这里涉及到高优先级打断低优先级的情况
+       *
+       * 例如：
+       * baseState:0
+       * {                          {                         {
+       *    lane:16,                   lane:1,                   lane:16
+       *    action:1   ->              action:(n)=>n+1  ->       action:(n)=>n+1
+       * }                          }                         }
+       * 正常更新不管优先级的话就是按顺序执行，结果应该为:1 -> 1+1=2 -> 2+1=3
+       * 如果加上优先级的处理，则先执行高优先级的，再执行低优先级的：0+1=1 -> 1=1 -> 1+1=2，显然结果已经不对了
+       * 原因就是当开始执行第一个被跳过的Update时，它所依赖基状态和后续执行Update的过程可能不再和顺序执行时一致，最终导致结果不对
+       *
+       * 因此这里需要做的就是：
+       * 1、在第一次跳过Update时，记录当前的baseState，作为下一次该Update执行时的基状态（保证再次执行这个Update时基状态和顺序执行时一致）
+       * 2、把第一次跳过的Update以及后续执行的Update都接到一个新BaseQueue上（保证被跳过的Update执行时，后续的执行过程还和顺序执行时一致）
+       */
+      if (!isSubsetOfLanes(renderLanes, updateLane)) {
+        // 当前的update是否有足够的优先级，如果不够，则跳过这个更新
+        const clone: Update<S> = {
+          lane: updateLane,
+          action: update.action,
+          hasEagerState: update.hasEagerState,
+          eagerState: update.eagerState,
+          next: null as any,
+        };
+        // 我们将优先级不足的Update放到newBaseQueue上
+        if (newBaseQueueLast === null) {
+          // 这是第一个优先级不足的Update
+          newBaseQueueFirst = newBaseQueueLast = clone;
+          // 这次跳过更新的Update的基状态就是newState（即下一次该Update执行时的基状态）
+          newBaseState = newState;
+        } else {
+          // 接下去的都拼接在next上
+          newBaseQueueLast = (newBaseQueueLast.next as Update<S>) = clone;
+        }
+        // 把当前被跳过的Update的优先级设置到currentlyRenderingFiber上，后面可以被冒泡到hostRoot，从而再次被调度
+        currentlyRenderingFiber!.lanes = mergeLanes(
+          currentlyRenderingFiber!.lanes,
+          updateLane
+        );
+      } else {
+        /**
+         * 如果之前存在Update优先级不足被跳过，则将本次的Update接到newBaseQueueLast后面
+         * 这样就能保证被跳过的Update执行时，调用的Update顺序还是和未跳过之前一致
+         */
+        if (newBaseQueueLast !== null) {
+          // 将当前的Update克隆一份，设置优先级为NoLane，NoLane是所有位掩码的子集，所以永远不会被跳过
+          const clone: Update<S> = {
+            lane: NoLane,
+            action: update.action,
+            hasEagerState: update.hasEagerState,
+            eagerState: update.eagerState,
+            next: null as any,
+          };
+          newBaseQueueLast = (newBaseQueueLast.next as Update<S>) = clone;
+        }
+        // 使用之前已经计算好的state
+        if (update.hasEagerState) {
+          newState = update.eagerState;
+        } else {
+          const action = update.action;
+          // 计算新的state
+          newState = reducer(newState, action);
+        }
+      }
+
+      update = update.next;
+    } while (update !== null && update !== first);
+
+    if (newBaseQueueLast === null) {
+      // newBaseQueueLast不存在，说明没有被跳过的Update，所以newBaseState就是当前的Update计算的state
+      newBaseState = newState;
+    } else {
+      // 形成循环链表
+      newBaseQueueLast.next = newBaseQueueFirst as any;
+    }
+
+    // 新旧state是否相同，如果不同，标记receivedUpdate为true
+    if (!is(newState, hook.memoizedState)) {
+      markWorkInProgressReceivedUpdate();
+    }
+
+    hook.memoizedState = newState;
+    hook.baseState = newBaseState;
+    hook.baseQueue = newBaseQueueLast;
+    queue.lastRenderedState = newState;
+  }
+
+  const dispatch: Dispatch<A> = queue.dispatch;
+  return [hook.memoizedState, dispatch];
+}
 
 /**
  * @description: mount阶段的useLayoutEffect
@@ -339,148 +501,6 @@ function areHookInputsEqual(
     return false;
   }
   return true;
-}
-
-function updateReducer<S>(
-  reducer,
-  initialArg
-): [S, Dispatch<BasicStateAction<S>>] {
-  const hook = updateWorkInProgressHook();
-  const queue = hook.queue;
-  if (queue === null) throw Error("queue is null");
-
-  queue.lastRenderedReducer = reducer;
-  const current = currentHook!;
-  // baseQueue指向链表的最后一位
-  let baseQueue = current.baseQueue;
-  // pending指向链表的最后一位
-  const pendingQueue = queue.pending;
-
-  // 最后挂起的Update还没处理，把它加到baseQueue上
-  if (pendingQueue !== null) {
-    if (baseQueue != null) {
-      // 合并baseQueue和pendingQueue
-      // 1、假设baseQueue为 1->2->1  baseQueue.next是1
-      const baseFirst = baseQueue.next;
-      // 2、假设pendingQueue为 3->4->3 pendingQueue.next是3
-      const pendingFirst = pendingQueue.next;
-      // 3、2->3   ===>  1->2->3->4
-      baseQueue.next = pendingFirst;
-      // 4、4->1   ===>  1->2->3->4->1
-      pendingQueue.next = baseFirst;
-    }
-
-    // baseQueue为 1->2->3->4->1
-    current.baseQueue = baseQueue = pendingQueue;
-    queue.pending = null;
-  }
-
-  // 存在baseQueue需要处理
-  if (baseQueue !== null) {
-    // 获取第一个Update
-    const first = baseQueue.next;
-    let newState = current.baseState;
-
-    let newBaseState = null;
-    let newBaseQueueFirst: Update<S> | null = null;
-    let newBaseQueueLast: Update<S> | null = null;
-    let update = first;
-
-    // 循环处理所有Update，进行state的计算
-    // 循环终止条件：update不存在或者且update !== first（只有一个Update的情况）
-    do {
-      const updateLane = update.lane;
-      /**
-       * 这里涉及到高优先级打断低优先级的情况
-       *
-       * 例如：
-       * baseState:0
-       * {                          {                         {
-       *    lane:16,                   lane:1,                   lane:16
-       *    action:1   ->              action:(n)=>n+1  ->       action:(n)=>n+1
-       * }                          }                         }
-       * 正常更新不管优先级的话就是按顺序执行，结果应该为:1 -> 1+1=2 -> 2+1=3
-       * 如果加上优先级的处理，则先执行高优先级的，再执行低优先级的：0+1=1 -> 1=1 -> 1+1=2，显然结果已经不对了
-       * 原因就是当开始执行第一个被跳过的Update时，它所依赖基状态和后续执行Update的过程可能不再和顺序执行时一致，最终导致结果不对
-       *
-       * 因此这里需要做的就是：
-       * 1、在第一次跳过Update时，记录当前的baseState，作为下一次该Update执行时的基状态（保证再次执行这个Update时基状态和顺序执行时一致）
-       * 2、把第一次跳过的Update以及后续执行的Update都接到一个新BaseQueue上（保证被跳过的Update执行时，后续的执行过程还和顺序执行时一致）
-       */
-      if (!isSubsetOfLanes(renderLanes, updateLane)) {
-        // 当前的update是否有足够的优先级，如果不够，则跳过这个更新
-        const clone: Update<S> = {
-          lane: updateLane,
-          action: update.action,
-          hasEagerState: update.hasEagerState,
-          eagerState: update.eagerState,
-          next: null as any,
-        };
-        // 我们将优先级不足的Update放到newBaseQueue上
-        if (newBaseQueueLast === null) {
-          // 这是第一个优先级不足的Update
-          newBaseQueueFirst = newBaseQueueLast = clone;
-          // 这次跳过更新的Update的基状态就是newState（即下一次该Update执行时的基状态）
-          newBaseState = newState;
-        } else {
-          // 接下去的都拼接在next上
-          newBaseQueueLast = (newBaseQueueLast.next as Update<S>) = clone;
-        }
-        // 把当前被跳过的Update的优先级设置到currentlyRenderingFiber上，后面可以被冒泡到hostRoot，从而再次被调度
-        currentlyRenderingFiber!.lanes = mergeLanes(
-          currentlyRenderingFiber!.lanes,
-          updateLane
-        );
-      } else {
-        /**
-         * 如果之前存在Update优先级不足被跳过，则将本次的Update接到newBaseQueueLast后面
-         * 这样就能保证被跳过的Update执行时，调用的Update顺序还是和未跳过之前一致
-         */
-        if (newBaseQueueLast !== null) {
-          // 将当前的Update克隆一份，设置优先级为NoLane，NoLane是所有位掩码的子集，所以永远不会被跳过
-          const clone: Update<S> = {
-            lane: NoLane,
-            action: update.action,
-            hasEagerState: update.hasEagerState,
-            eagerState: update.eagerState,
-            next: null as any,
-          };
-          newBaseQueueLast = (newBaseQueueLast.next as Update<S>) = clone;
-        }
-        // 使用之前已经计算好的state
-        if (update.hasEagerState) {
-          newState = update.eagerState;
-        } else {
-          const action = update.action;
-          // 计算新的state
-          newState = reducer(newState, action);
-        }
-      }
-
-      update = update.next;
-    } while (update !== null && update !== first);
-
-    if (newBaseQueueLast === null) {
-      // newBaseQueueLast不存在，说明没有被跳过的Update，所以newBaseState就是当前的Update计算的state
-      newBaseState = newState;
-    } else {
-      // 形成循环链表
-      newBaseQueueLast.next = newBaseQueueFirst as any;
-    }
-
-    // 新旧state是否相同，如果不同，标记receivedUpdate为true
-    if (!is(newState, hook.memoizedState)) {
-      markWorkInProgressReceivedUpdate();
-    }
-
-    hook.memoizedState = newState;
-    hook.baseState = newBaseState;
-    hook.baseQueue = newBaseQueueLast;
-    queue.lastRenderedState = newState;
-  }
-
-  const dispatch: Dispatch<BasicStateAction<S>> = queue.dispatch;
-  return [hook.memoizedState, dispatch];
 }
 
 /**

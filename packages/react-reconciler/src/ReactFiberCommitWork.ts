@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-26 17:10:24
+ * @LastEditTime: 2022-06-26 21:28:45
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -15,6 +15,7 @@ import {
   removeChild,
 } from "packages/react-dom/src/client/ReactDOMHostConfig";
 import {
+  ChildDeletion,
   LayoutMask,
   MutationMask,
   NoFlags,
@@ -556,6 +557,9 @@ function commitPassiveUnmountEffects_begin() {
     const child = fiber.child;
 
     // TODO 节点有删除的情况，需要对删除的节点进行副作用清理
+    if ((nextEffect.flags & ChildDeletion) !== NoFlags) {
+      throw Error("commitPassiveUnmountEffects_begin ChildDeletion");
+    }
 
     if ((fiber.subtreeFlags & PassiveMask) !== NoFlags && child !== null) {
       child.return = fiber;

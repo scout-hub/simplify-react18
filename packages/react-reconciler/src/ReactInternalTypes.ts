@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-30 15:32:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-26 14:29:03
+ * @LastEditTime: 2022-06-26 21:54:43
  */
 import type { Flags } from "./ReactFiberFlags";
 import type { Lane, LaneMap, Lanes } from "./ReactFiberLane";
@@ -65,4 +65,9 @@ export type Dispatcher = {
     create: () => (() => void) | void,
     deps: Array<any> | void | null
   );
+  useReducer<S, I, A>(
+    reducer: (S, A) => S,
+    initialArg: I,
+    init?: (I) => S
+  ): [S, Dispatch<A>];
 };

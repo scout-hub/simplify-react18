@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-26 20:41:39
+ * @LastEditTime: 2022-06-26 21:26:37
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -331,7 +331,7 @@ function performConcurrentWorkOnRoot(root: FiberRoot, didTimeout: boolean) {
    *
    * 这两个值不想等的情况：
    * 1、任务顺利调度完了，root.callbackNode会变成null
-   * 2、有高优先级任务打断了低优先级任务 TODO
+   * 2、有高优先级任务打断了低优先级任务
    */
   if (root.callbackNode === originalCallbackNode) {
     return performConcurrentWorkOnRoot.bind(null, root);

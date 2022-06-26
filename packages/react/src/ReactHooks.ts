@@ -2,9 +2,11 @@
  * @Author: Zhouqi
  * @Date: 2022-06-11 20:11:17
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-26 14:31:19
+ * @LastEditTime: 2022-06-26 21:49:34
  */
 import ReactCurrentDispatcher from "./ReactCurrentDispatcher";
+
+type Dispatch<A> = (A) => void;
 
 function resolveDispatcher() {
   const dispatcher = ReactCurrentDispatcher.current;
@@ -32,3 +34,11 @@ export function useLayoutEffect(
   return dispatcher.useLayoutEffect(create, deps);
 }
 
+export function useReducer<S, I, A>(
+  reducer: (S, A) => S,
+  initialArg: I,
+  init?: (I) => S
+): [S, Dispatch<A>] {
+  const dispatcher = resolveDispatcher()!;
+  return dispatcher.useReducer(reducer, initialArg, init);
+}
