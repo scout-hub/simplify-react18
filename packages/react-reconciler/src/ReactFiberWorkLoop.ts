@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-27 13:58:06
+ * @LastEditTime: 2022-06-27 16:23:57
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -528,6 +528,8 @@ function commitRootImpl(root: FiberRoot) {
 
     // layout阶段
     commitLayoutEffects(finishedWork, root);
+  } else {
+    root.current = finishedWork;
   }
 
   // 本次提交存在副作用，在布局完成后去调度这些副作用回调
