@@ -1,5 +1,5 @@
 
-# simplify-react
+# simplify-react18
 a simplified version of react18 implementation for study
 
 构建：pnpm build
