@@ -2,44 +2,37 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-27 17:27:19
+ * @LastEditTime: 2022-06-27 22:33:33
  */
-const { useState, useMemo } = React;
+const { useState, useMemo, useCallback } = React;
 
-const Child = ({ count }) => {
+const Child = () => {
   console.log("re-render child");
-  return <div>{count}</div>;
-};
-
-const Child1 = ({ data }) => {
-  console.log("re-render child1");
-  return <div>{data.id}</div>;
+  return <div>子组件</div>;
 };
 
 const App = () => {
   const [count, setCount] = useState(0);
-  const [data, setData] = useState({ id: 1 });
-  const MemoChild = useMemo(() => <Child count={count} />, [count]);
-  const MemoChild1 = useMemo(() => <Child1 data={data} />, [data]);
+
+  const userInfo = useMemo(() => ({ name: "zs", age: 14 }), []);
+
+  const increment = () => {
+    setCount(count + 1);
+  };
+
+  const onClick = useCallback((userInfo) => {
+    setUserInfo(userInfo);
+  }, []);
+
   return (
     <div>
-      {MemoChild}
-      <button
-        onClick={() => {
-          setCount(count + 1);
-        }}
-      >
-        更新child
-      </button>
-      {MemoChild1}
-      <button
-        onClick={() => {
-          data.id = data.id + 1;
-          setData(data);
-        }}
-      >
-        更新child1
-      </button>
+      <button onClick={increment}>点击次数：{count}</button>
+      {useMemo(
+        () => (
+          <Child userInfo={userInfo} onClick={onClick} />
+        ),
+        [onClick, userInfo]
+      )}
     </div>
   );
 };
