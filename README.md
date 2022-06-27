@@ -16,3 +16,4 @@ a simplified version of react18 implementation for study
  - [x] useEffect ------ example/useEffect
  - [x] useLayoutEffect ------ example/useLayoutEffect
  - [x] useCallback ------ example/useCallback
+ - [x] useMemo ------ example/useMemo
