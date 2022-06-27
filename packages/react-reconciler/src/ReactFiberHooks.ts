@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-27 13:48:29
+ * @LastEditTime: 2022-06-27 16:54:43
  */
 import {
   isSubsetOfLanes,
@@ -134,6 +134,7 @@ const HooksDispatcherOnMount: Dispatcher = {
   useEffect: mountEffect,
   useLayoutEffect: mountLayoutEffect,
   useReducer: mountReducer,
+  useCallback: mountCallback,
 };
 
 const HooksDispatcherOnUpdate: Dispatcher = {
@@ -141,7 +142,38 @@ const HooksDispatcherOnUpdate: Dispatcher = {
   useEffect: updateEffect,
   useLayoutEffect: updateLayoutEffect,
   useReducer: updateReducer,
+  useCallback: updateCallback,
 };
+
+/**
+ * @description: mount阶段的useCallback
+ */
+function mountCallback<T>(callback: T, deps: Array<any> | void | null): T {
+  const hook = mountWorkInProgressHook();
+  const nextDeps = deps === undefined ? null : deps;
+  hook.memoizedState = [callback, nextDeps];
+  return callback;
+}
+
+/**
+ * @description: update阶段的useCallback
+ */
+function updateCallback<T>(callback: T, deps: Array<any> | void | null): T {
+  const hook = updateWorkInProgressHook();
+  const nextDeps = deps === undefined ? null : deps;
+  const prevState = hook.memoizedState;
+  if (prevState !== null && nextDeps !== null) {
+    // 取出依赖项进行比较
+    const prevDeps: Array<any> | null = prevState[1];
+    // 如果前后依赖相同，则返回第一次mount时候传入的callback
+    if (areHookInputsEqual(nextDeps, prevDeps)) {
+      return prevState[0];
+    }
+  }
+  // 否则返回新的callback
+  hook.memoizedState = [callback, nextDeps];
+  return callback;
+}
 
 /**
  * @description: mount阶段的useReducer

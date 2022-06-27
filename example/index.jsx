@@ -2,94 +2,22 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-27 16:25:32
+ * @LastEditTime: 2022-06-27 16:46:10
  */
-const { useReducer } = React;
-
-function initChildCount(initialCount) {
-  return { count: initialCount };
-}
-
-const childReducer = (state, action) => {
-  switch (action.type) {
-    case "add":
-      return { count: ++state.count };
-    case "del":
-      return { count: --state.count };
-    case "reset":
-      return initChildCount(action.payload);
-    default:
-      break;
-  }
-};
-
-const Child = ({ childCount }) => {
-  const [state, dispatch] = useReducer(
-    childReducer,
-    childCount,
-    initChildCount
-  );
-  return (
-    <div>
-      <button
-        onClick={() => {
-          dispatch({ type: "add" });
-        }}
-      >
-        增加
-      </button>
-      <button
-        onClick={() => {
-          dispatch({ type: "del" });
-        }}
-      >
-        减少
-      </button>
-      <button
-        onClick={() => {
-          dispatch({ type: "reset", payload: 10 });
-        }}
-      >
-        重置
-      </button>
-      child：{state.count}
-    </div>
-  );
-};
-
-const initState = { count: 0 };
-
-const reducer = (state, action) => {
-  switch (action.type) {
-    case "add":
-      return { count: ++state.count };
-    case "del":
-      return { count: --state.count };
-    default:
-      break;
-  }
-};
+const { useCallback, useState } = React;
+const set = new Set();
 
 const App = () => {
-  const [state, dispatch] = useReducer(reducer, initState);
+  const [state, setState] = useState(0);
+  // const callback = useCallback(() => {}, [state]);
+  const callback = useCallback(() => {}, []);
+  // const callback = useCallback(() => {});
+  set.add(callback);
+  // console.log(set.size);
   return (
     <div>
-      <button
-        onClick={() => {
-          dispatch({ type: "add" });
-        }}
-      >
-        增加
-      </button>
-      <button
-        onClick={() => {
-          dispatch({ type: "del" });
-        }}
-      >
-        减少
-      </button>
-      parent：{state.count}
-      <Child childCount={state.count} />
+      {state}
+      <button onClick={() => setState(state + 1)}>更新</button>
     </div>
   );
 };

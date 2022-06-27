@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-06-11 20:11:17
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-26 21:49:34
+ * @LastEditTime: 2022-06-27 16:48:23
  */
 import ReactCurrentDispatcher from "./ReactCurrentDispatcher";
 
@@ -41,4 +41,9 @@ export function useReducer<S, I, A>(
 ): [S, Dispatch<A>] {
   const dispatcher = resolveDispatcher()!;
   return dispatcher.useReducer(reducer, initialArg, init);
+}
+
+export function useCallback<T>(callback: T, deps: Array<any> | void | null): T {
+  const dispatcher = resolveDispatcher()!;
+  return dispatcher.useCallback(callback, deps);
 }
