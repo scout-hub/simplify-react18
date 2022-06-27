@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-06-11 20:11:17
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-27 16:48:23
+ * @LastEditTime: 2022-06-27 21:11:35
  */
 import ReactCurrentDispatcher from "./ReactCurrentDispatcher";
 
@@ -46,4 +46,9 @@ export function useReducer<S, I, A>(
 export function useCallback<T>(callback: T, deps: Array<any> | void | null): T {
   const dispatcher = resolveDispatcher()!;
   return dispatcher.useCallback(callback, deps);
+}
+
+export function useMemo<T>(create: () => T, deps: Array<any> | void | null): T {
+  const dispatcher = resolveDispatcher()!;
+  return dispatcher.useMemo(create, deps);
 }

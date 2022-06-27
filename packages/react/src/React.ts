@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-15 20:01:42
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-27 16:46:49
+ * @LastEditTime: 2022-06-27 21:12:18
  */
 import ReactSharedInternals from "./ReactSharedInternals";
 
@@ -14,5 +14,6 @@ export {
   useLayoutEffect,
   useReducer,
   useCallback,
+  useMemo,
 } from "./ReactHooks";
 export { Component } from "./ReactBaseClasses";

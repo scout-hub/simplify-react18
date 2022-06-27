@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-27 16:54:43
+ * @LastEditTime: 2022-06-27 21:16:52
  */
 import {
   isSubsetOfLanes,
@@ -135,6 +135,7 @@ const HooksDispatcherOnMount: Dispatcher = {
   useLayoutEffect: mountLayoutEffect,
   useReducer: mountReducer,
   useCallback: mountCallback,
+  useMemo: mountMemo,
 };
 
 const HooksDispatcherOnUpdate: Dispatcher = {
@@ -143,7 +144,41 @@ const HooksDispatcherOnUpdate: Dispatcher = {
   useLayoutEffect: updateLayoutEffect,
   useReducer: updateReducer,
   useCallback: updateCallback,
+  useMemo: updateMemo,
 };
+
+/**
+ * @description: mount阶段的useMemo
+ */
+function mountMemo<T>(nextCreate: () => T, deps: Array<any> | void | null): T {
+  const hook = mountWorkInProgressHook();
+  const nextDeps = deps === undefined ? null : deps;
+  const nextValue = nextCreate();
+  hook.memoizedState = [nextValue, nextDeps];
+  return nextValue;
+}
+
+/**
+ * @description: update阶段的useMemo
+ */
+function updateMemo<T>(nextCreate: () => T, deps: Array<any> | void | null): T {
+  const hook = updateWorkInProgressHook();
+  const nextDeps = deps === undefined ? null : deps;
+  const prevState = hook.memoizedState;
+  if (prevState !== null) {
+    if (nextDeps !== null) {
+      const prevDeps = prevState[1];
+      // 如果新旧依赖相同，则返回之前的结果
+      if (areHookInputsEqual(nextDeps, prevDeps)) {
+        return prevState[0];
+      }
+    }
+  }
+  // 否则重新执行函数，获取新的结果
+  const nextValue = nextCreate();
+  hook.memoizedState = [nextValue, nextDeps];
+  return nextValue;
+}
 
 /**
  * @description: mount阶段的useCallback

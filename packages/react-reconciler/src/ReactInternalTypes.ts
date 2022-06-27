@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-30 15:32:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-27 16:50:42
+ * @LastEditTime: 2022-06-27 21:14:21
  */
 import type { Flags } from "./ReactFiberFlags";
 import type { Lane, LaneMap, Lanes } from "./ReactFiberLane";
@@ -71,4 +71,5 @@ export type Dispatcher = {
     init?: (I) => S
   ): [S, Dispatch<A>];
   useCallback<T>(callback: T, deps: Array<any> | void | null): T;
+  useMemo<T>(nextCreate: () => T, deps: Array<any> | void | null): T;
 };
