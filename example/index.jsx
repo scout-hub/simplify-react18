@@ -2,13 +2,17 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-27 22:33:33
+ * @LastEditTime: 2022-06-28 09:38:42
  */
 const { useState, useMemo, useCallback } = React;
 
-const Child = () => {
-  console.log("re-render child");
-  return <div>子组件</div>;
+const Child = ({ onClick, userInfo }) => {
+  console.log("component");
+  return useMemo(() => {
+    console.log("render");
+    return <div>子组件</div>;
+  }, [onClick, userInfo]);
+  // return <div>子组件</div>;
 };
 
 const App = () => {
@@ -27,12 +31,13 @@ const App = () => {
   return (
     <div>
       <button onClick={increment}>点击次数：{count}</button>
-      {useMemo(
+      <Child userInfo={userInfo} onClick={onClick} />
+      {/* {useMemo(
         () => (
           <Child userInfo={userInfo} onClick={onClick} />
         ),
         [onClick, userInfo]
-      )}
+      )} */}
     </div>
   );
 };

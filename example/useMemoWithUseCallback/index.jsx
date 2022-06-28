@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-27 22:32:05
+ * @LastEditTime: 2022-06-28 09:47:58
  */
 const { useState, useMemo, useCallback } = React;
 
@@ -14,6 +14,7 @@ const Child = () => {
 const App = () => {
   const [count, setCount] = useState(0);
 
+  // const userInfo = { name: "zs", age: 14 };
   const userInfo = useMemo(() => ({ name: "zs", age: 14 }), []);
 
   const increment = () => {
