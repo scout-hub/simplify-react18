@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-15 20:01:42
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-27 21:12:18
+ * @LastEditTime: 2022-06-28 09:56:33
  */
 import ReactSharedInternals from "./ReactSharedInternals";
 
@@ -17,3 +17,4 @@ export {
   useMemo,
 } from "./ReactHooks";
 export { Component } from "./ReactBaseClasses";
+export { memo } from "./ReactMemo";

@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-27 14:36:52
+ * @LastEditTime: 2022-06-28 16:33:17
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { includesSomeLane, Lanes, NoLanes } from "./ReactFiberLane";
@@ -22,8 +22,16 @@ import {
   HostRoot,
   HostText,
   IndeterminateComponent,
+  MemoComponent,
+  SimpleMemoComponent,
 } from "./ReactWorkTags";
 import { constructClassInstance } from "./ReactFiberClassComponent";
+import {
+  createFiberFromTypeAndProps,
+  createWorkInProgress,
+  isSimpleFunctionComponent,
+} from "./ReactFiber";
+import { shallowEqual } from "packages/shared/src";
 
 // 是否有更新
 let didReceiveUpdate: boolean = false;
@@ -62,6 +70,7 @@ export function beginWork(
     // mount阶段
     didReceiveUpdate = false;
   }
+
   /**
    * 先清除workInProgress中的lanes
    * 不清除会导致root上的pendingLanes一直不为空，会被一直调度
@@ -92,12 +101,9 @@ export function beginWork(
       return updateHostComponent(current, workInProgress, renderLanes);
     case HostText:
       return null;
-    // return updateHostText(current, workInProgress);
     case FunctionComponent:
       const Component = workInProgress.type;
-      const unresolvedProps = workInProgress.pendingProps;
-      // TODO workInProgress.elementType === Component?
-      const resolvedProps = unresolvedProps;
+      const resolvedProps = workInProgress.pendingProps;
       return updateFunctionComponent(
         current,
         workInProgress,
@@ -107,8 +113,131 @@ export function beginWork(
       );
     case Fragment:
       return updateFragment(current, workInProgress, renderLanes);
+    case MemoComponent: {
+      const type = workInProgress.type;
+      const resolvedProps = workInProgress.pendingProps;
+      return updateMemoComponent(
+        current,
+        workInProgress,
+        type,
+        resolvedProps,
+        renderLanes
+      );
+    }
+    case SimpleMemoComponent: {
+      return updateSimpleMemoComponent(
+        current,
+        workInProgress,
+        workInProgress.type,
+        workInProgress.pendingProps,
+        renderLanes
+      );
+    }
   }
   return null;
+}
+
+/**
+ * @description: 更新React.memo组件
+ */
+function updateMemoComponent(
+  current: Fiber | null,
+  workInProgress: Fiber,
+  Component: any,
+  nextProps: any,
+  renderLanes: Lanes
+) {
+  // mount阶段
+  if (current === null) {
+    const type = Component.type;
+    // 判断是不是简单的函数组件，即没有定义defaultProps以及只有浅比较的简单memo组件的一种快捷路径
+    if (
+      isSimpleFunctionComponent(type) &&
+      Component.compare === null &&
+      Component.defaultProps === undefined
+    ) {
+      // 标记SimpleMemoComponent的tag
+      workInProgress.tag = SimpleMemoComponent;
+      workInProgress.type = type;
+      return updateSimpleMemoComponent(
+        current,
+        workInProgress,
+        type,
+        nextProps,
+        renderLanes
+      );
+    }
+    const child = createFiberFromTypeAndProps(
+      Component.type,
+      null,
+      nextProps,
+      renderLanes
+    );
+    child.return = workInProgress;
+    workInProgress.child = child;
+    return child;
+  }
+  // update阶段
+  const currentChild = current.child!;
+  const hasScheduledUpdateOrContext = checkScheduledUpdateOrContext(
+    current,
+    renderLanes
+  );
+  // 没有任务需要执行
+  if (!hasScheduledUpdateOrContext) {
+    const prevProps = currentChild.memoizedProps;
+    let compare = Component.compare;
+    compare = compare !== null ? compare : shallowEqual;
+    // 如果用户传入的compare函数执行结果为true，则直接bailout
+    if (compare(prevProps, nextProps)) {
+      return bailoutOnAlreadyFinishedWork(current, workInProgress, renderLanes);
+    }
+  }
+
+  const newChild = createWorkInProgress(currentChild, nextProps);
+  newChild.return = workInProgress;
+  workInProgress.child = newChild;
+  return newChild;
+}
+
+/**
+ * @description: 更新简单的memo组件
+ */
+function updateSimpleMemoComponent(
+  current: Fiber | null,
+  workInProgress: Fiber,
+  Component: any,
+  nextProps: any,
+  renderLanes: Lanes
+): null | Fiber {
+  // TODO react在源码中注释说到，即使是mount阶段，current也有可能不是null（内部渲染暂停），这个问题需要评估是否会产生任何其他影响
+  // 这里默认当作update阶段的执行
+  if (current !== null) {
+    const prevProps = current.memoizedProps;
+    // 浅比较
+    if (shallowEqual(prevProps, nextProps)) {
+      didReceiveUpdate = false;
+      // ？？？
+      workInProgress.pendingProps = nextProps = prevProps;
+      // 没有需要进行的工作了，直接bailout
+      if (!checkScheduledUpdateOrContext(current, renderLanes)) {
+        // TODO 理解lanes赋值这一步操作
+        // workInProgress.lanes = current.lanes;
+        return bailoutOnAlreadyFinishedWork(
+          current,
+          workInProgress,
+          renderLanes
+        );
+      }
+    }
+  }
+  return updateFunctionComponent(
+    current,
+    workInProgress,
+    Component,
+    nextProps,
+    renderLanes
+  );
 }
 
 /**
@@ -318,6 +447,7 @@ function mountIndeterminateComponent(
     null,
     renderLanes
   );
+  // TODO classComponent
   workInProgress.tag = FunctionComponent;
   reconcileChildren(null, workInProgress, value, renderLanes);
   return workInProgress.child;

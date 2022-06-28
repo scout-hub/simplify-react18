@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:39:57
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-20 21:24:41
+ * @LastEditTime: 2022-06-28 11:19:31
  */
 export type WorkTag =
   | 0
@@ -32,11 +32,11 @@ export type WorkTag =
   | 24
   | 25;
 
-// Function组件标记
+// Function组件
 export const FunctionComponent = 0;
-// Class组件标记
+// Class组件
 export const ClassComponent = 1;
-// Before we know whether it is function or class 还不知道是function还是class类型
+// 还不知道是function还是class类型
 export const IndeterminateComponent = 2;
 // 当前应用的根节点
 export const HostRoot = 3;
@@ -46,3 +46,7 @@ export const HostComponent = 5;
 export const HostText = 6;
 // 片段
 export const Fragment = 7;
+// react memo
+export const MemoComponent = 14;
+// simple react memo
+export const SimpleMemoComponent = 15;

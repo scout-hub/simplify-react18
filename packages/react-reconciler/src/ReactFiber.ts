@@ -2,12 +2,17 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-25 21:25:01
+ * @LastEditTime: 2022-06-28 14:09:52
  */
-import { ClassComponent, Fragment, WorkTag } from "./ReactWorkTags";
+import {
+  ClassComponent,
+  Fragment,
+  MemoComponent,
+  WorkTag,
+} from "./ReactWorkTags";
 import type { Fiber } from "./ReactInternalTypes";
 import type { Lanes } from "./ReactFiberLane";
-import { isFunction, isString } from "packages/shared/src";
+import { isFunction, isObject, isString } from "packages/shared/src";
 import { NoFlags, StaticMask } from "./ReactFiberFlags";
 import { NoLanes } from "./ReactFiberLane";
 import {
@@ -16,6 +21,7 @@ import {
   HostText,
   IndeterminateComponent,
 } from "./ReactWorkTags";
+import { REACT_MEMO_TYPE } from "packages/shared/src/ReactSymbols";
 
 /**
  * @description: 创建一个标记为HostRoot的fiber树根节点
@@ -109,7 +115,7 @@ export function createFiberFromElement(element: any, lanes: Lanes): Fiber {
 /**
  * @description: 根据type和props创建fiber
  */
-function createFiberFromTypeAndProps(
+export function createFiberFromTypeAndProps(
   type: any,
   key: any,
   pendingProps: any,
@@ -124,8 +130,19 @@ function createFiberFromTypeAndProps(
   } else if (isString(type)) {
     // 说明是普通元素节点
     fiberTag = HostComponent;
+  } else {
+    getTag: switch (type) {
+      default:
+        if (isObject(type)) {
+          switch (type.$$typeof) {
+            case REACT_MEMO_TYPE:
+              fiberTag = MemoComponent;
+              break getTag;
+          }
+        }
+    }
   }
-  // TODO 组件
+
   const fiber = createFiber(fiberTag, pendingProps, key);
   fiber.elementType = type;
   fiber.type = type;
@@ -158,4 +175,15 @@ export function createFiberFromFragment(
   const fiber = createFiber(Fragment, elements, key);
   fiber.lanes = lanes;
   return fiber;
+}
+
+/**
+ * @description: 判断是不是简单的函数组件
+ */
+export function isSimpleFunctionComponent(type: any) {
+  return (
+    isFunction(type) &&
+    !shouldConstruct(type) &&
+    type.defaultProps === undefined
+  );
 }
