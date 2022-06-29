@@ -18,3 +18,4 @@ a simplified version of react18 implementation for study
  - [x] useCallback ------ example/useCallback
  - [x] useMemo ------ example/useMemo
  - [x] React.memo ------ example/reactMemo
+ - [x] lifeCycles ------ example/lifeCycles
