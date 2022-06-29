@@ -2,19 +2,20 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-29 11:26:21
+ * @LastEditTime: 2022-06-29 14:21:07
  */
 const { Component, useState } = React;
 
 class Child extends Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      num: 0,
+    };
   }
 
   static getDerivedStateFromProps(nextProps, prevState) {
-    console.log(nextProps, prevState);
-    return {};
+    return nextProps;
   }
 
   render() {

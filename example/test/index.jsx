@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-29 11:35:30
+ * @LastEditTime: 2022-06-29 14:32:35
  */
 const { Component, useState } = React;
 
@@ -15,7 +15,7 @@ class Child extends Component {
   }
 
   static getDerivedStateFromProps(nextProps, prevState) {
-    return {};
+    return nextProps;
   }
 
   render() {

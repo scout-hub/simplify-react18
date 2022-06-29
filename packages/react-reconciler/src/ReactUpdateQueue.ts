@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 14:43:08
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-17 14:31:11
+ * @LastEditTime: 2022-06-29 13:57:55
  */
 import type { Lane, Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -104,7 +104,12 @@ export function enqueueUpdate(fiber, update) {
   sharedQueue.pending = update;
 }
 
-export function processUpdateQueue<State>(workInProgress: Fiber) {
+export function processUpdateQueue<State>(
+  workInProgress: Fiber,
+  props: any,
+  instance: any,
+  renderLanes: Lanes
+) {
   const queue: UpdateQueue<State> = workInProgress.updateQueue;
 
   let firstBaseUpdate = queue.firstBaseUpdate;
@@ -212,16 +217,16 @@ export function cloneUpdateQueue<State>(current: Fiber, workInProgress: Fiber) {
   }
 }
 
-function getStateFromUpdate(workInProgress, queue, update, prevState) {
+function getStateFromUpdate<State>(
+  workInProgress: Fiber,
+  queue: UpdateQueue<State>,
+  update: Update<State>,
+  prevState: State
+) {
   switch (update.tag) {
     case UpdateState:
       const payload = update.payload;
-      let partialState;
-      if (isFunction(payload)) {
-        partialState = payload();
-      } else {
-        partialState = payload;
-      }
+      const partialState = isFunction(payload) ? payload() : payload;
       if (partialState == null) {
         // 不需要更新
         return prevState;

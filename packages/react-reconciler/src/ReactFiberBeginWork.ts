@@ -403,12 +403,13 @@ function updateHostRoot(
   workInProgress: Fiber,
   renderLanes: Lanes
 ) {
+  const nextProps = workInProgress.pendingProps;
   const prevState = workInProgress.memoizedState;
   const prevChildren = prevState.element;
 
   // 克隆一份UpdateQueue
   cloneUpdateQueue(current!, workInProgress);
-  processUpdateQueue(workInProgress);
+  processUpdateQueue(workInProgress, nextProps, null, renderLanes);
 
   const nextState = workInProgress.memoizedState;
   // 获取要更新的jsx元素
