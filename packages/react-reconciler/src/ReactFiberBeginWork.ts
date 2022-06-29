@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-28 16:33:17
+ * @LastEditTime: 2022-06-29 11:57:00
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { includesSomeLane, Lanes, NoLanes } from "./ReactFiberLane";
@@ -25,7 +25,11 @@ import {
   MemoComponent,
   SimpleMemoComponent,
 } from "./ReactWorkTags";
-import { constructClassInstance } from "./ReactFiberClassComponent";
+import {
+  constructClassInstance,
+  mountClassInstance,
+  updateClassInstance,
+} from "./ReactFiberClassComponent";
 import {
   createFiberFromTypeAndProps,
   createWorkInProgress,
@@ -89,11 +93,12 @@ export function beginWork(
       );
     case ClassComponent: {
       const Component = workInProgress.type;
+      const resolvedProps = workInProgress.pendingProps;
       return updateClassComponent(
         current,
         workInProgress,
         Component,
-        null,
+        resolvedProps,
         renderLanes
       );
     }
@@ -188,7 +193,7 @@ function updateMemoComponent(
     const prevProps = currentChild.memoizedProps;
     let compare = Component.compare;
     compare = compare !== null ? compare : shallowEqual;
-    // 如果用户传入的compare函数执行结果为true，则直接bailout
+    // 如果用户传入的compare函数执行结果为true，则直接bailout，否则进入更新
     if (compare(prevProps, nextProps)) {
       return bailoutOnAlreadyFinishedWork(current, workInProgress, renderLanes);
     }
@@ -271,23 +276,39 @@ function updateClassComponent(
   renderLanes: Lanes
 ) {
   const instance = workInProgress.stateNode;
-  // 首次mount
+  let shouldUpdate;
+  // 实例不存在的情况
   if (instance === null) {
     constructClassInstance(workInProgress, Component, nextProps);
+    mountClassInstance(workInProgress, Component, nextProps, renderLanes);
+    shouldUpdate = true;
+  } else if (current === null) {
+    // 存在实例，但是没有current fiber
+    throw Error("updateClassComponent current is null");
   } else {
     // update
+    shouldUpdate = updateClassInstance(
+      current,
+      workInProgress,
+      Component,
+      nextProps,
+      renderLanes
+    );
   }
   const nextUnitOfWork = finishClassComponent(
     current,
     workInProgress,
     Component,
-    true,
+    shouldUpdate,
     false,
     renderLanes
   );
   return nextUnitOfWork;
 }
 
+/**
+ * @description: 执行class组件的最终渲染
+ */
 function finishClassComponent(
   current: Fiber | null,
   workInProgress: Fiber,
@@ -296,8 +317,13 @@ function finishClassComponent(
   hasContext: boolean,
   renderLanes: Lanes
 ) {
+  // 不需要更新，直接bailout
+  if (!shouldUpdate) {
+    return bailoutOnAlreadyFinishedWork(current, workInProgress, renderLanes);
+  }
   const instance = workInProgress.stateNode;
   const nextChildren = instance.render();
+  // 处理子节点
   reconcileChildren(current, workInProgress, nextChildren, renderLanes);
   return workInProgress.child;
 }

@@ -2,45 +2,40 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-28 16:25:44
+ * @LastEditTime: 2022-06-29 11:26:21
  */
-const { useState, useMemo, useCallback, memo } = React;
+const { Component, useState } = React;
 
-const Child = memo(
-  () => {
-    console.log("re-render child");
-    return <div>子组件</div>;
-  },
-  (prevProps, nextProps) => {
-    console.log(prevProps, nextProps);
-    return true;
+class Child extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {};
   }
-);
+
+  static getDerivedStateFromProps(nextProps, prevState) {
+    console.log(nextProps, prevState);
+    return {};
+  }
+
+  render() {
+    const { num } = this.props;
+    return <div>{num}</div>;
+  }
+}
 
 const App = () => {
-  const [count, setCount] = useState(0);
-
-  // const userInfo = { name: "zs", age: 14 };
-
-  const userInfo = useMemo(() => ({ name: "zs", age: 14 }), []);
-
-  const increment = () => {
-    setCount(count + 1);
-  };
-
-  // const onClick = (userInfo) => {
-  //   setUserInfo(userInfo);
-  // };
-  const onClick = useCallback((userInfo) => {
-    setUserInfo(userInfo);
-  }, []);
+  const [num, setNum] = useState(0);
 
   return (
     <div>
-      <button onClick={increment}>点击次数：{count}</button>
-      {/* <Child /> */}
-      {/* <Child count={count} /> */}
-      <Child userInfo={userInfo} onClick={onClick} />
+      <Child num={num} />
+      <button
+        onClick={() => {
+          setNum(num + 1);
+        }}
+      >
+        更新
+      </button>
     </div>
   );
 };
