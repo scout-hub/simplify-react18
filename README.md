@@ -6,7 +6,7 @@ a simplified version of react18 implementation for study
 
 目前实现：
 
- - [x] function component/Fragment/文本节点/普通element的创建和更新 ------ example/renderApp
+ - [x] function component/class component/Fragment/文本节点/普通element的创建和更新 ------ example/renderApp
  - [x] 优先级调度 ------ example/优先级调度
  - [x] 时间切片 ------ example/时间切片
  - [x] diff ------ example/diff
