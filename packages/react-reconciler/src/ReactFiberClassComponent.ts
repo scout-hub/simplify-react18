@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-06-18 21:00:04
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-29 17:44:01
+ * @LastEditTime: 2022-06-29 21:19:59
  */
 import { NoLanes } from "./ReactFiberLane";
 import { assign, isFunction, shallowEqual } from "packages/shared/src";
@@ -14,7 +14,7 @@ import {
   UpdateQueue,
 } from "./ReactUpdateQueue";
 import type { Lanes } from "./ReactFiberLane";
-import { Update } from "./ReactFiberFlags";
+import { Snapshot, Update } from "./ReactFiberFlags";
 
 const classComponentUpdater = {};
 
@@ -137,7 +137,9 @@ export function mountClassInstance(
   }
 
   // 判断是否有新的生命周期函数getDerivedStateFromProps、getSnapshotBeforeUpdate
-  const hasNewLifecycles = isFunction(getDerivedStateFromProps);
+  const hasNewLifecycles =
+    isFunction(getDerivedStateFromProps) ||
+    isFunction(instance.getSnapshotBeforeUpdate);
 
   if (!hasNewLifecycles && isFunction(instance.componentWillMount)) {
     callComponentWillMount(workInProgress, instance);
@@ -169,8 +171,11 @@ export function updateClassInstance(
   instance.props = oldProps;
 
   const getDerivedStateFromProps = ctor.getDerivedStateFromProps;
+
   // 判断是否有新的生命周期函数getDerivedStateFromProps、getSnapshotBeforeUpdate
-  const hasNewLifecycles = isFunction(getDerivedStateFromProps);
+  const hasNewLifecycles =
+    isFunction(getDerivedStateFromProps) ||
+    isFunction(instance.getSnapshotBeforeUpdate);
 
   // 在下面这些生命周期中，只有在componentDidUpdate中的实例上的props和state才是新的，其他都是老的
 
@@ -218,8 +223,18 @@ export function updateClassInstance(
     if (isFunction(instance.componentDidUpdate)) {
       workInProgress.flags |= Update;
     }
-    // TODO getSnapshotBeforeUpdate
+    if (isFunction(instance.getSnapshotBeforeUpdate)) {
+      workInProgress.flags |= Snapshot;
+    }
   } else {
+    if (
+      oldProps === current.memoizedProps &&
+      oldState === current.memoizedState
+    ) {
+      throw Error(
+        "oldProps === current.memoizedProps &&  oldState === current.memoizedState"
+      );
+    }
     // componentDidUpdate存在的并且新旧props或state不相等的情况下，标记上Update flag
     if (isFunction(instance.componentDidUpdate)) {
       if (
@@ -229,7 +244,14 @@ export function updateClassInstance(
         workInProgress.flags |= Update;
       }
 
-      // TODO getSnapshotBeforeUpdate
+      if (isFunction(instance.getSnapshotBeforeUpdate)) {
+        if (
+          oldProps !== current.memoizedProps ||
+          oldState !== current.memoizedState
+        ) {
+          workInProgress.flags |= Snapshot;
+        }
+      }
 
       // 即使shouldUpdate是false，这里也要更新memoizedProps和memoizedState，表示可以复用
       workInProgress.memoizedProps = newProps;

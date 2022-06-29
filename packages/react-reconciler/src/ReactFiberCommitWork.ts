@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-29 14:57:00
+ * @LastEditTime: 2022-06-29 21:39:47
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -15,6 +15,7 @@ import {
   removeChild,
 } from "packages/react-dom/src/client/ReactDOMHostConfig";
 import {
+  BeforeMutationMask,
   ChildDeletion,
   LayoutMask,
   MutationMask,
@@ -22,6 +23,7 @@ import {
   Passive,
   PassiveMask,
   Placement,
+  Snapshot,
   Update,
 } from "./ReactFiberFlags";
 import {
@@ -283,7 +285,11 @@ function commitLayoutEffectOnFiber(
             const prevProps = current.memoizedProps;
             const prevState = current.memoizedState;
             // 更新阶段，执行componentDidUpdate
-            instance.componentDidUpdate(prevProps, prevState);
+            instance.componentDidUpdate(
+              prevProps,
+              prevState,
+              instance.__reactInternalSnapshotBeforeUpdate
+            );
           }
         }
         break;
@@ -633,5 +639,80 @@ function commitHookEffectListUnmount(flags: HookFlags, finishedWork: Fiber) {
       }
       effect = effect.next;
     } while (effect !== firstEffect);
+  }
+}
+
+/**
+ * @description: beforeMutationEffect阶段，当前应用树状态变更之前的操作，是getSnapshotBeforeUpdate调用的地方
+ */
+export function commitBeforeMutationEffects(
+  root: FiberRoot,
+  firstChild: Fiber
+) {
+  nextEffect = firstChild;
+  commitBeforeMutationEffects_begin();
+}
+
+/**
+ * @description: commitBeforeMutation递阶段
+ */
+function commitBeforeMutationEffects_begin() {
+  while (nextEffect !== null) {
+    const fiber = nextEffect;
+    const child = fiber.child;
+    // 找到第一个subtreeFlags中不包含BeforeMutationMask并且存在子节点的fiber（递）
+    if (
+      (fiber.subtreeFlags & BeforeMutationMask) !== NoFlags &&
+      child !== null
+    ) {
+      child.return = fiber;
+      nextEffect = child;
+    } else {
+      commitBeforeMutationEffects_complete();
+    }
+  }
+}
+
+/**
+ * @description: commitBeforeMutation归阶段
+ */
+function commitBeforeMutationEffects_complete() {
+  // 从子到父进行归处理（归）
+  while (nextEffect !== null) {
+    const fiber = nextEffect;
+    commitBeforeMutationEffectsOnFiber(fiber);
+
+    const sibling = fiber.sibling;
+    if (sibling !== null) {
+      sibling.return = fiber.return;
+      nextEffect = sibling;
+      return;
+    }
+
+    nextEffect = fiber.return;
+  }
+}
+
+function commitBeforeMutationEffectsOnFiber(finishedWork: Fiber) {
+  const current = finishedWork.alternate;
+  const flags = finishedWork.flags;
+  if ((flags & Snapshot) !== NoFlags) {
+    switch (finishedWork.tag) {
+      case ClassComponent: {
+        // 更新阶段执行的操作
+        if (current !== null) {
+          const prevProps = current.memoizedProps;
+          const prevState = current.memoizedState;
+          const instance = finishedWork.stateNode;
+          const snapshot = instance.getSnapshotBeforeUpdate(
+            prevProps,
+            prevState
+          );
+          // 将getSnapshotBeforeUpdate的返回值挂在到__reactInternalSnapshotBeforeUpdate属性上，将来作为componentDidUpdate的第三个参数
+          instance.__reactInternalSnapshotBeforeUpdate = snapshot;
+        }
+        break;
+      }
+    }
   }
 }

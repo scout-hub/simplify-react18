@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-29 17:42:04
+ * @LastEditTime: 2022-06-29 21:20:38
  */
 const { Component, useState } = React;
 
@@ -15,18 +15,18 @@ class Child extends Component {
     };
   }
 
-  // static getDerivedStateFromProps(nextProps, prevState) {
-  //   console.log("getDerivedStateFromProps");
-  //   return nextProps;
+  static getDerivedStateFromProps(nextProps, prevState) {
+    console.log("getDerivedStateFromProps");
+    return nextProps;
+  }
+
+  // componentWillMount() {
+  //   console.log("componentWillMount");
   // }
 
-  componentWillMount() {
-    console.log("componentWillMount");
-  }
-
-  componentWillReceiveProps(newProps) {
-    console.log("componentWillReceiveProps", newProps);
-  }
+  // componentWillReceiveProps(newProps) {
+  //   console.log("componentWillReceiveProps", newProps);
+  // }
 
   shouldComponentUpdate(newProps, newState) {
     console.log("shouldComponentUpdate", newProps, newState);
@@ -37,8 +37,12 @@ class Child extends Component {
     console.log("componentDidMount");
   }
 
-  componentWillUpdate(newProps, newState) {
-    console.log("componentWillUpdate", newProps, newState);
+  // componentWillUpdate(newProps, newState) {
+  //   console.log("componentWillUpdate", newProps, newState);
+  // }
+
+  getSnapshotBeforeUpdate() {
+    console.log("getSnapshotBeforeUpdate");
   }
 
   componentDidUpdate() {

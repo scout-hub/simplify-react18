@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-28 14:57:32
+ * @LastEditTime: 2022-06-29 21:28:02
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -18,6 +18,7 @@ import {
 import { createWorkInProgress } from "./ReactFiber";
 import { beginWork } from "./ReactFiberBeginWork";
 import {
+  commitBeforeMutationEffects,
   commitLayoutEffects,
   commitMutationEffects,
   commitPassiveMountEffects,
@@ -518,7 +519,8 @@ function commitRootImpl(root: FiberRoot) {
   const rootHasEffect = (finishedWork.flags & MutationMask) !== NoFlags;
 
   if (subtreeHasEffects || rootHasEffect) {
-    // TODO beforeMutationEffect阶段
+    // beforeMutationEffect阶段，当前应用树状态变更之前的操作，是getSnapshotBeforeUpdate调用的地方
+    commitBeforeMutationEffects(root, finishedWork);
 
     // 处理一些副作用，一般都是dom操作，比如更新删除插入dom
     commitMutationEffects(root, finishedWork);
@@ -526,7 +528,7 @@ function commitRootImpl(root: FiberRoot) {
     // 渲染完成，将current指向workInProgress（双缓存机制的最后一步）
     root.current = finishedWork;
 
-    // layout阶段
+    // layout阶段，componentDidMount、componentDidUpdate调用的地方
     commitLayoutEffects(finishedWork, root);
   } else {
     root.current = finishedWork;
