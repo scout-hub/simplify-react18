@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-29 11:57:00
+ * @LastEditTime: 2022-06-29 14:41:12
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { includesSomeLane, Lanes, NoLanes } from "./ReactFiberLane";
@@ -295,6 +295,7 @@ function updateClassComponent(
       renderLanes
     );
   }
+  // render
   const nextUnitOfWork = finishClassComponent(
     current,
     workInProgress,

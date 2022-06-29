@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-26 21:28:45
+ * @LastEditTime: 2022-06-29 14:57:00
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -270,6 +270,22 @@ function commitLayoutEffectOnFiber(
     switch (finishedWork.tag) {
       case FunctionComponent: {
         commitHookEffectListMount(HookLayout | HookHasEffect, finishedWork);
+        break;
+      }
+      case ClassComponent: {
+        // 获取组件实例
+        const instance = finishedWork.stateNode;
+        if (finishedWork.flags & Update) {
+          if (current === null) {
+            // mount阶段执行componentDidMount
+            instance.componentDidMount();
+          } else {
+            const prevProps = current.memoizedProps;
+            const prevState = current.memoizedState;
+            // 更新阶段，执行componentDidUpdate
+            instance.componentDidUpdate(prevProps, prevState);
+          }
+        }
         break;
       }
     }

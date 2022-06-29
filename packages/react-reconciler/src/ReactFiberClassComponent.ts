@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-06-18 21:00:04
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-29 14:32:56
+ * @LastEditTime: 2022-06-29 15:07:01
  */
 import { NoLanes } from "./ReactFiberLane";
 import { assign, isFunction, shallowEqual } from "packages/shared/src";
@@ -69,6 +69,18 @@ export function mountClassInstance(
     // 更新instance上的state
     instance.state = workInProgress.memoizedState;
   }
+
+  // 判断是否有新的生命周期函数getDerivedStateFromProps、getSnapshotBeforeUpdate
+  const hasNewLifecycles = isFunction(getDerivedStateFromProps);
+
+  if (!hasNewLifecycles && isFunction(instance.componentWillMount)) {
+    throw Error("componentWillMount");
+  }
+
+  // 如果componentDidMount存在，标记上Update
+  if (isFunction(instance.componentDidMount)) {
+    workInProgress.flags |= Update;
+  }
 }
 
 function applyDerivedStateFromProps(
@@ -114,12 +126,8 @@ export function updateClassInstance(
   // 在下面这些生命周期中，只有在componentDidUpdate中的实例上的props和state才是新的，其他都是老的
 
   // 当用了新的生命周期函数时，不应该再调用不安全的生命周期函数
-  if (
-    !hasNewLifecycles &&
-    (isFunction(instance.UNSAFE_componentWillReceiveProps) ||
-      isFunction(instance.componentWillReceiveProps))
-  ) {
-    throw Error("UNSAFE_componentWillReceiveProps  componentWillReceiveProps");
+  if (!hasNewLifecycles && isFunction(instance.componentWillReceiveProps)) {
+    throw Error("componentWillReceiveProps");
   }
 
   const oldState = workInProgress.memoizedState;
@@ -151,22 +159,18 @@ export function updateClassInstance(
     newState
   );
 
-  // 如果需要更新组件
+  // 需要更新组件
   if (shouldUpdate) {
-    if (
-      !hasNewLifecycles &&
-      (isFunction(instance.UNSAFE_componentWillUpdate) ||
-        isFunction(instance.componentWillUpdate))
-    ) {
-      throw Error("UNSAFE_componentWillUpdate  componentWillUpdate");
+    if (!hasNewLifecycles && isFunction(instance.componentWillUpdate)) {
+      throw Error("componentWillUpdate");
     }
     if (isFunction(instance.componentDidUpdate)) {
       workInProgress.flags |= Update;
     }
     // TODO getSnapshotBeforeUpdate
   } else {
+    // componentDidUpdate存在的并且新旧props或state不相等的情况下，标记上Update flag
     if (isFunction(instance.componentDidUpdate)) {
-      // 新旧props或state不相等的情况下，标记上Update flag
       if (
         oldProps !== current.memoizedProps ||
         oldState !== current.memoizedState
