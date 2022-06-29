@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-06-18 21:00:04
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-29 15:07:01
+ * @LastEditTime: 2022-06-29 17:44:01
  */
 import { NoLanes } from "./ReactFiberLane";
 import { assign, isFunction, shallowEqual } from "packages/shared/src";
@@ -16,22 +16,6 @@ import {
 import type { Lanes } from "./ReactFiberLane";
 import { Update } from "./ReactFiberFlags";
 
-/**
- * @description: 生成class组件实例
- */
-export function constructClassInstance(
-  workInProgress: Fiber,
-  ctor: any,
-  props: any
-) {
-  let instance = new ctor(props);
-  // 获取组件实例上定义的state
-  const state = instance.state;
-  workInProgress.memoizedState = state == null ? null : state;
-  adoptClassInstance(workInProgress, instance);
-  return instance;
-}
-
 const classComponentUpdater = {};
 
 /**
@@ -43,44 +27,27 @@ function adoptClassInstance(workInProgress: Fiber, instance: any): void {
 }
 
 /**
- * @description: 挂载class组件实例
+ * @description: 检查组件是否需要更新，pureComponent浅比较以及shouldComponentUpdate生命周期函数
  */
-export function mountClassInstance(
+function checkShouldComponentUpdate(
   workInProgress: Fiber,
   ctor: any,
+  oldProps: any,
   newProps: any,
-  renderLanes: Lanes
+  oldState: any,
+  newState: any
 ) {
   const instance = workInProgress.stateNode;
-  instance.props = newProps;
-  instance.state = workInProgress.memoizedState;
-  // 初始化更新队列
-  initializeUpdateQueue(workInProgress);
-  // class（不是实例上获取）上获取getDerivedStateFromProps生命周期函数
-  const getDerivedStateFromProps = ctor.getDerivedStateFromProps;
-  if (isFunction(getDerivedStateFromProps)) {
-    // 执行getDerivedStateFromProps生命周期函数，这个函数是在finishClassComponent（render）之前执行的
-    applyDerivedStateFromProps(
-      workInProgress,
-      ctor,
-      getDerivedStateFromProps,
-      newProps
-    );
-    // 更新instance上的state
-    instance.state = workInProgress.memoizedState;
+  const shouldComponentUpdate = instance.shouldComponentUpdate;
+  // 调用shouldComponentUpdate生命周期函数
+  if (isFunction(shouldComponentUpdate)) {
+    const shouldUpdate = shouldComponentUpdate(newProps, newState);
+    return shouldUpdate;
   }
 
-  // 判断是否有新的生命周期函数getDerivedStateFromProps、getSnapshotBeforeUpdate
-  const hasNewLifecycles = isFunction(getDerivedStateFromProps);
+  // TODO pureComponent的浅比较
 
-  if (!hasNewLifecycles && isFunction(instance.componentWillMount)) {
-    throw Error("componentWillMount");
-  }
-
-  // 如果componentDidMount存在，标记上Update
-  if (isFunction(instance.componentDidMount)) {
-    workInProgress.flags |= Update;
-  }
+  return true;
 }
 
 function applyDerivedStateFromProps(
@@ -101,6 +68,88 @@ function applyDerivedStateFromProps(
   if (workInProgress.lanes === NoLanes) {
     const updateQueue: UpdateQueue<any> = workInProgress.updateQueue;
     updateQueue.baseState = memoizedState;
+  }
+}
+
+function callComponentWillMount(workInProgress: Fiber, instance: any) {
+  const oldState = instance.state;
+  instance.componentWillMount();
+
+  // 在componentWillMount可能会修改state
+  if (oldState !== instance.state) {
+    throw Error("callComponentWillMount oldState !== instance.state");
+  }
+}
+
+function callComponentWillReceiveProps(workInProgress, instance, newProps) {
+  const oldState = instance.state;
+  instance.componentWillReceiveProps(newProps);
+
+  // callComponentWillReceiveProps可能会修改state
+  if (instance.state !== oldState) {
+    throw Error("callComponentWillReceiveProps instance.state !== oldState");
+  }
+}
+
+/**
+ * @description: 生成class组件实例
+ */
+export function constructClassInstance(
+  workInProgress: Fiber,
+  ctor: any,
+  props: any
+) {
+  let instance = new ctor(props);
+  // 获取组件实例上定义的state
+  const state = instance.state;
+  workInProgress.memoizedState = state == null ? null : state;
+  adoptClassInstance(workInProgress, instance);
+  return instance;
+}
+
+/**
+ * @description: 挂载class组件实例
+ */
+export function mountClassInstance(
+  workInProgress: Fiber,
+  ctor: any,
+  newProps: any,
+  renderLanes: Lanes
+) {
+  const instance = workInProgress.stateNode;
+  instance.props = newProps;
+  instance.state = workInProgress.memoizedState;
+  // 初始化更新队列
+  initializeUpdateQueue(workInProgress);
+  // class（不是实例上获取）上获取getDerivedStateFromProps生命周期函数
+  const getDerivedStateFromProps = ctor.getDerivedStateFromProps;
+
+  if (isFunction(getDerivedStateFromProps)) {
+    // 执行getDerivedStateFromProps生命周期函数，这个函数是在finishClassComponent（render）之前执行的
+    applyDerivedStateFromProps(
+      workInProgress,
+      ctor,
+      getDerivedStateFromProps,
+      newProps
+    );
+    // 更新instance上的state
+    instance.state = workInProgress.memoizedState;
+  }
+
+  // 判断是否有新的生命周期函数getDerivedStateFromProps、getSnapshotBeforeUpdate
+  const hasNewLifecycles = isFunction(getDerivedStateFromProps);
+
+  if (!hasNewLifecycles && isFunction(instance.componentWillMount)) {
+    callComponentWillMount(workInProgress, instance);
+    // componentWillMount可能存在额外的状态更新，这里去处理这些状态更新
+    processUpdateQueue(workInProgress, newProps, instance, renderLanes);
+    // 更新一下state
+    instance.state = workInProgress.memoizedState;
+  }
+
+  // 如果componentDidMount存在，标记上Update
+  if (isFunction(instance.componentDidMount)) {
+    workInProgress.flags |= Update;
   }
 }
 
@@ -127,7 +176,9 @@ export function updateClassInstance(
 
   // 当用了新的生命周期函数时，不应该再调用不安全的生命周期函数
   if (!hasNewLifecycles && isFunction(instance.componentWillReceiveProps)) {
-    throw Error("componentWillReceiveProps");
+    if (oldProps !== newProps) {
+      callComponentWillReceiveProps(workInProgress, instance, newProps);
+    }
   }
 
   const oldState = workInProgress.memoizedState;
@@ -162,7 +213,7 @@ export function updateClassInstance(
   // 需要更新组件
   if (shouldUpdate) {
     if (!hasNewLifecycles && isFunction(instance.componentWillUpdate)) {
-      throw Error("componentWillUpdate");
+      instance.componentWillUpdate(newProps, newState);
     }
     if (isFunction(instance.componentDidUpdate)) {
       workInProgress.flags |= Update;
@@ -191,28 +242,4 @@ export function updateClassInstance(
   instance.state = newState;
 
   return shouldUpdate;
-}
-
-/**
- * @description: 检查组件是否需要更新，pureComponent浅比较以及shouldComponentUpdate生命周期函数
- */
-function checkShouldComponentUpdate(
-  workInProgress: Fiber,
-  ctor: any,
-  oldProps: any,
-  newProps: any,
-  oldState: any,
-  newState: any
-) {
-  const instance = workInProgress.stateNode;
-  const shouldComponentUpdate = instance.shouldComponentUpdate;
-  // 调用shouldComponentUpdate生命周期函数
-  if (isFunction(shouldComponentUpdate)) {
-    const shouldUpdate = shouldComponentUpdate(newProps, newState);
-    return shouldUpdate;
-  }
-
-  // TODO pureComponent的浅比较
-
-  return true;
 }
