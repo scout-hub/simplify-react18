@@ -2,28 +2,60 @@
  * @Author: Zhouqi
  * @Date: 2022-06-18 21:00:04
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-29 21:19:59
+ * @LastEditTime: 2022-06-30 15:13:10
  */
 import { NoLanes } from "./ReactFiberLane";
-import { assign, isFunction, shallowEqual } from "packages/shared/src";
+import { assign, isFunction } from "packages/shared/src";
 import { Fiber } from "./ReactInternalTypes";
 import {
   cloneUpdateQueue,
+  createUpdate,
+  enqueueUpdate,
   initializeUpdateQueue,
   processUpdateQueue,
   UpdateQueue,
 } from "./ReactUpdateQueue";
 import type { Lanes } from "./ReactFiberLane";
 import { Snapshot, Update } from "./ReactFiberFlags";
+import {
+  get as getInstance,
+  set as setInstance,
+} from "packages/shared/src/ReactInstanceMap";
+import {
+  requestEventTime,
+  requestUpdateLane,
+  scheduleUpdateOnFiber,
+} from "./ReactFiberWorkLoop";
 
-const classComponentUpdater = {};
+const classComponentUpdater = {
+  enqueueSetState(instance, payload, callback) {
+    // 根据实例获取对应的fiber
+    const fiber = getInstance(instance);
+    const eventTime = requestEventTime();
+    const lane = requestUpdateLane(fiber);
+    // 创建一个update
+    const update = createUpdate(eventTime, lane);
+    // 赋值参数
+    update.payload = payload;
+    // 绑定callback
+    if (callback != null) {
+      update.callback = callback;
+    }
+    // update入队
+    enqueueUpdate(fiber, update);
+    // 开始调度更新
+    scheduleUpdateOnFiber(fiber, lane, eventTime);
+  },
+};
 
 /**
  * @description: 收集组件实例
  */
 function adoptClassInstance(workInProgress: Fiber, instance: any): void {
-  workInProgress.stateNode = instance;
   instance.updater = classComponentUpdater;
+  workInProgress.stateNode = instance;
+  // 在实例上绑定当前class组件的fiber，在需要调度的时候可以获取这个fiber
+  setInstance(instance, workInProgress);
 }
 
 /**

@@ -2,12 +2,13 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 14:43:08
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-29 13:57:55
+ * @LastEditTime: 2022-06-30 15:15:41
  */
-import type { Lane, Lanes } from "./ReactFiberLane";
+import { Lane, Lanes, NoLane } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
 import { assign, isFunction } from "packages/shared/src";
 import { NoLanes } from "./ReactFiberLane";
+import { Callback } from "./ReactFiberFlags";
 
 export type Update<State> = {
   eventTime: number; // 任务时间，通过performance.now()获取的毫秒数
@@ -85,7 +86,7 @@ export function createUpdate(eventTime: number, lane: Lane): Update<any> {
 /**
  * @description: 向当前fiber节点的updateQueue中添加Update
  */
-export function enqueueUpdate(fiber, update) {
+export function enqueueUpdate<State>(fiber: Fiber, update: Update<State>) {
   const updateQueue = fiber.updateQueue;
   if (updateQueue === null) return;
   const sharedQueue = updateQueue.shared;
@@ -166,12 +167,27 @@ export function processUpdateQueue<State>(
     let newLastBaseUpdate = null;
     let newFirstBaseUpdate = null;
 
-    let update = firstBaseUpdate;
+    let update: Update<State> | null = firstBaseUpdate;
+    // TODO 优先级调度
     do {
       newState = getStateFromUpdate(workInProgress, queue, update, newState);
+      // 存在callback，则执行callback回调，比如setState第二个参数
+      const callback = update.callback;
+      // lane要存在，如果已经提交了，那不应该再触发回调
+      if (update.lane === NoLane) {
+        console.warn("update.lane === NoLane");
+      }
+      if (callback && update.lane !== NoLane) {
+        // 标记上Callback
+        workInProgress.flags |= Callback;
+        const effects = queue.effects;
+        // 将callback不为null的effect添加到effects中，将来统一执行副作用(update.callback)
+        effects == null ? (queue.effects = [update]) : effects.push(update);
+      }
       // 可能当所有的update都处理完的时候，payload的执行又产生的新的update被添加到了updateQueue.shared.pending
       // 这个时候还需要继续执行新的更新
-      if (update.next === null) {
+      update = update.next;
+      if (update === null) {
         pendingQueue = queue.shared.pending;
         if (pendingQueue === null) {
           break;

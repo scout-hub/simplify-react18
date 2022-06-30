@@ -2,10 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-15 15:30:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-12 22:12:02
+ * @LastEditTime: 2022-06-30 13:51:46
  */
 const typescript = require('@rollup/plugin-typescript');
-const commonjs = require('rollup-plugin-commonjs');
 
 export default [{
     input: './packages/react/index.ts',

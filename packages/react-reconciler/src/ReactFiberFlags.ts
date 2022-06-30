@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 13:28:53
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-29 21:31:12
+ * @LastEditTime: 2022-06-30 15:07:38
  */
 export type Flags = number;
 
@@ -10,6 +10,7 @@ export const NoFlags = 0b00000000000000000000000000;
 export const Placement = 0b00000000000000000000000010;
 export const Update = 0b00000000000000000000000100;
 export const ChildDeletion = 0b00000000000000000000010000;
+export const Callback = 0b00000000000000000001000000;
 export const Snapshot = 0b00000000000000010000000000;
 export const Passive = 0b00000000000000100000000000;
 

@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-29 21:40:07
+ * @LastEditTime: 2022-06-30 14:40:45
  */
 const { Component, useState } = React;
 
@@ -20,10 +20,12 @@ class Child extends Component {
     return nextProps;
   }
 
+  // 不安全的生命周期
   componentWillMount() {
     console.log("componentWillMount");
   }
 
+  // 不安全的生命周期
   componentWillReceiveProps(newProps) {
     console.log("componentWillReceiveProps", newProps);
   }
@@ -37,6 +39,7 @@ class Child extends Component {
     console.log("componentDidMount");
   }
 
+  // 不安全的生命周期
   componentWillUpdate(newProps, newState) {
     console.log("componentWillUpdate", newProps, newState);
   }
