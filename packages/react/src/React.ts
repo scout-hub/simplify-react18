@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-15 20:01:42
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-28 09:56:33
+ * @LastEditTime: 2022-06-30 22:31:19
  */
 import ReactSharedInternals from "./ReactSharedInternals";
 
@@ -16,5 +16,5 @@ export {
   useCallback,
   useMemo,
 } from "./ReactHooks";
-export { Component } from "./ReactBaseClasses";
+export { Component, PureComponent } from "./ReactBaseClasses";
 export { memo } from "./ReactMemo";

@@ -2,37 +2,20 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-30 16:49:52
+ * @LastEditTime: 2022-06-30 22:31:26
  */
-const { Component, useState } = React;
+const { PureComponent, Component, useState } = React;
 
-class Child extends Component {
+class Child extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {
-      age: 12,
       num: 0,
     };
   }
 
   update = () => {
-    // 只执行一次更新(批量处理)，因为优先级相同，后续的更新直接return了（ensureRootIsScheduled）
-    // this.setState({
-    //   num: this.state.num + 1,
-    // });
-    // this.setState({
-    //   num: this.state.num + 1,
-    // });
-    // this.setState({
-    //   num: this.state.num + 1,
-    // });
-
-    // 后一个setState的值依赖前一个
-    this.setState((state, props) => {
-      return { num: state.num + 1 };
-    });
-    this.setState((state, props) => {
-      console.log(state.num);
+    this.setState((state) => {
       return { num: state.num + 1 };
     });
   };
@@ -54,10 +37,11 @@ const App = () => {
 
   return (
     <div>
-      <Child num={num} />
+      <Child />
       <button
         onClick={() => {
           setNum(num + 1);
+          // setNum(num + 1);
         }}
       >
         更新
