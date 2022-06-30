@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 14:43:08
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-30 16:18:56
+ * @LastEditTime: 2022-06-30 16:47:29
  */
 import { Lane, Lanes, NoLane } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -170,7 +170,14 @@ export function processUpdateQueue<State>(
     let update: Update<State> | null = firstBaseUpdate;
     // TODO 优先级调度
     do {
-      newState = getStateFromUpdate(workInProgress, queue, update, newState);
+      newState = getStateFromUpdate(
+        workInProgress,
+        queue,
+        update,
+        newState,
+        props,
+        instance
+      );
       // 存在callback，则执行callback回调，比如setState第二个参数
       const callback = update.callback;
       // lane要存在，如果已经提交了，那不应该再触发回调
@@ -233,21 +240,28 @@ export function cloneUpdateQueue<State>(current: Fiber, workInProgress: Fiber) {
   }
 }
 
+/**
+ * @description: 从update中计算新的state
+ */
 function getStateFromUpdate<State>(
   workInProgress: Fiber,
   queue: UpdateQueue<State>,
   update: Update<State>,
-  prevState: State
+  prevState: State,
+  nextProps: any,
+  instance: any
 ) {
   switch (update.tag) {
     case UpdateState:
       const payload = update.payload;
-      const partialState = isFunction(payload) ? payload() : payload;
+      const partialState = isFunction(payload)
+        ? payload.call(instance, prevState, nextProps)
+        : payload;
       if (partialState == null) {
         // 不需要更新
         return prevState;
       }
-      return assign({}, prevState, payload);
+      return assign({}, prevState, partialState);
   }
 }
 
