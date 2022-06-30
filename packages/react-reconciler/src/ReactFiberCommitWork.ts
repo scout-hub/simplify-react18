@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-29 21:39:47
+ * @LastEditTime: 2022-06-30 16:12:42
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -41,6 +41,7 @@ import {
   Insertion as HookInsertion,
 } from "./ReactHookEffectTags";
 import { FunctionComponentUpdateQueue } from "./ReactFiberHooks";
+import { commitUpdateQueue } from "./ReactUpdateQueue";
 
 let hostParent: Element | null = null;
 
@@ -291,6 +292,10 @@ function commitLayoutEffectOnFiber(
               instance.__reactInternalSnapshotBeforeUpdate
             );
           }
+        }
+        const updateQueue = finishedWork.updateQueue;
+        if (updateQueue !== null) {
+          commitUpdateQueue(finishedWork, updateQueue, instance);
         }
         break;
       }

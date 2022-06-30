@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-30 15:48:15
+ * @LastEditTime: 2022-06-30 16:20:04
  */
 const { Component, useState } = React;
 
@@ -22,7 +22,7 @@ class Child extends Component {
   componentWillMount() {
     // 这里同步调用setState不会触发额外的渲染更新
     this.setState({ num: 14 }, () => {
-      console.log('setState callback');
+      console.log("setState callback", this.state);
     });
   }
 

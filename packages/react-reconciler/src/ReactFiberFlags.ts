@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 13:28:53
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-30 15:07:38
+ * @LastEditTime: 2022-06-30 16:00:08
  */
 export type Flags = number;
 
@@ -22,6 +22,6 @@ export const PassiveStatic = 0b00100000000000000000000000;
 
 export const StaticMask = LayoutStatic | PassiveStatic | RefStatic;
 export const MutationMask = Placement | Update | ChildDeletion;
-export const LayoutMask = Update;
+export const LayoutMask = Update | Callback;
 export const PassiveMask = Passive | ChildDeletion;
 export const BeforeMutationMask = Update | Snapshot;

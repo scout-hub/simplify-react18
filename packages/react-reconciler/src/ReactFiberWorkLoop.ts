@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-29 21:28:02
+ * @LastEditTime: 2022-06-30 16:02:31
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -62,7 +62,13 @@ import {
   flushSyncCallbacks,
   scheduleSyncCallback,
 } from "./ReactFiberSyncTaskQueue";
-import { MutationMask, NoFlags, PassiveMask } from "./ReactFiberFlags";
+import {
+  BeforeMutationMask,
+  LayoutMask,
+  MutationMask,
+  NoFlags,
+  PassiveMask,
+} from "./ReactFiberFlags";
 
 type RootExitStatus = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -515,8 +521,13 @@ function commitRootImpl(root: FiberRoot) {
   }
 
   const subtreeHasEffects =
-    (finishedWork.subtreeFlags & MutationMask) !== NoFlags;
-  const rootHasEffect = (finishedWork.flags & MutationMask) !== NoFlags;
+    (finishedWork.subtreeFlags &
+      (BeforeMutationMask | MutationMask | LayoutMask | PassiveMask)) !==
+    NoFlags;
+  const rootHasEffect =
+    (finishedWork.flags &
+      (BeforeMutationMask | MutationMask | LayoutMask | PassiveMask)) !==
+    NoFlags;
 
   if (subtreeHasEffects || rootHasEffect) {
     // beforeMutationEffect阶段，当前应用树状态变更之前的操作，是getSnapshotBeforeUpdate调用的地方

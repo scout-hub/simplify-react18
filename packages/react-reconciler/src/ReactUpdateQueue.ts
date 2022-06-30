@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 14:43:08
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-30 15:15:41
+ * @LastEditTime: 2022-06-30 16:18:56
  */
 import { Lane, Lanes, NoLane } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -248,5 +248,27 @@ function getStateFromUpdate<State>(
         return prevState;
       }
       return assign({}, prevState, payload);
+  }
+}
+
+/**
+ * @description: 执行updateQueue上的副作用（update的callback）
+ */
+export function commitUpdateQueue<State>(
+  finishedWork: Fiber,
+  finishedQueue: UpdateQueue<State>,
+  instance: any
+) {
+  const effects = finishedQueue.effects;
+  finishedQueue.effects = null;
+  if (effects) {
+    for (let i = 0; i < effects.length; i++) {
+      const effect = effects[i];
+      const callback = effect.callback;
+      if (callback) {
+        effect.callback = null;
+        isFunction(callback) && callback.call(instance);
+      }
+    }
   }
 }
