@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-15 20:01:42
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-30 22:31:19
+ * @LastEditTime: 2022-07-01 17:22:27
  */
 import ReactSharedInternals from "./ReactSharedInternals";
 
@@ -18,3 +18,4 @@ export {
 } from "./ReactHooks";
 export { Component, PureComponent } from "./ReactBaseClasses";
 export { memo } from "./ReactMemo";
+export { REACT_FRAGMENT_TYPE as Fragment } from "packages/shared/src/ReactSymbols";

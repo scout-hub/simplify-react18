@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-30 11:34:15
+ * @LastEditTime: 2022-07-01 17:32:46
  */
 import {
   ClassComponent,
@@ -21,7 +21,10 @@ import {
   HostText,
   IndeterminateComponent,
 } from "./ReactWorkTags";
-import { REACT_MEMO_TYPE } from "packages/shared/src/ReactSymbols";
+import {
+  REACT_FRAGMENT_TYPE,
+  REACT_MEMO_TYPE,
+} from "packages/shared/src/ReactSymbols";
 
 /**
  * @description: 创建一个标记为HostRoot的fiber树根节点
@@ -132,6 +135,9 @@ export function createFiberFromTypeAndProps(
     fiberTag = HostComponent;
   } else {
     getTag: switch (type) {
+      case REACT_FRAGMENT_TYPE: {
+        return createFiberFromFragment(pendingProps.children, lanes, key);
+      }
       default:
         if (isObject(type)) {
           switch (type.$$typeof) {

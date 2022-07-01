@@ -2,55 +2,46 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-01 13:37:26
+ * @LastEditTime: 2022-07-01 17:23:15
  */
-const { PureComponent, Component, useState } = React;
+const { Fragment, Component } = React;
 
-class Child extends PureComponent {
+const Child = (props) => {
+  const { child } = props;
+  return <p>{child}</p>;
+};
+
+class Child1 extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      num: 0,
-      age: 14,
+      title: "Child1",
     };
   }
 
-  componentWillMount() {
-    this.state = { num: 2 };
-  }
-
-  update = () => {
-    this.setState((state) => {
-      return { num: state.num + 1 };
-    });
-  };
-
   render() {
-    console.log("render");
-    const { num } = this.state;
+    const { title } = this.state;
     return (
-      <div>
-        {num}
-        <button onClick={this.update}>更新child</button>
-      </div>
+      <Fragment>
+        <div>{title}</div>
+        <div>Fragement</div>
+      </Fragment>
     );
   }
 }
 
 const App = () => {
-  const [num, setNum] = useState(0);
-
+  const title = "hello";
+  const child = "child";
   return (
-    <div>
-      <Child />
-      <button
-        onClick={() => {
-          setNum(num);
-          // setNum(num + 1);
-        }}
-      >
-        更新
-      </button>
+    <div className="red">
+      {title}
+      <div>react</div>
+      {["study", "react"].map((item) => (
+        <span key={item}>{item}&nbsp;</span>
+      ))}
+      <Child child={child} />
+      <Child1 />
     </div>
   );
 };

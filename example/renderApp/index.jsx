@@ -2,14 +2,16 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-29 21:43:32
+ * @LastEditTime: 2022-07-01 17:33:04
  */
+const { Fragment, Component } = React;
+
 const Child = (props) => {
   const { child } = props;
   return <p>{child}</p>;
 };
 
-class Child1 extends React.Component {
+class Child1 extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -19,7 +21,12 @@ class Child1 extends React.Component {
 
   render() {
     const { title } = this.state;
-    return <div>{title}</div>;
+    return (
+      <Fragment>
+        <div>{title}</div>
+        <div>Fragement</div>
+      </Fragment>
+    );
   }
 }
 
@@ -31,7 +38,7 @@ const App = () => {
       {title}
       <div>react</div>
       {["study", "react"].map((item) => (
-        <span>{item}&nbsp;</span>
+        <span key={item}>{item}&nbsp;</span>
       ))}
       <Child child={child} />
       <Child1 />
