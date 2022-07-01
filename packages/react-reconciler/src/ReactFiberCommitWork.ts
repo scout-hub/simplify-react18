@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-30 16:12:42
+ * @LastEditTime: 2022-07-01 22:00:24
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -585,6 +585,7 @@ function commitPassiveUnmountEffects_begin() {
 
     // TODO 节点有删除的情况，需要对删除的节点进行副作用清理
     if ((nextEffect.flags & ChildDeletion) !== NoFlags) {
+      const deletions = fiber.deletions;
       throw Error("commitPassiveUnmountEffects_begin ChildDeletion");
     }
 

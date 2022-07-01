@@ -2,9 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-01 17:33:04
+ * @LastEditTime: 2022-07-01 22:00:46
  */
-const { Fragment, Component } = React;
+const { Fragment, Component, useState } = React;
 
 const Child = (props) => {
   const { child } = props;
@@ -22,7 +22,7 @@ class Child1 extends Component {
   render() {
     const { title } = this.state;
     return (
-      <Fragment>
+      <Fragment key={title}>
         <div>{title}</div>
         <div>Fragement</div>
       </Fragment>
@@ -33,6 +33,7 @@ class Child1 extends Component {
 const App = () => {
   const title = "hello";
   const child = "child";
+  const [num, setNum] = useState(0);
   return (
     <div className="red">
       {title}
@@ -40,6 +41,8 @@ const App = () => {
       {["study", "react"].map((item) => (
         <span key={item}>{item}&nbsp;</span>
       ))}
+      {num}
+      <button onClick={() => setNum(num + 1)}>更新</button>
       <Child child={child} />
       <Child1 />
     </div>

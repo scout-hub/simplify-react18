@@ -2,12 +2,15 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-21 22:05:35
+ * @LastEditTime: 2022-07-01 22:09:20
  */
 import type { Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
 import { isArray, isNumber, isObject, isString } from "packages/shared/src";
-import { REACT_ELEMENT_TYPE } from "packages/shared/src/ReactSymbols";
+import {
+  REACT_ELEMENT_TYPE,
+  REACT_FRAGMENT_TYPE,
+} from "packages/shared/src/ReactSymbols";
 import {
   createFiberFromElement,
   createFiberFromFragment,
@@ -31,6 +34,15 @@ function ChildReconciler(shouldTrackSideEffects) {
     newChild: any,
     lanes: Lanes
   ) {
+    // 是否是无key属性的Fragment，如果是无key属性的Fragment，就把它当作数组去处理（直接处理children）
+    const isUnkeyedTopLevelFragment =
+      isObject(newChild) &&
+      newChild.type === REACT_FRAGMENT_TYPE &&
+      newChild.key === null;
+    if (isUnkeyedTopLevelFragment) {
+      newChild = newChild.props.children;
+    }
+
     if (isObject(newChild)) {
       // 处理单个子节点的情况
       switch (newChild.$$typeof) {
@@ -492,7 +504,15 @@ function ChildReconciler(shouldTrackSideEffects) {
       // key相同，可能可以复用，接下去判断type
       if (child.key === key) {
         const elementType = element.type;
-        if (child.elementType === elementType) {
+        // Fragment片段
+        if (elementType === REACT_FRAGMENT_TYPE && child.tag === Fragment) {
+          // 这里是single elment的处理，也就是只有一个子节点，所以后面的兄弟节点可以全部删除
+          deleteRemainingChildren(returnFiber, child.sibling);
+          // Fragment的pendingProps只需要children
+          const existing = useFiber(child, element.props.children);
+          existing.return = returnFiber;
+          return existing;
+        } else if (child.elementType === elementType) {
           // 这里是single elment的处理，也就是只有一个子节点，所以后面的兄弟节点可以全部删除
           deleteRemainingChildren(returnFiber, child.sibling);
           const existing = useFiber(child, element.props);
@@ -517,6 +537,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     }
     // 没有节点复用（比如首屏渲染的hostRoot的current是没有child节点的）直接创建fiber节点
     const created: Fiber = createFiberFromElement(element, lanes);
+    console.log(created);
     created.return = returnFiber;
     return created;
   }
@@ -536,7 +557,7 @@ function ChildReconciler(shouldTrackSideEffects) {
    */
   function deleteChild(returnFiber: Fiber, childToDelete: Fiber) {
     const deletions = returnFiber.deletions;
-    // 如果deletions不存在，则创建一个[]
+    // 如果deletions不存在，则创建一个
     if (deletions === null) {
       returnFiber.deletions = [childToDelete];
       returnFiber.flags |= ChildDeletion;
