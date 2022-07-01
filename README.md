@@ -20,3 +20,4 @@ a simplified version of react18 implementation for study
  - [x] React.memo ------ example/reactMemo
  - [x] lifeCycles ------ example/lifeCycles
  - [x] setState ------ example/setState
+ - [x] pureComponent ------ example/pureComponent
