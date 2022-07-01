@@ -2,10 +2,10 @@
  * @Author: Zhouqi
  * @Date: 2022-06-18 21:00:04
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-30 15:13:10
+ * @LastEditTime: 2022-07-01 14:03:18
  */
 import { NoLanes } from "./ReactFiberLane";
-import { assign, isFunction } from "packages/shared/src";
+import { assign, isFunction, shallowEqual } from "packages/shared/src";
 import { Fiber } from "./ReactInternalTypes";
 import {
   cloneUpdateQueue,
@@ -13,6 +13,7 @@ import {
   enqueueUpdate,
   initializeUpdateQueue,
   processUpdateQueue,
+  ReplaceState,
   UpdateQueue,
 } from "./ReactUpdateQueue";
 import type { Lanes } from "./ReactFiberLane";
@@ -46,6 +47,23 @@ const classComponentUpdater = {
     // 开始调度更新
     scheduleUpdateOnFiber(fiber, lane, eventTime);
   },
+  enqueueReplaceState(instance, payload, callback) {
+    const fiber = getInstance(instance);
+    const lane = requestUpdateLane(fiber);
+    const eventTime = requestEventTime();
+
+    const update = createUpdate(eventTime, lane);
+    update.payload = payload;
+    // 标记替换为ReplaceState
+    update.tag = ReplaceState;
+
+    if (callback != null) {
+      update.callback = callback;
+    }
+
+    enqueueUpdate(fiber, update);
+    scheduleUpdateOnFiber(fiber, lane, eventTime);
+  },
 };
 
 /**
@@ -77,7 +95,13 @@ function checkShouldComponentUpdate(
     return shouldUpdate;
   }
 
-  // TODO pureComponent的浅比较
+  // pureComponent的浅比较
+  const pureComponentPrototype = ctor.prototype;
+  if (pureComponentPrototype && pureComponentPrototype.isPureReactComponent) {
+    return (
+      !shallowEqual(oldState, newState) || !shallowEqual(oldProps, newProps)
+    );
+  }
 
   return true;
 }
@@ -107,9 +131,12 @@ function callComponentWillMount(workInProgress: Fiber, instance: any) {
   const oldState = instance.state;
   instance.componentWillMount();
 
-  // 在componentWillMount可能会修改state
+  /**
+   * 在componentWillMount可能会直接修改state，即this.state = xxx，实际上应该用setState
+   * 但是react也会帮你进行state的替换
+   */
   if (oldState !== instance.state) {
-    throw Error("callComponentWillMount oldState !== instance.state");
+    instance.updater.enqueueReplaceState(instance, instance.state, null);
   }
 }
 
@@ -117,9 +144,9 @@ function callComponentWillReceiveProps(workInProgress, instance, newProps) {
   const oldState = instance.state;
   instance.componentWillReceiveProps(newProps);
 
-  // callComponentWillReceiveProps可能会修改state
+  // callComponentWillReceiveProps可能会同步修改state，即this.state = xxx，实际上应该用setState
   if (instance.state !== oldState) {
-    throw Error("callComponentWillReceiveProps instance.state !== oldState");
+    instance.updater.enqueueReplaceState(instance, instance.state, null);
   }
 }
 
@@ -177,7 +204,7 @@ export function mountClassInstance(
     callComponentWillMount(workInProgress, instance);
     // componentWillMount可能存在额外的状态更新，这里去处理这些状态更新
     processUpdateQueue(workInProgress, newProps, instance, renderLanes);
-    // 更新一下state
+    // 更新一下实例上的state
     instance.state = workInProgress.memoizedState;
   }
 
@@ -259,14 +286,6 @@ export function updateClassInstance(
       workInProgress.flags |= Snapshot;
     }
   } else {
-    if (
-      oldProps === current.memoizedProps &&
-      oldState === current.memoizedState
-    ) {
-      throw Error(
-        "oldProps === current.memoizedProps &&  oldState === current.memoizedState"
-      );
-    }
     // componentDidUpdate存在的并且新旧props或state不相等的情况下，标记上Update flag
     if (isFunction(instance.componentDidUpdate)) {
       if (
@@ -275,20 +294,21 @@ export function updateClassInstance(
       ) {
         workInProgress.flags |= Update;
       }
-
-      if (isFunction(instance.getSnapshotBeforeUpdate)) {
-        if (
-          oldProps !== current.memoizedProps ||
-          oldState !== current.memoizedState
-        ) {
-          workInProgress.flags |= Snapshot;
-        }
-      }
-
-      // 即使shouldUpdate是false，这里也要更新memoizedProps和memoizedState，表示可以复用
-      workInProgress.memoizedProps = newProps;
-      workInProgress.memoizedState = newState;
     }
+
+    // getSnapshotBeforeUpdate存在的并且新旧props或state不相等的情况下，标记上Snapshot flag
+    if (isFunction(instance.getSnapshotBeforeUpdate)) {
+      if (
+        oldProps !== current.memoizedProps ||
+        oldState !== current.memoizedState
+      ) {
+        workInProgress.flags |= Snapshot;
+      }
+    }
+
+    // 即使shouldUpdate是false，这里也要更新memoizedProps和memoizedState，表示可以复用
+    workInProgress.memoizedProps = newProps;
+    workInProgress.memoizedState = newState;
   }
 
   // 更新实例上的状态

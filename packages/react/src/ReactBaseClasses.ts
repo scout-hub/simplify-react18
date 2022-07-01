@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-06-18 20:49:05
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-30 22:37:49
+ * @LastEditTime: 2022-07-01 13:15:34
  */
 import { assign } from "packages/shared/src";
 class Component {
@@ -17,26 +17,22 @@ class Component {
 
 // 标记是不是react class component
 Component.prototype.isReactComponent = true;
-
-class ComponentDummy {}
-ComponentDummy.prototype = Component.prototype;
-
 class PureComponent {
   public updater;
   public isPureReactComponent;
   constructor(public props) {}
 }
 
-const pureComponentPrototype = ((PureComponent.prototype as any) =
-  new ComponentDummy());
+const pureComponentPrototype = (PureComponent.prototype = Object.create(
+  Component.prototype
+));
 
 pureComponentPrototype.constructor = PureComponent;
 
-// 将Component原型上的属性方法合并过来，减少通过原型链去访问的必要性
+// 将Component原型上的属性方法合并过来，减少通过原型链去访问的开销
 assign(pureComponentPrototype, Component.prototype);
 
 // 标记是不是react class pureComponent
-(pureComponentPrototype as any).isPureReactComponent = true;
-
+pureComponentPrototype.isPureReactComponent = true;
 
 export { Component, PureComponent };

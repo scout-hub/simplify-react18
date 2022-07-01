@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-30 16:49:52
+ * @LastEditTime: 2022-07-01 13:48:08
  */
 const { Component, useState } = React;
 
@@ -13,6 +13,11 @@ class Child extends Component {
       age: 12,
       num: 0,
     };
+  }
+
+  componentWillMount() {
+    // 这一步react会提示用setState去操作，如果不用setState，react会帮你进行state的replace操作
+    this.state = { num: 2 };
   }
 
   update = () => {

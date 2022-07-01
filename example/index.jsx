@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-30 22:30:11
+ * @LastEditTime: 2022-07-01 13:37:26
  */
 const { PureComponent, Component, useState } = React;
 
@@ -11,7 +11,12 @@ class Child extends PureComponent {
     super(props);
     this.state = {
       num: 0,
+      age: 14,
     };
+  }
+
+  componentWillMount() {
+    this.state = { num: 2 };
   }
 
   update = () => {
@@ -40,7 +45,7 @@ const App = () => {
       <Child />
       <button
         onClick={() => {
-          setNum(num + 1);
+          setNum(num);
           // setNum(num + 1);
         }}
       >

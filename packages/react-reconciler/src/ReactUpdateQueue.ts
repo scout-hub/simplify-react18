@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 14:43:08
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-30 16:47:29
+ * @LastEditTime: 2022-07-01 13:59:24
  */
 import { Lane, Lanes, NoLane } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -35,6 +35,7 @@ export type UpdateQueue<State> = {
 };
 
 export const UpdateState = 0;
+export const ReplaceState = 1;
 
 /**
  *
@@ -252,7 +253,7 @@ function getStateFromUpdate<State>(
   instance: any
 ) {
   switch (update.tag) {
-    case UpdateState:
+    case UpdateState: {
       const payload = update.payload;
       const partialState = isFunction(payload)
         ? payload.call(instance, prevState, nextProps)
@@ -262,6 +263,13 @@ function getStateFromUpdate<State>(
         return prevState;
       }
       return assign({}, prevState, partialState);
+    }
+    case ReplaceState: {
+      const payload = update.payload;
+      return isFunction(payload)
+        ? payload.call(instance, prevState, nextProps)
+        : payload;
+    }
   }
 }
 
