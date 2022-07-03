@@ -2,10 +2,10 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:36:13
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-26 14:21:23
+ * @LastEditTime: 2022-07-03 10:53:13
  */
 
-import { isFunction, isNumber, isString } from "packages/shared/src";
+import { isNumber, isString } from "shared";
 import {
   setValueForProperty,
   setValueForStyles,

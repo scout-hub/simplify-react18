@@ -41,16 +41,36 @@ importers:
       typescript: 4.6.4
 
   packages/react:
-    specifiers: {}
+    specifiers:
+      react-reconciler: workspace:^1.0.0
+      shared: workspace:^1.0.0
+    dependencies:
+      react-reconciler: link:../react-reconciler
+      shared: link:../shared
 
   packages/react-dom:
-    specifiers: {}
+    specifiers:
+      react-reconciler: workspace:^1.0.0
+      shared: workspace:^1.0.0
+    dependencies:
+      react-reconciler: link:../react-reconciler
+      shared: link:../shared
 
   packages/react-reconciler:
-    specifiers: {}
+    specifiers:
+      scheduler: workspace:^1.0.0
+      shared: workspace:^1.0.0
+      simplify-react-dom: workspace:^1.0.0
+    dependencies:
+      scheduler: link:../scheduler
+      shared: link:../shared
+      simplify-react-dom: link:../react-dom
 
   packages/scheduler:
-    specifiers: {}
+    specifiers:
+      shared: workspace:^1.0.0
+    dependencies:
+      shared: link:../shared
 
   packages/shared:
     specifiers: {}

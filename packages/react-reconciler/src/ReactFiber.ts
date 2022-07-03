@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-01 17:32:46
+ * @LastEditTime: 2022-07-03 11:04:00
  */
 import {
   ClassComponent,
@@ -12,7 +12,7 @@ import {
 } from "./ReactWorkTags";
 import type { Fiber } from "./ReactInternalTypes";
 import type { Lanes } from "./ReactFiberLane";
-import { isFunction, isObject, isString } from "packages/shared/src";
+import { isFunction, isObject, isString } from "shared";
 import { NoFlags, StaticMask } from "./ReactFiberFlags";
 import { NoLanes } from "./ReactFiberLane";
 import {

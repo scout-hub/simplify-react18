@@ -2,9 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-06-28 09:55:28
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-28 10:16:26
+ * @LastEditTime: 2022-07-03 10:49:20
  */
-import { REACT_MEMO_TYPE } from "packages/shared/src/ReactSymbols";
+import { REACT_MEMO_TYPE } from "shared";
 
 export function memo(
   type,

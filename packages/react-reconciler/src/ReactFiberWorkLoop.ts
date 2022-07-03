@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-30 16:02:31
+ * @LastEditTime: 2022-07-03 11:12:07
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -54,10 +54,7 @@ import {
   lanesToEventPriority,
   setCurrentUpdatePriority,
 } from "./ReactEventPriorities";
-import {
-  getCurrentEventPriority,
-  scheduleMicrotask,
-} from "packages/react-dom/src/client/ReactDOMHostConfig";
+import { getCurrentEventPriority, scheduleMicrotask } from "simplify-react-dom";
 import {
   flushSyncCallbacks,
   scheduleSyncCallback,

@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:23:10
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-20 22:30:06
+ * @LastEditTime: 2022-07-03 11:08:40
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { Lanes, mergeLanes, NoLanes } from "./ReactFiberLane";
@@ -12,7 +12,7 @@ import {
   createTextInstance,
   finalizeInitialChildren,
   prepareUpdate,
-} from "packages/react-dom/src/client/ReactDOMHostConfig";
+} from "simplify-react-dom";
 import {
   ClassComponent,
   Fragment,

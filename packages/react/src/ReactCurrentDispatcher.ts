@@ -2,9 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-06-11 20:21:33
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-12 17:47:12
+ * @LastEditTime: 2022-07-03 10:51:53
  */
-import type { Dispatcher } from "packages/react-reconciler/src/ReactInternalTypes";
+import type { Dispatcher } from "react-reconciler";
 
 const ReactCurrentDispatcher: { current: null | Dispatcher } = {
   current: null,

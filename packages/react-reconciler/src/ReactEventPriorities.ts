@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-06-14 12:32:30
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-14 17:16:12
+ * @LastEditTime: 2022-07-03 11:03:44
  */
 import {
   DefaultLane,
@@ -14,7 +14,7 @@ import {
   Lanes,
 } from "./ReactFiberLane";
 import { NoLane } from "./ReactFiberLane";
-import { SyncLane } from "packages/react-reconciler/src/ReactFiberLane";
+import { SyncLane } from "./ReactFiberLane";
 
 export type EventPriority = Lane;
 

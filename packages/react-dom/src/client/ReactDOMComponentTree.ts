@@ -2,9 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-28 19:40:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-02 10:56:27
+ * @LastEditTime: 2022-07-03 10:54:51
  */
-import { Fiber } from "packages/react-reconciler/src/ReactInternalTypes";
+import type { Fiber } from "react-reconciler";
 
 const randomKey = Math.random().toString(36).slice(2);
 const internalPropsKey = "__reactProps$" + randomKey;

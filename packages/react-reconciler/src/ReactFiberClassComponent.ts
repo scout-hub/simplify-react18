@@ -2,10 +2,10 @@
  * @Author: Zhouqi
  * @Date: 2022-06-18 21:00:04
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-01 14:03:18
+ * @LastEditTime: 2022-07-03 11:07:53
  */
 import { NoLanes } from "./ReactFiberLane";
-import { assign, isFunction, shallowEqual } from "packages/shared/src";
+import { assign, isFunction, shallowEqual } from "shared";
 import { Fiber } from "./ReactInternalTypes";
 import {
   cloneUpdateQueue,
@@ -21,7 +21,7 @@ import { Snapshot, Update } from "./ReactFiberFlags";
 import {
   get as getInstance,
   set as setInstance,
-} from "packages/shared/src/ReactInstanceMap";
+} from "shared";
 import {
   requestEventTime,
   requestUpdateLane,

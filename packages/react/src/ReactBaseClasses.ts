@@ -2,9 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-06-18 20:49:05
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-01 13:15:34
+ * @LastEditTime: 2022-07-03 10:45:48
  */
-import { assign } from "packages/shared/src";
+import { assign } from "shared";
 class Component {
   public isReactComponent;
   public updater;

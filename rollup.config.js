@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-15 15:30:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-30 13:51:46
+ * @LastEditTime: 2022-07-03 11:06:41
  */
 const typescript = require('@rollup/plugin-typescript');
 
@@ -24,7 +24,7 @@ export default [{
         }
     },
 }, {
-    input: './packages/react-dom/src/index.ts',
+    input: './packages/react-dom/index.ts',
     output: {
         name: 'ReactDOM',
         format: "iife",

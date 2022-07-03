@@ -2,10 +2,10 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 13:53:51
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-03 20:01:49
+ * @LastEditTime: 2022-07-03 11:00:35
  */
-import type { Fiber } from "packages/react-reconciler/src/ReactInternalTypes";
-import { HostComponent } from "packages/react-reconciler/src/ReactWorkTags";
+import type { Fiber } from "react-reconciler";
+import { HostComponent } from "react-reconciler";
 import { DOMEventName } from "./DOMEventNames";
 import { addEventBubbleListener } from "./EventListener";
 import { allNativeEvents } from "./EventRegistry";

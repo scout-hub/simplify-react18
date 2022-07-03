@@ -1,5 +1,5 @@
 {
-  "name": "react-dom",
+  "name": "simplify-react-dom",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,5 +8,9 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "react-reconciler": "workspace:^1.0.0",
+    "shared": "workspace:^1.0.0"
+  }
 }

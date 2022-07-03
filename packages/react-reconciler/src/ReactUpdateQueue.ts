@@ -2,11 +2,11 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 14:43:08
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-01 13:59:24
+ * @LastEditTime: 2022-07-03 11:12:36
  */
 import { Lane, Lanes, NoLane } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
-import { assign, isFunction } from "packages/shared/src";
+import { assign, isFunction } from "shared";
 import { NoLanes } from "./ReactFiberLane";
 import { Callback } from "./ReactFiberFlags";
 

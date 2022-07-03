@@ -2,9 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-15 20:14:41
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-25 21:31:45
+ * @LastEditTime: 2022-07-03 10:49:10
  */
-import { REACT_ELEMENT_TYPE } from "packages/shared/src/ReactSymbols";
+import { REACT_ELEMENT_TYPE } from "shared";
 import ReactCurrentOwner from "./ReactCurrentOwner";
 
 /**

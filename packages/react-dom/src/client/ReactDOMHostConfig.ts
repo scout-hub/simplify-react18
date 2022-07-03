@@ -2,11 +2,11 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 15:44:53
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-20 22:27:27
+ * @LastEditTime: 2022-07-03 10:58:50
  */
 
-import { DefaultEventPriority } from "packages/react-reconciler/src/ReactEventPriorities";
-import { Fiber } from "packages/react-reconciler/src/ReactInternalTypes";
+import type { Fiber } from "react-reconciler";
+import { DefaultEventPriority } from "react-reconciler";
 import { DOMEventName } from "../events/DOMEventNames";
 import { getEventPriority } from "../events/ReactDOMEventListener";
 import {

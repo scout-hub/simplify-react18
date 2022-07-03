@@ -2,9 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 13:51:07
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-02 11:07:49
+ * @LastEditTime: 2022-07-03 11:00:22
  */
-import type { Fiber } from "packages/react-reconciler/src/ReactInternalTypes";
+import type { Fiber } from "react-reconciler";
 import type { DOMEventName } from "../DOMEventNames";
 import {
   accumulateSinglePhaseListeners,

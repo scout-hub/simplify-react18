@@ -2,14 +2,14 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 15:02:16
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-19 15:51:06
+ * @LastEditTime: 2022-07-03 11:01:51
  */
 import {
   DefaultEventPriority,
   DiscreteEventPriority,
   getCurrentUpdatePriority,
   setCurrentUpdatePriority,
-} from "packages/react-reconciler/src/ReactEventPriorities";
+} from "react-reconciler";
 import { getClosestInstanceFromNode } from "../client/ReactDOMComponentTree";
 import { DOMEventName } from "./DOMEventNames";
 import { dispatchEventForPluginEventSystem } from "./DOMPluginEventSystem";

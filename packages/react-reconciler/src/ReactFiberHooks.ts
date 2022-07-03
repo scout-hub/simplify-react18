@@ -14,7 +14,7 @@ import {
   removeLanes,
 } from "./ReactFiberLane";
 import { is, isFunction } from "packages/shared/src";
-import ReactSharedInternals from "packages/shared/src/ReactSharedInternals";
+import { ReactSharedInternals } from "shared";
 import {
   requestEventTime,
   requestUpdateLane,

@@ -2,9 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 11:58:34
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-20 16:43:54
+ * @LastEditTime: 2022-07-03 11:14:29
  */
-import * as Scheduler from "packages/scheduler/src/forks/Scheduler";
+import * as Scheduler from "scheduler";
 
 export const now = Scheduler.unstable_now;
 export const scheduleCallback = Scheduler.unstable_scheduleCallback;

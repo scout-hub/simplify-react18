@@ -8,5 +8,10 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "scheduler": "workspace:^1.0.0",
+    "shared": "workspace:^1.0.0",
+    "simplify-react-dom": "workspace:^1.0.0"
+  }
 }

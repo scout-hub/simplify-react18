@@ -2,9 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-25 16:43:22
+ * @LastEditTime: 2022-07-03 11:15:12
  */
-import { isFunction } from "packages/shared/src";
+import { isFunction } from "shared";
 import {
   continuousYieldMs,
   // enableIsInputPending,

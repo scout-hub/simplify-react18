@@ -6,11 +6,11 @@
  */
 import type { Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
-import { isArray, isNumber, isObject, isString } from "packages/shared/src";
+import { isArray, isNumber, isObject, isString } from "shared";
 import {
   REACT_ELEMENT_TYPE,
   REACT_FRAGMENT_TYPE,
-} from "packages/shared/src/ReactSymbols";
+} from "shared";
 import {
   createFiberFromElement,
   createFiberFromFragment,

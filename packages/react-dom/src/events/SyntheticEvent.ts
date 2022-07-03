@@ -2,9 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-06-01 16:36:45
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-02 11:30:06
+ * @LastEditTime: 2022-07-03 11:02:04
  */
-import { Fiber } from "packages/react-reconciler/src/ReactInternalTypes";
+import { Fiber } from "react-reconciler";
 
 function functionThatReturnsTrue() {
   return true;
