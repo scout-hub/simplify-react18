@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-03 11:04:00
+ * @LastEditTime: 2022-07-05 22:03:13
  */
 import {
   ClassComponent,
@@ -44,7 +44,17 @@ function createFiber(tag: WorkTag, pendingProps, key: null | string) {
   return new FiberNode(tag, pendingProps, key);
 }
 
-// Fiber类
+/**
+ * Fiber类
+ * 
+ * react中有三种数据关系：
+ * 
+ * 1、ReactElement：即jsx经过babel转换后的数据，它描述了页面中dom的信息以及层级关系（最初dom diff应用的地方，不好控制渲染过程）
+ * 2、Fiber：是reactElement的镜像（拷贝了ReactElemen上的数据）。每一个fiber即是一个节点，也是一个独立的工作单元（并发），上面记录一些其他Fiber任务的信息，
+ * 例如sibling，return、child，能够知道接下去需要处理什么， 回去要处理什么（异步可中断/恢复。像函数嵌套调用一样，父函数调用子函数，子函数调用完可以回到父函数等等）。
+ * 它反映了组件Diff等工作的调用关系，推进整个渲染过程。由于每一个Fiber都是独立的工作，所以非常适合做并发，因为他们之间没有依赖关系，任务可以按照不同的顺序执行，并且能保证最终结果是正确的。
+ * 3、DOM：页面上实际的效果
+ */
 class FiberNode {
   type = null;
   elementType = null;
