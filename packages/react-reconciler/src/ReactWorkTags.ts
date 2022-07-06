@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:39:57
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-06 14:34:45
+ * @LastEditTime: 2022-07-06 21:13:58
  */
 export type WorkTag =
   | 0
@@ -51,6 +51,3 @@ export const Fragment = 7;
 export const MemoComponent = 14;
 // simple react memo
 export const SimpleMemoComponent = 15;
-
-// 组件缓存
-export const KeepAlive = 26;

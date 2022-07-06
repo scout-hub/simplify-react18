@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-06 17:07:04
+ * @LastEditTime: 2022-07-06 21:14:15
  */
 import type { Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -17,7 +17,6 @@ import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from "shared";
 import {
   createFiberFromElement,
   createFiberFromFragment,
-  createFiberFromKeepAlive,
   createFiberFromText,
   createWorkInProgress,
 } from "./ReactFiber";
@@ -59,17 +58,6 @@ function ChildReconciler(shouldTrackSideEffects) {
               lanes
             )
           );
-        // other
-        case REACT_KEEP_ALIVE_TYPE: {
-          return placeSingleChild(
-            reconcileSingleKeepAlive(
-              returnFiber,
-              currentFirstChild,
-              newChild,
-              lanes
-            )
-          );
-        }
       }
       // 处理多个子节点的情况
       if (isArray(newChild)) {
@@ -492,11 +480,6 @@ function ChildReconciler(shouldTrackSideEffects) {
           created.return = returnFiber;
           return created;
         }
-        // other
-        case REACT_KEEP_ALIVE_TYPE: {
-          console.log(newChild);
-          return createFiberFromKeepAlive(newChild, lanes);
-        }
       }
 
       if (isArray(newChild)) {
@@ -608,21 +591,6 @@ function ChildReconciler(shouldTrackSideEffects) {
     }
     return newFiber;
   }
-
-  const reconcileSingleKeepAlive = (
-    returnFiber: Fiber,
-    currentFirstChild: Fiber | null,
-    element: any,
-    lanes: Lanes
-  ) => {
-    let child = currentFirstChild;
-    while (child !== null) {
-      break;
-    }
-    const created: Fiber = createFiberFromKeepAlive(element, lanes);
-    created.return = returnFiber;
-    return created;
-  };
 
   return reconcileChildFibers;
 }

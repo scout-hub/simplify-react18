@@ -2,12 +2,11 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-06 17:06:06
+ * @LastEditTime: 2022-07-06 21:13:48
  */
 import {
   ClassComponent,
   Fragment,
-  KeepAlive,
   MemoComponent,
   WorkTag,
 } from "./ReactWorkTags";
@@ -150,10 +149,6 @@ export function createFiberFromTypeAndProps(
       case REACT_FRAGMENT_TYPE: {
         return createFiberFromFragment(pendingProps.children, lanes, key);
       }
-      case REACT_KEEP_ALIVE_TYPE: {
-        console.log(1);
-        return createFiberFromKeepAlive(pendingProps.children, lanes);
-      }
       default:
         if (isObject(type)) {
           switch (type.$$typeof) {
@@ -211,16 +206,4 @@ export function isSimpleFunctionComponent(type: any) {
     !shouldConstruct(type) &&
     type.defaultProps === undefined
   );
-}
-
-export function createFiberFromKeepAlive(element: any, lanes: Lanes) {
-  const { children, storageContainer, keys, cache } = element;
-  const fiber: Fiber = createFiber(KeepAlive, children, null);
-  fiber.lanes = lanes;
-  fiber.stateNode = {
-    storageContainer,
-    keys,
-    cache,
-  };
-  return fiber;
 }
