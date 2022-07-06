@@ -2,22 +2,26 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-01 22:09:20
+ * @LastEditTime: 2022-07-06 17:07:04
  */
 import type { Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
-import { isArray, isNumber, isObject, isString } from "shared";
 import {
-  REACT_ELEMENT_TYPE,
-  REACT_FRAGMENT_TYPE,
+  isArray,
+  isNumber,
+  isObject,
+  isString,
+  REACT_KEEP_ALIVE_TYPE,
 } from "shared";
+import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from "shared";
 import {
   createFiberFromElement,
   createFiberFromFragment,
+  createFiberFromKeepAlive,
   createFiberFromText,
   createWorkInProgress,
 } from "./ReactFiber";
-import { ChildDeletion, Forked, Placement } from "./ReactFiberFlags";
+import { ChildDeletion, Placement } from "./ReactFiberFlags";
 import { Fragment, HostText } from "./ReactWorkTags";
 
 /**
@@ -55,6 +59,17 @@ function ChildReconciler(shouldTrackSideEffects) {
               lanes
             )
           );
+        // other
+        case REACT_KEEP_ALIVE_TYPE: {
+          return placeSingleChild(
+            reconcileSingleKeepAlive(
+              returnFiber,
+              currentFirstChild,
+              newChild,
+              lanes
+            )
+          );
+        }
       }
       // 处理多个子节点的情况
       if (isArray(newChild)) {
@@ -477,6 +492,11 @@ function ChildReconciler(shouldTrackSideEffects) {
           created.return = returnFiber;
           return created;
         }
+        // other
+        case REACT_KEEP_ALIVE_TYPE: {
+          console.log(newChild);
+          return createFiberFromKeepAlive(newChild, lanes);
+        }
       }
 
       if (isArray(newChild)) {
@@ -537,7 +557,6 @@ function ChildReconciler(shouldTrackSideEffects) {
     }
     // 没有节点复用（比如首屏渲染的hostRoot的current是没有child节点的）直接创建fiber节点
     const created: Fiber = createFiberFromElement(element, lanes);
-    console.log(created);
     created.return = returnFiber;
     return created;
   }
@@ -589,6 +608,21 @@ function ChildReconciler(shouldTrackSideEffects) {
     }
     return newFiber;
   }
+
+  const reconcileSingleKeepAlive = (
+    returnFiber: Fiber,
+    currentFirstChild: Fiber | null,
+    element: any,
+    lanes: Lanes
+  ) => {
+    let child = currentFirstChild;
+    while (child !== null) {
+      break;
+    }
+    const created: Fiber = createFiberFromKeepAlive(element, lanes);
+    created.return = returnFiber;
+    return created;
+  };
 
   return reconcileChildFibers;
 }

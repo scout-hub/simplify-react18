@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-25 21:10:35
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-03 11:07:27
+ * @LastEditTime: 2022-07-06 17:12:10
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { includesSomeLane, Lanes, NoLanes } from "./ReactFiberLane";
@@ -22,6 +22,7 @@ import {
   HostRoot,
   HostText,
   IndeterminateComponent,
+  KeepAlive,
   MemoComponent,
   SimpleMemoComponent,
 } from "./ReactWorkTags";
@@ -137,6 +138,9 @@ export function beginWork(
         workInProgress.pendingProps,
         renderLanes
       );
+    }
+    case KeepAlive: {
+      return updateKeepAlive(current, workInProgress, renderLanes);
     }
   }
   return null;
@@ -498,4 +502,20 @@ function updateHostComponent(
   }
   reconcileChildren(current, workInProgress, nextChildren, renderLanes);
   return workInProgress.child;
+}
+
+// other
+function updateKeepAlive(
+  current: Fiber | null,
+  workInProgress: Fiber,
+  renderLanes: Lanes
+) {
+  const nextChildren = workInProgress.pendingProps;
+  console.log(nextChildren);
+  const key = nextChildren;
+  // mount阶段
+  if (current === null) {
+  } else {
+    // update阶段
+  }
 }

@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-03 11:08:25
+ * @LastEditTime: 2022-07-06 13:57:47
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -399,6 +399,18 @@ function commitDeletionEffectsOnFiber(
       }
       return;
     }
+    case FunctionComponent: {
+      recursivelyTraverseDeletionEffects(
+        finishedRoot,
+        nearestMountedAncestor,
+        deletedFiber
+      );
+      return;
+    }
+    case ClassComponent: {
+      throw Error("unmount class component");
+      return;
+    }
     default:
       // 删除子节点
       recursivelyTraverseDeletionEffects(
@@ -583,11 +595,10 @@ function commitPassiveUnmountEffects_begin() {
     const fiber = nextEffect;
     const child = fiber.child;
 
-    // TODO 节点有删除的情况，需要对删除的节点进行副作用清理
-    if ((nextEffect.flags & ChildDeletion) !== NoFlags) {
-      const deletions = fiber.deletions;
-      throw Error("commitPassiveUnmountEffects_begin ChildDeletion");
-    }
+    // if ((nextEffect.flags & ChildDeletion) !== NoFlags) {
+    //   const deletions = fiber.deletions;
+    // throw Error("commitPassiveUnmountEffects_begin ChildDeletion");
+    // }
 
     if ((fiber.subtreeFlags & PassiveMask) !== NoFlags && child !== null) {
       child.return = fiber;

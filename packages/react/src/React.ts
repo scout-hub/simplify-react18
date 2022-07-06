@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-15 20:01:42
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-01 17:22:27
+ * @LastEditTime: 2022-07-06 15:15:31
  */
 import ReactSharedInternals from "./ReactSharedInternals";
 
@@ -18,4 +18,7 @@ export {
 } from "./ReactHooks";
 export { Component, PureComponent } from "./ReactBaseClasses";
 export { memo } from "./ReactMemo";
-export { REACT_FRAGMENT_TYPE as Fragment } from "packages/shared/src/ReactSymbols";
+export { REACT_FRAGMENT_TYPE as Fragment } from "shared";
+
+// other
+export { createKeepAlive } from "react-reconciler";
