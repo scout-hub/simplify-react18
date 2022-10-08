@@ -10,7 +10,6 @@ a simplified version of react18 implementation for study
  - [x] 优先级调度 ------ example/优先级调度
  - [x] 时间切片 ------ example/时间切片
  - [x] diff ------ example/diff
- - [x] 事件系统 ------ examplate/event
  - [x] useState ------ example/useState
  - [x] useReducer ------ example/useReducer
  - [x] useEffect ------ example/useEffect
