@@ -24,7 +24,7 @@ const App = () => {
   // 直接呈现执行useLayoutEffect后的视图
   useLayoutEffect(() => {
     let i = 0;
-    while (i <= 1000000000) {
+    while(i <= 1000000000) {
       i++;
     }
     setDirection("column");

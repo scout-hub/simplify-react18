@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-03 11:12:07
+ * @LastEditTime: 2023-06-01 09:08:27
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -333,7 +333,7 @@ function performConcurrentWorkOnRoot(root: FiberRoot, didTimeout: boolean) {
   /**
    * 说明本次调度的回调任务被中断了，这时需要返回performConcurrentWorkOnRoot，以延续之前中断的任务
    *
-   * 这两个值不想等的情况：
+   * 这两个值不相等的情况：
    * 1、任务顺利调度完了，root.callbackNode会变成null
    * 2、有高优先级任务打断了低优先级任务
    */
@@ -382,7 +382,8 @@ function renderRootConcurrent(root, lanes: Lanes) {
  */
 function workLoopConcurrent() {
   // 留给react render的时间片不够就会中断render
-  while (workInProgress !== null && !shouldYield()) {
+  while (workInProgress !== null) {
+    // while (workInProgress !== null && !shouldYield()) {
     performUnitOfWork(workInProgress);
   }
 }
@@ -461,22 +462,9 @@ function commitRootImpl(root: FiberRoot) {
   // } while (rootWithPendingPassiveEffects !== null);
   /**
    * 在本次commit之前先检查是否还有未执行的useEffect，如果有则去执行它们，在执行过程中可能会产生新的副作用，因此需要用while循环
-   *
-   * 例如：
-   * useEffect(() => {console.log(1)},[num])
-   * useLayoutEffect(() => {setNum(1)},[num])
-   *
-   * 第一次进入commitRootImpl，由于执行了useEffect，rootWithPendingPassiveEffects会被赋值为root。
-   * 紧接着由于useLayoutEffec的执行会触发一次同步的副作用回调任务，回调中的setNum触发一个同步的更新任务，这个任务通过微任务的方式执行。
-   * 这个更新执行到第二次commitRootImpl，此时rootWithPendingPassiveEffects是上一次useEffect执行后赋值的root。
-   * 因为useEffect的副作用是在宏任务中触发的，因此需要到下一个事件循环内才能执行，
    */
   while (rootWithPendingPassiveEffects !== null) {
-    /**
-     * flushPassiveEffects也会对rootWithPendingPassiveEffects是不是为null做一次判断
-     * 这里是否用while先检查rootWithPendingPassiveEffects更好？
-     * 而不是不管如何都先执行一次flushPassiveEffects，再利用flushPassiveEffects函数去判断？
-     */
+    console.log(11);
     flushPassiveEffects();
   }
 
@@ -511,6 +499,7 @@ function commitRootImpl(root: FiberRoot) {
       rootDoesHavePassiveEffects = true;
       // 用Scheduler调度flushPassiveEffects（在布局完成后去调度这些副作用回调）
       scheduleCallback(NormalSchedulerPriority, () => {
+        console.log(22);
         flushPassiveEffects();
         return null;
       });
@@ -547,6 +536,8 @@ function commitRootImpl(root: FiberRoot) {
     rootDoesHavePassiveEffects = false;
     rootWithPendingPassiveEffects = root;
   }
+
+  // TODO：执行umount fiber的effect副作用函数的销毁函数
 
   // commit阶段可能会产生新的更新，所以这里再调度一次
   ensureRootIsScheduled(root, now());

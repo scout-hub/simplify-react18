@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "build": "rollup -c",
-    "dev": "node scripts/dev.js"
+    "build": "rollup -c"
   },
   "keywords": [],
   "author": "",

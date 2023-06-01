@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-06 21:12:50
+ * @LastEditTime: 2022-10-11 14:34:10
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -597,7 +597,7 @@ function commitPassiveUnmountEffects_begin() {
 
     // if ((nextEffect.flags & ChildDeletion) !== NoFlags) {
     //   const deletions = fiber.deletions;
-    // throw Error("commitPassiveUnmountEffects_begin ChildDeletion");
+    //   throw Error("commitPassiveUnmountEffects_begin ChildDeletion");
     // }
 
     if ((fiber.subtreeFlags & PassiveMask) !== NoFlags && child !== null) {

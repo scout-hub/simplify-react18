@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-26 20:52:22
+ * @LastEditTime: 2023-04-16 15:07:49
  */
 const { useState, useEffect } = React;
 
@@ -11,7 +11,7 @@ const App = () => {
   useEffect(() => {
     const btn = document.getElementById("btn1");
     setTimeout(() => {
-      setNum((num) => num + 1);
+      setNum((num) => num + 2);
     }, 1000);
     setTimeout(() => {
       btn.click();
@@ -23,12 +23,13 @@ const App = () => {
       <button
         id="btn1"
         onClick={() => {
-          setNum((num) => num + 2);
+          setNum((num) => num + 1);
         }}
       ></button>
-      <button onClick={() => {}}>更新</button>
-      {Array.from(new Array(100000)).map((item, i) => (
-        <h1 key={i}>{num}</h1>
+      {Array.from(new Array(1)).map((item, i) => (
+        <h1 key={i}>
+          <span>{num}</span>
+        </h1>
       ))}
     </div>
   );

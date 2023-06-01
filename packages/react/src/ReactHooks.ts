@@ -2,8 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-06-11 20:11:17
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-27 21:11:35
+ * @LastEditTime: 2022-08-22 15:03:45
  */
+import { DebounceOptions } from "react-reconciler/src/ReactInternalTypes";
 import ReactCurrentDispatcher from "./ReactCurrentDispatcher";
 
 type Dispatch<A> = (A) => void;
@@ -51,4 +52,13 @@ export function useCallback<T>(callback: T, deps: Array<any> | void | null): T {
 export function useMemo<T>(create: () => T, deps: Array<any> | void | null): T {
   const dispatcher = resolveDispatcher()!;
   return dispatcher.useMemo(create, deps);
+}
+
+export function useDebounce<T>(
+  callback: T,
+  options: DebounceOptions = {},
+  deps: Array<any> | void | null
+) {
+  const dispatcher = resolveDispatcher()!;
+  return dispatcher.useDebounce(callback, options, deps);
 }

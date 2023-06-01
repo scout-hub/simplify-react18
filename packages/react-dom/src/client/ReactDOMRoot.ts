@@ -2,11 +2,9 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 19:59:04
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-03 10:59:28
+ * @LastEditTime: 2023-03-14 20:52:04
  */
-import { createContainer } from "react-reconciler";
-import { updateContainer } from "react-reconciler";
-import { ConcurrentRoot } from "react-reconciler";
+import { ConcurrentRoot, updateContainer, createContainer } from "react-reconciler";
 import { listenToAllSupportedEvents } from "../events/DOMPluginEventSystem";
 
 export function createRoot(container) {

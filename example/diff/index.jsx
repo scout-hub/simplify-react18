@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-19 14:54:46
+ * @LastEditTime: 2022-09-26 14:19:49
  */
 const { useState } = React;
 
@@ -63,7 +63,7 @@ const oldDom = (
   <ul>
     <li key="0">0</li>
     <li key="1">1</li>
-    <li key="2"></li>
+    <li key="2">2</li>
   </ul>
 );
 
@@ -71,7 +71,7 @@ const newDom = (
   <ul>
     <li key="1">1</li>
     <li key="0">0</li>
-    <li key="2"></li>
+    <li key="2">2</li>
   </ul>
 );
 

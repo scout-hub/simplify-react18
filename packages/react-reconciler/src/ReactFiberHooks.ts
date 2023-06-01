@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-27 14:45:26
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-27 21:16:52
+ * @LastEditTime: 2023-04-12 20:27:04
  */
 import {
   isSubsetOfLanes,
@@ -24,6 +24,7 @@ import type {
   BasicStateAction,
   Dispatch,
   Dispatcher,
+  DebounceOptions,
   Fiber,
 } from "./ReactInternalTypes";
 import { markWorkInProgressReceivedUpdate } from "./ReactFiberBeginWork";
@@ -136,6 +137,7 @@ const HooksDispatcherOnMount: Dispatcher = {
   useReducer: mountReducer,
   useCallback: mountCallback,
   useMemo: mountMemo,
+  useDebounce: mountDebounce,
 };
 
 const HooksDispatcherOnUpdate: Dispatcher = {
@@ -145,7 +147,56 @@ const HooksDispatcherOnUpdate: Dispatcher = {
   useReducer: updateReducer,
   useCallback: updateCallback,
   useMemo: updateMemo,
+  useDebounce: updateDebounce,
 };
+
+function debounce(fn, options): () => void {
+  let timer: number | undefined = undefined;
+  return function () {
+    if (timer) {
+      clearTimeout(timer);
+    }
+    timer = setTimeout(function (this: any) {
+      fn.call(this, arguments);
+      clearTimeout(timer);
+      timer = undefined;
+    }, options.timeout);
+  };
+}
+
+function mountDebounce<T>(
+  callback: T,
+  options: DebounceOptions = {},
+  deps: Array<any> | void | null
+): T {
+  const hook = mountWorkInProgressHook();
+  const nextDeps = deps === undefined ? null : deps;
+  const debounceCallback = debounce(callback, options) as any;
+  hook.memoizedState = [debounceCallback, nextDeps];
+  return debounceCallback;
+}
+
+function updateDebounce<T>(
+  callback: T,
+  options: DebounceOptions = {},
+  deps: Array<any> | void | null
+): T {
+  const hook = updateWorkInProgressHook();
+  const nextDeps = deps === undefined ? null : deps;
+  const prevState = hook.memoizedState;
+  if (prevState !== null && nextDeps !== null) {
+    // 取出依赖项进行比较
+    const prevDeps: Array<any> | null = prevState[1];
+    // 如果前后依赖相同，则返回第一次mount时候传入的callback
+    if (areHookInputsEqual(nextDeps, prevDeps)) {
+      return prevState[0];
+    }
+  }
+  // 否则返回新的callback
+  const debounceCallback = debounce(callback, options) as any;
+  hook.memoizedState = [debounceCallback, nextDeps];
+  return debounceCallback;
+}
 
 /**
  * @description: mount阶段的useMemo
@@ -273,7 +324,6 @@ function updateReducer<S, I, A>(
 
   queue.lastRenderedReducer = reducer;
   const current = currentHook!;
-  // baseQueue指向链表的最后一位
   let baseQueue = current.baseQueue;
   // pending指向链表的最后一位
   const pendingQueue = queue.pending;

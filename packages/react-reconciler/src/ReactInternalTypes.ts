@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-30 15:32:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-27 21:14:21
+ * @LastEditTime: 2023-03-14 20:57:23
  */
 import type { Flags } from "./ReactFiberFlags";
 import type { Lane, LaneMap, Lanes } from "./ReactFiberLane";
@@ -52,6 +52,11 @@ export type FiberRoot = {
   finishedWork: Fiber | null;
 };
 
+export type DebounceOptions = {
+  leading?: boolean;
+  timeout?: number;
+};
+
 export type Dispatch<A> = (a: A) => void;
 export type BasicStateAction<S> = ((a: S) => S) | S;
 
@@ -72,4 +77,9 @@ export type Dispatcher = {
   ): [S, Dispatch<A>];
   useCallback<T>(callback: T, deps: Array<any> | void | null): T;
   useMemo<T>(nextCreate: () => T, deps: Array<any> | void | null): T;
+  useDebounce<T>(
+    callback: T,
+    options: DebounceOptions,
+    deps: Array<any> | void | null
+  ): T;
 };

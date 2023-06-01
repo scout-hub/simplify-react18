@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-15 15:30:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-03 11:06:41
+ * @LastEditTime: 2023-03-15 09:18:16
  */
 const typescript = require('@rollup/plugin-typescript');
 
@@ -11,7 +11,8 @@ export default [{
     output: {
         name: 'React',
         format: "iife",
-        file: './build/simplify-react.global.js'
+        file: './build/simplify-react.global.js',
+        sourcemap: true,
     },
     plugins: [
         typescript({
@@ -19,7 +20,7 @@ export default [{
         })
     ],
     onwarn: (msg, warn) => {
-        if (!/Circular/.test(msg)) {
+        if(!/Circular/.test(msg)) {
             warn(msg)
         }
     },
@@ -29,6 +30,7 @@ export default [{
         name: 'ReactDOM',
         format: "iife",
         file: './build/simplify-react-dom.global.js',
+        sourcemap: true,
     },
     external: ['packages/react'],
     plugins: [
@@ -38,7 +40,7 @@ export default [{
         // commonjs()
     ],
     onwarn: (msg, warn) => {
-        if (!/Circular/.test(msg)) {
+        if(!/Circular/.test(msg)) {
             warn(msg)
         }
     },

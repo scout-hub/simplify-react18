@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 12:00:55
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-03 11:15:12
+ * @LastEditTime: 2023-03-15 21:22:50
  */
 import { isFunction } from "shared";
 import {
@@ -218,7 +218,7 @@ function workLoop(hasTimeRemaining: boolean, initialTime: number) {
     }
 
     // 获取真正的更新函数
-    const callback = currentTask.callback;
+    const callback = currentTask.callback; // performConcurrentWorkOnRoot
     if (typeof callback === "function") {
       currentTask.callback = null;
       currentPriorityLevel = currentTask.priorityLevel;

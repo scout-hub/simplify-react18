@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-01 13:48:08
+ * @LastEditTime: 2023-04-16 14:29:11
  */
 const { Component, useState } = React;
 
@@ -17,8 +17,21 @@ class Child extends Component {
 
   componentWillMount() {
     // 这一步react会提示用setState去操作，如果不用setState，react会帮你进行state的replace操作
-    this.state = { num: 2 };
+    // this.state = { num: 2 };
   }
+
+  // componentDidMount() {
+  //   this.setState({ num: this.state.num + 1 });
+  //   console.log(this.state.num); // 第 1 次 log
+  //   this.setState({ num: this.state.num + 1 });
+  //   console.log(this.state.num); // 第 2 次 log
+  //   setTimeout(() => {
+  //     this.setState({ num: this.state.num + 1 });
+  //     console.log(this.state.num); // 第 3 次 log
+  //     this.setState({ num: this.state.num + 1 });
+  //     console.log(this.state.num); // 第 4 次 log
+  //   }, 0);
+  // }
 
   update = () => {
     // 只执行一次更新(批量处理)，因为优先级相同，后续的更新直接return了（ensureRootIsScheduled）
@@ -30,20 +43,33 @@ class Child extends Component {
     // });
     // this.setState({
     //   num: this.state.num + 1,
+    // }, () => {
+    //   console.log(this.state.num);
     // });
 
+
     // 后一个setState的值依赖前一个
-    this.setState((state, props) => {
-      return { num: state.num + 1 };
-    });
-    this.setState((state, props) => {
-      console.log(state.num);
-      return { num: state.num + 1 };
-    });
+    // this.setState((state, props) => {
+    //   return { num: state.num + 1 };
+    // }, () => {
+    //   console.log(this.state.num);
+    // });
+    // this.setState((state, props) => {
+    //   return { num: state.num + 1 };
+    // }, () => {
+    //   console.log(this.state.num);
+    // });
+    // this.setState((state, props) => {
+    //   return { num: state.num + 1 };
+    // }, () => {
+    //   console.log(this.state.num);
+    // });
+
+    // console.log(this.state.num);
   };
 
   render() {
-    console.log("render");
+    // console.log("render");
     const { num } = this.state;
     return (
       <div>
@@ -60,13 +86,13 @@ const App = () => {
   return (
     <div>
       <Child num={num} />
-      <button
+      {/* <button
         onClick={() => {
           setNum(num + 1);
         }}
       >
         更新
-      </button>
+      </button> */}
     </div>
   );
 };
