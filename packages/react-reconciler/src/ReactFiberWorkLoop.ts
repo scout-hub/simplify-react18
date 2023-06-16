@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2023-06-01 09:08:27
+ * @LastEditTime: 2023-06-14 20:34:35
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -278,6 +278,8 @@ function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
  * @description: 不通过Schedular调度的同步任务的入口
  */
 function performSyncWorkOnRoot(root: FiberRoot) {
+  console.log('xxx');
+  flushPassiveEffects();
   let lanes = getNextLanes(root, NoLanes);
   // 没有同步的任务了，则直接返回
   if (!includesSomeLane(lanes, SyncLane)) return null;
@@ -457,16 +459,14 @@ function commitRoot(root: FiberRoot) {
 }
 
 function commitRootImpl(root: FiberRoot) {
-  // do {
-  //   flushPassiveEffects();
-  // } while (rootWithPendingPassiveEffects !== null);
   /**
-   * 在本次commit之前先检查是否还有未执行的useEffect，如果有则去执行它们，在执行过程中可能会产生新的副作用，因此需要用while循环
+   * 这段逻辑在react16的时候解决了多根标签下渲染时useEffect回调未执行的问题
+   * 但是在react18中，这段逻辑还未知在何时会被执行
    */
-  while (rootWithPendingPassiveEffects !== null) {
-    console.log(11);
-    flushPassiveEffects();
-  }
+  // while (rootWithPendingPassiveEffects !== null) {
+  //   console.error('while rootWithPendingPassiveEffects');
+  //   flushPassiveEffects();
+  // }
 
   const finishedWork = root.finishedWork;
 
@@ -499,7 +499,6 @@ function commitRootImpl(root: FiberRoot) {
       rootDoesHavePassiveEffects = true;
       // 用Scheduler调度flushPassiveEffects（在布局完成后去调度这些副作用回调）
       scheduleCallback(NormalSchedulerPriority, () => {
-        console.log(22);
         flushPassiveEffects();
         return null;
       });
@@ -541,6 +540,8 @@ function commitRootImpl(root: FiberRoot) {
 
   // commit阶段可能会产生新的更新，所以这里再调度一次
   ensureRootIsScheduled(root, now());
+
+  flushSyncCallbacks();
 }
 
 /**

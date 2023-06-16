@@ -8,7 +8,7 @@
             "type": "chrome",
             "request": "launch",
             "name": "Open index.html",
-            "file": "/Users/scout/Documents/frontEnd/simplify-react/example/useLayoutEffect/index.html",
+            "file": "/Users/scout/Documents/frontEnd/simplify-react/example/useEffect/index.html",
             "runtimeExecutable": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
             "runtimeArgs": [
                 "--disable-web-security"

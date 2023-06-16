@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:20:49
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-06-17 14:17:52
+ * @LastEditTime: 2023-06-16 13:43:17
  */
 import type { Fiber } from "./ReactInternalTypes";
 import { createHostRootFiber } from "./ReactFiber";
@@ -30,14 +30,14 @@ export function createFiberRoot(containerInfo, tag, initialChildren = null) {
 }
 
 class FiberRootNode {
-  current: any = null; // 指向当前的RootFiber应用
-  finishedWork = null;
-  callbackNode = null;
-  callbackPriority = NoLane;
-  pendingLanes = NoLane;
-  expiredLanes = NoLanes;
-  eventTimes = createLaneMap(NoLanes);
-  expirationTimes = createLaneMap(NoTimestamp); // 过期的lane数组
+  current: any = null; // 指向当前应用的根节点
+  finishedWork = null; // 上一次提交更新的根节点 FiberNode
+  callbackNode = null; // 调度回调的节点
+  callbackPriority = NoLane; // 调度的优先级
+  pendingLanes = NoLane; // 等待执行的任务
+  expiredLanes = NoLanes; // 记录已经过期的任务
+  eventTimes = createLaneMap(NoLanes); // 存储不同优先级的事件时间戳
+  expirationTimes = createLaneMap(NoTimestamp); // 存储不同lanes任务的过期时间
 
-  constructor(public containerInfo, public tag) {}
+  constructor(public containerInfo, public tag) { }
 }

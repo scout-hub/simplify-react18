@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 21:41:18
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-06 21:13:48
+ * @LastEditTime: 2023-06-15 21:18:54
  */
 import {
   ClassComponent,
@@ -74,7 +74,7 @@ class FiberNode {
   deletions = null;
   alternate = null;
 
-  constructor(public tag, public pendingProps, public key) {}
+  constructor(public tag, public pendingProps, public key) { }
 }
 
 /**
