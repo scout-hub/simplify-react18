@@ -2,12 +2,13 @@
 # simplify-react18
 通过一步步实现简单的vite来学习vite的核心原理
 
-# 文档输出
+### 内容输出
 docs
 
-构建：pnpm build
+### 构建
+pnpm build
 
-目前实现：
+### 目前实现：
 
  - [x] function component/class component/Fragment/文本节点/普通element的创建和更新 ------ example/renderApp
  - [x] 优先级调度 ------ example/优先级调度
