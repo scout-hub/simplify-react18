@@ -1,6 +1,9 @@
 
 # simplify-react18
-a simplified version of react18 implementation for study
+通过一步步实现简单的vite来学习vite的核心原理
+
+# 文档输出
+docs
 
 构建：pnpm build
 
