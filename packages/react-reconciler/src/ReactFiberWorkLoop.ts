@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2023-06-14 20:34:35
+ * @LastEditTime: 2023-06-19 18:55:48
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -278,7 +278,6 @@ function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
  * @description: 不通过Schedular调度的同步任务的入口
  */
 function performSyncWorkOnRoot(root: FiberRoot) {
-  console.log('xxx');
   flushPassiveEffects();
   let lanes = getNextLanes(root, NoLanes);
   // 没有同步的任务了，则直接返回

@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-16 19:59:04
  * @LastEditors: Zhouqi
- * @LastEditTime: 2023-03-14 20:52:04
+ * @LastEditTime: 2023-06-19 10:56:19
  */
 import { ConcurrentRoot, updateContainer, createContainer } from "react-reconciler";
 import { listenToAllSupportedEvents } from "../events/DOMPluginEventSystem";
@@ -21,7 +21,7 @@ class ReactDOMRoot {
     this._internalRoot = internalRoot;
   }
 
-  // 通过ReactDOM.render将jsx渲染到页面上
+  // 通过ReactDOM.render渲染页面
   render(children) {
     const root = this._internalRoot;
     updateContainer(children, root);
