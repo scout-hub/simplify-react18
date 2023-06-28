@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2023-06-19 18:55:48
+ * @LastEditTime: 2023-06-28 16:00:29
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -613,7 +613,6 @@ function completeUnitOfWork(unitOfWork: Fiber) {
       workInProgress = next;
       return;
     }
-
     // 处理当前节点的兄弟节点
     const siblingFiber = completedWork.sibling;
     if (siblingFiber !== null) {
