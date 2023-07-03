@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2023-03-15 10:04:32
+ * @LastEditTime: 2023-07-03 14:41:47
  */
 const { Fragment, Component, useState } = React;
 
@@ -30,24 +30,26 @@ class Child1 extends Component {
   }
 }
 
-const App = () => {
-  const title = "hello";
-  const child = "child";
-  const [num, setNum] = useState(0);
-  return (
-    <div className="red">
-      {title}
-      <div>react</div>
-      {["study", "react"].map((item) => (
-        <span key={item}>{item}&nbsp;</span>
-      ))}
-      {num}
-      <button onClick={() => setNum(num + 1)}>更新</button>
-      <Child child={child} />
-      <Child1 />
-    </div>
-  );
-};
+// const App = () => {
+//   const title = "hello";
+//   const child = "child";
+//   const [num, setNum] = useState(0);
+//   return (
+//     <div className="red">
+//       {title}
+//       <div>react</div>
+//       {["study", "react"].map((item) => (
+//         <span key={item}>{item}&nbsp;</span>
+//       ))}
+//       {num}
+//       <button onClick={() => setNum(num + 1)}>更新</button>
+//       <Child child={child} />
+//       <Child1 />
+//     </div>
+//   );
+// };
+
+const App = () => <div><span>react</span></div>
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<App />);

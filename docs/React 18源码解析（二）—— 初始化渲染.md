@@ -1,3 +1,9 @@
+<!--
+ * @Author: Zhouqi
+ * @Date: 2023-07-03 16:47:39
+ * @LastEditors: Zhouqi
+ * @LastEditTime: 2023-07-03 16:47:40
+-->
 # React 18源码解析（二）—— 初始化渲染
 
 
@@ -149,19 +155,19 @@ root.render(<App />);
 ```
 
 1. 在 prepareFreshStack 之前已经存在了FiberRoot 和 RootFiber，FiberRoot 的 current 指针指向当前应用的根节点 RootFiber
-   ![image-20230626140053215](/Users/scout/Library/Application Support/typora-user-images/image-20230626140053215.png)
+   ![image-20230626140053215](https://raw.githubusercontent.com/scout-hub/picgo-bed/dev/image-20230626140053215.png)
 2. 在第一次执行 prepareFreshStack 时会先创建 root fiber 对应的 workInProgress fiber，两者通过 alternate 进行关联
-   ![image-20230626150713943](/Users/scout/Library/Application Support/typora-user-images/image-20230626150713943.png)
+   ![image-20230626150713943](https://raw.githubusercontent.com/scout-hub/picgo-bed/dev/image-20230626150713943.png)
 3. 接下去会渲染 App 组件，创建 App 组件对应的 workInProgress fiber
-   ![image-20230626150700308](/Users/scout/Library/Application Support/typora-user-images/image-20230626150700308.png)
+   ![image-20230626150700308](https://raw.githubusercontent.com/scout-hub/picgo-bed/dev/image-20230626150700308.png)
 4. 创建 App 组件的子节点 div 对应的 workInProgress fiber
-   ![image-20230626150640050](/Users/scout/Library/Application Support/typora-user-images/image-20230626150640050.png)
+   ![image-20230626150640050](https://raw.githubusercontent.com/scout-hub/picgo-bed/dev/image-20230626150640050.png)
 5. 创建 div 的子节点 span 对应的 workInProgress fiber
-   ![image-20230626150618784](/Users/scout/Library/Application Support/typora-user-images/image-20230626150618784.png)
+   ![image-20230626150618784](https://raw.githubusercontent.com/scout-hub/picgo-bed/dev/image-20230626150618784.png)
 6. 页面更新完成后 current 指针指向右边的 workInProgress fiber 树
-   ![image-20230626150549806](/Users/scout/Library/Application Support/typora-user-images/image-20230626150549806.png)
+   ![image-20230626150549806](https://raw.githubusercontent.com/scout-hub/picgo-bed/dev/image-20230626150549806.png)
 7. 当组件更新时，会基于 current fiber 创建一颗新的 workInProgress fiber 树
-   ![image-20230626152742399](/Users/scout/Library/Application Support/typora-user-images/image-20230626152742399.png)
+   ![image-20230626152742399](https://raw.githubusercontent.com/scout-hub/picgo-bed/dev/image-20230626152742399.png)
 
 
 
@@ -418,7 +424,7 @@ function reconcileChildren(
 ```
 
 前面提到，对于首次渲染的 hostRoot 来说 current 是存在的，所以会进入 reconcileChildFibers 方法。我们以 const App = () => <div><span>react</span></div> 为例先看一下它对应生成的 jsx 对象：
-![image-20230627165432737](/Users/scout/Library/Application Support/typora-user-images/image-20230627165432737.png)
+![image-20230627165432737](https://raw.githubusercontent.com/scout-hub/picgo-bed/dev/image-20230627165432737.png)
 
 对于 hostRoot 来说，它的第一个子节点是 App 对应的 jsx 对象并且它的 $$typeof 对象是 Symbol(react.element)，因此会进入 reconcileSingleElement 方法，即单子节点的处理。当节点处理完后会通过 placeSingleChild 方法，给节点打上 flag 标记，这个标记会在后面的DOM操作中用到。
 
@@ -507,7 +513,7 @@ export function createFiberFromTypeAndProps(
 }
 ```
 
-当 fiber 创建完成后会继续调用 placeSingleChild 来给创建好的 fiber 打上 flag 标记，之前创建好的 App 组件的 fiber 会被打上 Placement 的标记，表示这个节点会被放置（DOM添加或者移动）。
+当 fiber 创建完成后会调用 placeSingleChild 将之前创建好的 App 组件的 fiber 打上 Placement 的标记，表示这个节点会被放置（DOM添加或者移动）。只有更新时创建的 fiber 才会被打上标记，由于 hostRoot 默认也是走的更新逻辑，所以 hostRoot 创建 App fiber 时 App fiber 会被打上标记。
 
 ```typescript
   // react-reconciler/src/ReactChildFiber.ts
@@ -604,9 +610,9 @@ export const reconcileChildFibers = ChildReconciler(true);
 export const mountChildFibers = ChildReconciler(false);
 ```
 
-接下去的流程其实和上面 App fiber 的创建流程大致相同了，对于 App 组件返回的 jsx 对象来说，外层对象是 div 节点对应的 jsx 对象，它也是一个 Object 类型，并且 $$typeof 也是 Symbol(react.element)，因此它也会走 reconcileSingleElement 和 placeSingleChild 方法。div 这种普通元素节点和之前讲的 App 组件节点的区别在于创建的 fiber 类型不同，在 createFiberFromTypeAndProps 中，普通元素的 tag 是一个字符串类型，所以它会被标记为 HostComponent 类型。
+接下去的流程其实和上面 App fiber 的创建流程大致相同了，对于 App 组件返回的 jsx 对象来说，外层对象是 div 节点对应的 jsx 对象，它也是一个 Object 类型，并且 $$typeof 也是 Symbol(react.element)，因此它也会走 reconcileSingleElement 和 placeSingleChild 方法。div 这类普通元素节点和之前讲的 App 组件节点的区别在于创建的 fiber 类型不同，在 createFiberFromTypeAndProps 中，普通元素的 tag 是一个字符串类型，所以它会被标记为 HostComponent 类型。并且在执行 placeSingleChild 的时候，div fiber 不会被打上 Placement 的标记，因为在创建 div fiber 的时候走的是初始化创建的流程，shouldTrackSideEffects 是 false。
 
-![image-20230628114312954](/Users/scout/Library/Application Support/typora-user-images/image-20230628114312954.png)
+![image-20230628114312954](https://raw.githubusercontent.com/scout-hub/picgo-bed/dev/image-20230628114312954.png)
 
 div fiber 创建完毕后会进入下一个 beginWork 阶段，由于 div 对应的 fiber 是 HostComponent类型，因此它会进入 updateHostComponent 方法。在 updateHostComponent 方法中会先获取子节点，判断子节点是不是唯一文本子节点，唯一文本子节点指的是子节点只有一个文本节点。如果是唯一文本子节点，则直接把 children 置为 null，表示不需要再处理子节点，直接把文本内容当做 props；反之则需要创建子 fiber 节点。显然，div 的子节点是 span 子节点，不是唯一文本子节点。所以接下去会创建 span 节点对应的 fiber，这个过程同父节点 div 相同。
 
