@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-19 21:24:22
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-10-11 14:34:10
+ * @LastEditTime: 2023-07-03 18:57:57
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -186,7 +186,6 @@ function commitMutationEffectsOnFiber(finishedWork: Fiber, root: FiberRoot) {
     }
     case HostRoot:
       recursivelyTraverseMutationEffects(root, finishedWork);
-      // commitReconciliationEffects(finishedWork);
       return;
     case HostText: {
       recursivelyTraverseMutationEffects(root, finishedWork);

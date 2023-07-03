@@ -1,8 +1,8 @@
 <!--
  * @Author: Zhouqi
- * @Date: 2023-07-03 16:47:39
+ * @Date: 2023-07-03 18:33:11
  * @LastEditors: Zhouqi
- * @LastEditTime: 2023-07-03 16:47:40
+ * @LastEditTime: 2023-07-03 18:33:12
 -->
 # React 18源码解析（二）—— 初始化渲染
 
@@ -716,7 +716,7 @@ function completeUnitOfWork(unitOfWork: Fiber) {
 2. 调用 appendAllChildren 将当前 fiber 的child fiber 对应的真实 DOM 添加到自身真实dom下。这种方式可以将下层的 DOM 汇聚到上层，最终向页面添加 DOM 时只需要 append 最顶层的 DOM 即可
 3. 将创建完的 DOM 赋值给 fiber 上的 stateNode 属性
 4. 调用 finalizeInitialChildren 初始化 DOM 属性等等
-5. bubbleProperties 是优先级冒泡，这里暂不需要了解
+5. bubbleProperties 内部对优先级和副作用标记进行了冒泡处理。冒泡的意思就是将子节点上的优先级以及副作用都记录到其父节点上，所有副作用标记会被记录到 subtreeFlags 上，优先级会被记录到 childLanes 上。这么做的好处就是根据父节点上的 subtreeFlags 和 childLanes就能知道子节点是否需要进行相关处理，比如在 DOM 更新的时候，某一个组件的 subtreeFlags 是 0，那么意味着其后代元素都不需要进行副作用处理，省去了对这些元素的遍历判断。
 
 ```typescript
 // demo.jsx
