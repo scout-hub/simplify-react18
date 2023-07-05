@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-26 17:20:37
  * @LastEditors: Zhouqi
- * @LastEditTime: 2022-07-06 21:14:15
+ * @LastEditTime: 2023-07-05 14:01:19
  */
 import type { Lanes } from "./ReactFiberLane";
 import type { Fiber } from "./ReactInternalTypes";
@@ -309,11 +309,6 @@ function ChildReconciler(shouldTrackSideEffects) {
     newIndex: number
   ): number {
     newFiber.index = newIndex;
-    // mount阶段直接返回lastPlacedIndex
-    if (!shouldTrackSideEffects) {
-      // newFiber.flags |= Forked;
-      return lastPlacedIndex;
-    }
     // mount的时候lastPlacedIndex不需要操作，没有意义
     if (!shouldTrackSideEffects) return lastPlacedIndex;
     const current = newFiber.alternate;
