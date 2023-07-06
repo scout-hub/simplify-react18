@@ -1,9 +1,3 @@
-<!--
- * @Author: Zhouqi
- * @Date: 2023-07-03 18:33:11
- * @LastEditors: Zhouqi
- * @LastEditTime: 2023-07-03 18:33:12
--->
 # React 18源码解析（二）—— 初始化渲染
 
 

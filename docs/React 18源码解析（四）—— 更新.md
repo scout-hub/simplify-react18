@@ -1,9 +1,3 @@
-<!--
- * @Author: Zhouqi
- * @Date: 2023-07-05 17:59:25
- * @LastEditors: Zhouqi
- * @LastEditTime: 2023-07-05 17:59:26
--->
 # React 18源码解析（四）——  更新
 
 
