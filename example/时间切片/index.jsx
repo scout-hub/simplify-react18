@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-31 16:21:54
  * @LastEditors: Zhouqi
- * @LastEditTime: 2023-03-15 21:44:53
+ * @LastEditTime: 2023-07-06 13:56:58
  */
 const { useState } = React;
 
@@ -20,7 +20,7 @@ const App = () => {
       >
         更新
       </button>
-      {Array.from(new Array(100000)).map((item, i) => (
+      {Array.from(new Array(300000)).map((item, i) => (
         <h1 key={i}>{num}</h1>
       ))}
     </div>

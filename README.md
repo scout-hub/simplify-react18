@@ -1,9 +1,8 @@
-
 # simplify-react18
 通过一步步实现简单的vite来学习vite的核心原理
 
 ### 内容输出
-docs
+https://github.com/scout-hub/technology-blog
 
 ### 构建
 pnpm build

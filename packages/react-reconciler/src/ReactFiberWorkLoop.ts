@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2023-06-28 16:00:29
+ * @LastEditTime: 2023-07-06 13:58:24
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -383,8 +383,8 @@ function renderRootConcurrent(root, lanes: Lanes) {
  */
 function workLoopConcurrent() {
   // 留给react render的时间片不够就会中断render
-  while (workInProgress !== null) {
-    // while (workInProgress !== null && !shouldYield()) {
+  // while (workInProgress !== null) {
+  while (workInProgress !== null && !shouldYield()) {
     performUnitOfWork(workInProgress);
   }
 }
