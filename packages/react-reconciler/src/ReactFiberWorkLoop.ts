@@ -2,7 +2,7 @@
  * @Author: Zhouqi
  * @Date: 2022-05-18 11:29:27
  * @LastEditors: Zhouqi
- * @LastEditTime: 2023-07-06 13:58:24
+ * @LastEditTime: 2023-07-17 10:23:59
  */
 import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import {
@@ -188,7 +188,7 @@ function ensureRootIsScheduled(root: FiberRoot, eventTime: number) {
   // 判读某些lane上的任务是否已经过期，过期的话就标记为过期，然后接下去就可以用同步的方式执行它们（解决饥饿问题）
   markStarvedLanesAsExpired(root, eventTime);
 
-  // 获取优先级最高的任务（有没有任务需要调度）
+  // 获取下一个需要更新的任务（有没有任务需要调度）
   const nextLanes = getNextLanes(
     root,
     root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes
